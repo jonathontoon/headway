@@ -19,7 +19,7 @@ function Editor() {
         theme={editorTheme}
         extensions={baseExtensions}
         basicSetup={{
-          lineNumbers: false,
+          lineNumbers: true,
           foldGutter: false,
           dropCursor: false,
           allowMultipleSelections: false,
