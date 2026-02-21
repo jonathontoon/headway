@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin 'tailwindcss-safe-area';
 
 @font-face {
   font-family: 'Departure Mono';

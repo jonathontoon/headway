@@ -20,16 +20,7 @@ function Editor() {
   }, [])
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100dvh",
-        background: "#000000",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className="flex flex-col w-screen h-dvh bg-black overflow-hidden">
       <CodeMirror
         value=""
         theme={editorTheme}
@@ -59,10 +50,7 @@ function Editor() {
           completionKeymap: false,
           lintKeymap: false,
         }}
-        style={{
-          flex: 1,
-          overflow: "hidden",
-        }}
+        className="flex-1 overflow-hidden"
       />
       <Footer {...stats} />
     </div>
