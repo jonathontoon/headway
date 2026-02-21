@@ -1,9 +1,9 @@
 import { EditorView } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
-import { markdown } from "@codemirror/lang-markdown";
+import { todotxt } from "@plugins/lang-todotxt";
 
 export const baseExtensions: Extension[] = [
-  markdown(),
+  todotxt(),
   EditorView.lineWrapping,
   EditorView.theme({
     "&": {

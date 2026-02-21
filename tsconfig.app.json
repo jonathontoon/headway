@@ -31,7 +31,8 @@
       "@hooks/*": ["src/hooks/*"],
       "@utilities/*": ["src/utilities/*"],
       "@theme/*": ["src/theme/*"],
-      "@services/*": ["src/services/*"]
+      "@services/*": ["src/services/*"],
+      "@plugins/*": ["src/plugins/*"]
     }
   },
   "include": ["src"]
