@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface PreProps extends HTMLAttributes<HTMLPreElement> {
-  className?: string
+  className?: string;
 }
 
 const Pre: FunctionComponent<PropsWithChildren<PreProps>> = ({
@@ -16,6 +16,6 @@ const Pre: FunctionComponent<PropsWithChildren<PreProps>> = ({
   <pre className={className} {...attrs}>
     {children}
   </pre>
-)
+);
 
-export default Pre
+export default Pre;

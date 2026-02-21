@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
-  className?: string
+  className?: string;
 }
 
 const Header: FunctionComponent<PropsWithChildren<HeaderProps>> = ({
@@ -16,6 +16,6 @@ const Header: FunctionComponent<PropsWithChildren<HeaderProps>> = ({
   <header className={className} {...attrs}>
     {children}
   </header>
-)
+);
 
-export default Header
+export default Header;

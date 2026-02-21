@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {
-  className?: string
+  className?: string;
 }
 
 const TableBody: FunctionComponent<PropsWithChildren<TableBodyProps>> = ({
@@ -16,6 +16,6 @@ const TableBody: FunctionComponent<PropsWithChildren<TableBodyProps>> = ({
   <tbody className={className} {...attrs}>
     {children}
   </tbody>
-)
+);
 
-export default TableBody
+export default TableBody;

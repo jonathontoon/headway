@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
-  className?: string
+  className?: string;
 }
 
 const Table: FunctionComponent<PropsWithChildren<TableProps>> = ({
@@ -16,6 +16,6 @@ const Table: FunctionComponent<PropsWithChildren<TableProps>> = ({
   <table className={className} {...attrs}>
     {children}
   </table>
-)
+);
 
-export default Table
+export default Table;

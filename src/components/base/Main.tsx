@@ -1,7 +1,7 @@
-import { forwardRef, type HTMLAttributes, type ForwardedRef } from 'react'
+import { forwardRef, type HTMLAttributes, type ForwardedRef } from "react";
 
 interface MainProps extends HTMLAttributes<HTMLDivElement> {
-  className?: string
+  className?: string;
 }
 
 const Main = forwardRef<HTMLDivElement, MainProps>(
@@ -9,9 +9,9 @@ const Main = forwardRef<HTMLDivElement, MainProps>(
     <main className={className} {...attrs} ref={ref}>
       {children}
     </main>
-  ),
-)
+  )
+);
 
-Main.displayName = 'Main'
+Main.displayName = "Main";
 
-export default Main
+export default Main;

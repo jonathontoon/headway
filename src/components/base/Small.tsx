@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface SmallProps extends HTMLAttributes<HTMLElement> {
-  className?: string
+  className?: string;
 }
 
 const Small: FunctionComponent<PropsWithChildren<SmallProps>> = ({
@@ -16,6 +16,6 @@ const Small: FunctionComponent<PropsWithChildren<SmallProps>> = ({
   <small className={className} {...attrs}>
     {children}
   </small>
-)
+);
 
-export default Small
+export default Small;

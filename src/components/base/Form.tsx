@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface FormProps extends HTMLAttributes<HTMLFormElement> {
-  className?: string
+  className?: string;
 }
 
 const Form: FunctionComponent<PropsWithChildren<FormProps>> = ({
@@ -16,6 +16,6 @@ const Form: FunctionComponent<PropsWithChildren<FormProps>> = ({
   <form className={className} {...attrs}>
     {children}
   </form>
-)
+);
 
-export default Form
+export default Form;

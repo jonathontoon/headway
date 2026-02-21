@@ -2,11 +2,11 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface LinkProps extends HTMLAttributes<HTMLAnchorElement> {
-  className?: string
-  href: string
+  className?: string;
+  href: string;
 }
 
 const Link: FunctionComponent<PropsWithChildren<LinkProps>> = ({
@@ -23,6 +23,6 @@ const Link: FunctionComponent<PropsWithChildren<LinkProps>> = ({
   >
     {children}
   </a>
-)
+);
 
-export default Link
+export default Link;

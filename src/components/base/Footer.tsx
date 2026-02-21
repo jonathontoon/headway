@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface FooterProps extends HTMLAttributes<HTMLElement> {
-  className?: string
+  className?: string;
 }
 
 const Footer: FunctionComponent<PropsWithChildren<FooterProps>> = ({
@@ -16,6 +16,6 @@ const Footer: FunctionComponent<PropsWithChildren<FooterProps>> = ({
   <footer className={className} {...attrs}>
     {children}
   </footer>
-)
+);
 
-export default Footer
+export default Footer;

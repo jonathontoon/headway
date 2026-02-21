@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface OrderedListProps extends HTMLAttributes<HTMLOListElement> {
-  className?: string
+  className?: string;
 }
 
 const OrderedList: FunctionComponent<PropsWithChildren<OrderedListProps>> = ({
@@ -16,6 +16,6 @@ const OrderedList: FunctionComponent<PropsWithChildren<OrderedListProps>> = ({
   <ol className={className} {...attrs}>
     {children}
   </ol>
-)
+);
 
-export default OrderedList
+export default OrderedList;

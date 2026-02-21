@@ -1,7 +1,7 @@
-import { type HTMLAttributes, type PropsWithChildren, forwardRef } from 'react'
+import { type HTMLAttributes, type PropsWithChildren, forwardRef } from "react";
 
 interface SectionProps extends HTMLAttributes<HTMLElement> {
-  className?: string
+  className?: string;
 }
 
 const Section = forwardRef<HTMLElement, PropsWithChildren<SectionProps>>(
@@ -9,9 +9,9 @@ const Section = forwardRef<HTMLElement, PropsWithChildren<SectionProps>>(
     <section ref={ref} className={className} {...attrs}>
       {children}
     </section>
-  ),
-)
+  )
+);
 
-Section.displayName = 'Section'
+Section.displayName = "Section";
 
-export default Section
+export default Section;

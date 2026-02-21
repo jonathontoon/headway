@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface BodyProps extends HTMLAttributes<HTMLBodyElement> {
-  className?: string
+  className?: string;
 }
 
 const Body: FunctionComponent<PropsWithChildren<BodyProps>> = ({
@@ -16,6 +16,6 @@ const Body: FunctionComponent<PropsWithChildren<BodyProps>> = ({
   <body className={className} {...attrs}>
     {children}
   </body>
-)
+);
 
-export default Body
+export default Body;

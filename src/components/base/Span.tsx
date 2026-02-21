@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface SpanProps extends HTMLAttributes<HTMLSpanElement> {
-  className?: string
+  className?: string;
 }
 
 const Span: FunctionComponent<PropsWithChildren<SpanProps>> = ({
@@ -16,6 +16,6 @@ const Span: FunctionComponent<PropsWithChildren<SpanProps>> = ({
   <span className={className} {...attrs}>
     {children}
   </span>
-)
+);
 
-export default Span
+export default Span;

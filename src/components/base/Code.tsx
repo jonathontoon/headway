@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface CodeProps extends HTMLAttributes<HTMLSpanElement> {
-  className?: string
+  className?: string;
 }
 
 const Code: FunctionComponent<PropsWithChildren<CodeProps>> = ({
@@ -16,6 +16,6 @@ const Code: FunctionComponent<PropsWithChildren<CodeProps>> = ({
   <code className={className} {...attrs}>
     {children}
   </code>
-)
+);
 
-export default Code
+export default Code;

@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface PasswordInputProps extends HTMLAttributes<HTMLInputElement> {
-  className?: string
+  className?: string;
 }
 
 const PasswordInput: FunctionComponent<
@@ -14,6 +14,6 @@ const PasswordInput: FunctionComponent<
   <input type="password" className={className} {...attrs}>
     {children}
   </input>
-)
+);
 
-export default PasswordInput
+export default PasswordInput;

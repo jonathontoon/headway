@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface FieldSetProps extends HTMLAttributes<HTMLFieldSetElement> {
-  className?: string
+  className?: string;
 }
 
 const FieldSet: FunctionComponent<PropsWithChildren<FieldSetProps>> = ({
@@ -16,6 +16,6 @@ const FieldSet: FunctionComponent<PropsWithChildren<FieldSetProps>> = ({
   <fieldset className={className} {...attrs}>
     {children}
   </fieldset>
-)
+);
 
-export default FieldSet
+export default FieldSet;

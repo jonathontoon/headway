@@ -1,12 +1,12 @@
-import { type HTMLAttributes, type ForwardedRef, forwardRef } from 'react'
+import { type HTMLAttributes, type ForwardedRef, forwardRef } from "react";
 
 interface TextInputProps extends HTMLAttributes<HTMLInputElement> {
-  className?: string
-  placeholder?: string
-  value?: string
-  autoComplete?: string
-  disabled?: boolean
-  maxLength?: number
+  className?: string;
+  placeholder?: string;
+  value?: string;
+  autoComplete?: string;
+  disabled?: boolean;
+  maxLength?: number;
 }
 
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
@@ -20,7 +20,7 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
       maxLength,
       ...props
     },
-    ref: ForwardedRef<HTMLInputElement>,
+    ref: ForwardedRef<HTMLInputElement>
   ) => (
     <input
       ref={ref}
@@ -33,9 +33,9 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
       maxLength={maxLength}
       {...props}
     />
-  ),
-)
+  )
+);
 
-TextInput.displayName = 'TextInput'
+TextInput.displayName = "TextInput";
 
-export default TextInput
+export default TextInput;

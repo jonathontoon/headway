@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface BlockQuoteProps extends HTMLAttributes<HTMLQuoteElement> {
-  className?: string
+  className?: string;
 }
 
 const BLockQuote: FunctionComponent<PropsWithChildren<BlockQuoteProps>> = ({
@@ -16,6 +16,6 @@ const BLockQuote: FunctionComponent<PropsWithChildren<BlockQuoteProps>> = ({
   <blockquote className={className} {...attrs}>
     {children}
   </blockquote>
-)
+);
 
-export default BLockQuote
+export default BLockQuote;

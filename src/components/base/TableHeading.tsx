@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface TableHeadingProps extends HTMLAttributes<HTMLTableCellElement> {
-  className?: string
+  className?: string;
 }
 
 const TableHeading: FunctionComponent<PropsWithChildren<TableHeadingProps>> = ({
@@ -16,6 +16,6 @@ const TableHeading: FunctionComponent<PropsWithChildren<TableHeadingProps>> = ({
   <th className={className} {...attrs}>
     {children}
   </th>
-)
+);
 
-export default TableHeading
+export default TableHeading;

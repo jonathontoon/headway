@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface LabelProps extends HTMLAttributes<HTMLLabelElement> {
-  className?: string
+  className?: string;
 }
 
 const Label: FunctionComponent<PropsWithChildren<LabelProps>> = ({
@@ -16,6 +16,6 @@ const Label: FunctionComponent<PropsWithChildren<LabelProps>> = ({
   <label className={className} {...attrs}>
     {children}
   </label>
-)
+);
 
-export default Label
+export default Label;

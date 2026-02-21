@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface ListItemProps extends HTMLAttributes<HTMLLIElement> {
-  className?: string
+  className?: string;
 }
 
 const ListItem: FunctionComponent<PropsWithChildren<ListItemProps>> = ({
@@ -16,6 +16,6 @@ const ListItem: FunctionComponent<PropsWithChildren<ListItemProps>> = ({
   <li className={className} {...attrs}>
     {children}
   </li>
-)
+);
 
-export default ListItem
+export default ListItem;

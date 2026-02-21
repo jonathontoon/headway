@@ -2,10 +2,10 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from 'react'
+} from "react";
 
 interface ParagraphProps extends HTMLAttributes<HTMLParagraphElement> {
-  className?: string
+  className?: string;
 }
 
 const Paragraph: FunctionComponent<PropsWithChildren<ParagraphProps>> = ({
@@ -16,6 +16,6 @@ const Paragraph: FunctionComponent<PropsWithChildren<ParagraphProps>> = ({
   <p className={className} {...attrs}>
     {children}
   </p>
-)
+);
 
-export default Paragraph
+export default Paragraph;
