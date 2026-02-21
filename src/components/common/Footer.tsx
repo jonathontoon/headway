@@ -10,7 +10,7 @@ function Footer({ wordCount, charCount, readingTime }: FooterProps) {
       style={{
         display: "flex",
         gap: "24px",
-        padding: "6px 16px",
+        padding: "6px 16px env(safe-area-inset-bottom)",
         background: "#000000",
         borderTop: "1px solid #1a1a1a",
         fontFamily: "'Departure Mono', monospace",
