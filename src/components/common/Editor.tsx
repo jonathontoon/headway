@@ -23,7 +23,7 @@ function Editor() {
     <div
       style={{
         width: "100vw",
-        height: "100vh",
+        height: "100dvh",
         background: "#000000",
         overflow: "hidden",
         display: "flex",
