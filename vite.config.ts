@@ -14,6 +14,7 @@ export default defineConfig({
       '@utilities': resolve(__dirname, 'src/utilities'),
       '@theme': resolve(__dirname, 'src/theme'),
       '@services': resolve(__dirname, 'src/services'),
+      '@plugins': resolve(__dirname, 'src/plugins'),
     },
   },
   build: {
@@ -26,7 +27,7 @@ export default defineConfig({
             '@uiw/codemirror-themes',
             '@codemirror/state',
             '@codemirror/view',
-            '@codemirror/lang-markdown',
+            '@codemirror/language',
             '@lezer/highlight',
           ],
           'react-vendor': ['react', 'react-dom'],

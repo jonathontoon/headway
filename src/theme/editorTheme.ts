@@ -1,5 +1,6 @@
 import { createTheme } from "@uiw/codemirror-themes";
 import { tags as t } from "@lezer/highlight";
+import { todotxtTags } from "@plugins/lang-todotxt";
 
 export const editorTheme = createTheme({
   theme: "dark",
@@ -40,5 +41,15 @@ export const editorTheme = createTheme({
     { tag: t.quote, color: "#666666" },
     { tag: t.monospace, color: "#aaaaaa" },
     { tag: t.strikethrough, color: "#666666", textDecoration: "line-through" },
+    { tag: todotxtTags.completionMark, color: "#555555" },
+    { tag: todotxtTags.completedText, color: "#555555" },
+    { tag: todotxtTags.priorityA, color: "#ff6b6b", fontWeight: "bold" },
+    { tag: todotxtTags.priorityB, color: "#ffd93d", fontWeight: "bold" },
+    { tag: todotxtTags.priorityC, color: "#6bcb77", fontWeight: "bold" },
+    { tag: todotxtTags.priorityOther, color: "#aaaaaa", fontWeight: "bold" },
+    { tag: todotxtTags.date, color: "#888888" },
+    { tag: todotxtTags.context, color: "#4ecdc4" },
+    { tag: todotxtTags.project, color: "#45b7d1" },
+    { tag: todotxtTags.metadata, color: "#a8a8ff" },
   ],
 });

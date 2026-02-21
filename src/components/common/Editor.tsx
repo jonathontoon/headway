@@ -4,18 +4,42 @@ import { editorTheme } from "@theme/editorTheme";
 import { baseExtensions } from "@services/editorService";
 import Summary from "@common/Summary";
 
-const computeStats = (content: string) => {
-  const trimmed = content.trim();
-  const wordCount = trimmed === "" ? 0 : trimmed.split(/\s+/).length;
-  const charCount = content.length;
-  return { wordCount, charCount };
+const parseTodoStats = (content: string) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const lines = content.split("\n").filter((line) => line.trim() !== "");
+
+  let totalTasks = 0;
+  let overdue = 0;
+  let dueToday = 0;
+  const contexts = new Set<string>();
+  const projects = new Set<string>();
+
+  for (const line of lines) {
+    if (/^x /.test(line)) continue;
+
+    totalTasks++;
+
+    for (const word of line.split(/\s+/)) {
+      if (word.startsWith("@") && word.length > 1) contexts.add(word);
+      if (word.startsWith("+") && word.length > 1) projects.add(word);
+    }
+
+    const dueMatch = line.match(/\bdue:(\d{4}-\d{2}-\d{2})\b/);
+    if (dueMatch) {
+      const dueDate = dueMatch[1];
+      if (dueDate < today) overdue++;
+      else if (dueDate === today) dueToday++;
+    }
+  }
+
+  return { totalTasks, overdue, dueToday, contexts: contexts.size, projects: projects.size };
 };
 
 const Editor = () => {
-  const [stats, setStats] = useState({ wordCount: 0, charCount: 0 });
+  const [stats, setStats] = useState({ totalTasks: 0, overdue: 0, dueToday: 0, contexts: 0, projects: 0 });
 
   const handleChange = useCallback((value: string) => {
-    setStats(computeStats(value));
+    setStats(parseTodoStats(value));
   }, []);
 
   return (
