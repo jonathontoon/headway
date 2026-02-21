@@ -20,20 +20,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-
-    /* Path aliases */
-    "baseUrl": ".",
-    "paths": {
-      "@organisms": ["src/components/common"],
-      "@organisms/*": ["src/components/common/*"],
-      "@hooks": ["src/hooks"],
-      "@hooks/*": ["src/hooks/*"],
-      "@utilities": ["src/utilities"],
-      "@utilities/*": ["src/utilities/*"]
-    }
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src"]
 }
