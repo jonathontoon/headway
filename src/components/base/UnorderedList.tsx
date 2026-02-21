@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react"
+} from 'react'
 
 interface UnorderedListProps extends HTMLAttributes<HTMLUListElement> {
   className?: string
@@ -10,12 +10,10 @@ interface UnorderedListProps extends HTMLAttributes<HTMLUListElement> {
 
 const UnorderedList: FunctionComponent<
   PropsWithChildren<UnorderedListProps>
-> = ({ className, children, ...attrs }) => {
-  return (
-    <ul className={className} {...attrs}>
-      {children}
-    </ul>
-  )
-}
+> = ({ className, children, ...attrs }) => (
+  <ul className={className} {...attrs}>
+    {children}
+  </ul>
+)
 
 export default UnorderedList

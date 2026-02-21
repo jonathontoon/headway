@@ -12,7 +12,7 @@ const parseArguments = (prompt: string, command: string): string[] => {
   }
 
   const args: string[] = []
-  let currentArg: string = ""
+  let currentArg: string = ''
   let inQuotes: boolean = false
 
   for (let i = 0; i < argumentString.length; i++) {
@@ -23,10 +23,10 @@ const parseArguments = (prompt: string, command: string): string[] => {
       continue
     }
 
-    if (char === " " && !inQuotes) {
+    if (char === ' ' && !inQuotes) {
       if (currentArg) {
         args.push(currentArg)
-        currentArg = ""
+        currentArg = ''
       }
     } else {
       currentArg += char

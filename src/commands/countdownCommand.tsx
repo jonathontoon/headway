@@ -1,7 +1,7 @@
-import { type ReactNode } from "react"
-import DefaultResponse from "@common/DefaultResponse"
-import StatusResponse from "@common/StatusResponse"
-import CountdownResponse from "@common/CountdownResponse"
+import { type ReactNode } from 'react'
+import DefaultResponse from '@common/DefaultResponse'
+import StatusResponse from '@common/StatusResponse'
+import CountdownResponse from '@common/CountdownResponse'
 
 /**
  * Handles the 'countdown' command by displaying a countdown sequence.
@@ -12,7 +12,7 @@ const handleCountdownCommand = async (
   startCount: string,
   pushToHistory: (content: ReactNode) => void,
   setIsProcessing: (isProcessing: boolean) => void,
-  pushToHistoryWithDelay: (content: ReactNode, delay: number) => void
+  pushToHistoryWithDelay: (content: ReactNode, delay: number) => void,
 ) => {
   const count = parseInt(startCount, 10)
   if (isNaN(count) || count < 0) {
@@ -21,7 +21,7 @@ const handleCountdownCommand = async (
         statusType="error"
         statusText="Please provide a valid positive number."
         hintText="Example: countdown 10"
-      />
+      />,
     )
     return
   }
@@ -32,12 +32,12 @@ const handleCountdownCommand = async (
     // Initial message
     await pushToHistoryWithDelay(
       <DefaultResponse responseText="Starting countdown..." />,
-      0
+      0,
     )
 
     // Simulate a random error condition (5% chance)
     if (Math.random() < 0.05) {
-      throw new Error("Countdown system malfunction!")
+      throw new Error('Countdown system malfunction!')
     }
 
     // Count down from startCount to 0
@@ -48,17 +48,17 @@ const handleCountdownCommand = async (
     // Final message
     await pushToHistoryWithDelay(
       <StatusResponse statusType="success" statusText="Countdown complete!" />,
-      1000
+      1000,
     )
   } catch (error) {
     await pushToHistoryWithDelay(
       <StatusResponse
         statusType="error"
         statusText={
-          error instanceof Error ? error.message : "An unknown error occurred"
+          error instanceof Error ? error.message : 'An unknown error occurred'
         }
       />,
-      0
+      0,
     )
   } finally {
     setIsProcessing(false)

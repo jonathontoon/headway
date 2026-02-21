@@ -1,8 +1,8 @@
-import type { FunctionComponent } from "react"
+import type { FunctionComponent } from 'react'
 
-import BlockQuote from "../base/BlockQuote.tsx"
-import Response from "../common/Response.tsx"
-import Paragraph from "../base/Paragraph"
+import BlockQuote from '../base/BlockQuote.tsx'
+import Response from '../common/Response.tsx'
+import Paragraph from '../base/Paragraph'
 
 interface QuoteResponseProps {
   quoteText: string
@@ -10,14 +10,12 @@ interface QuoteResponseProps {
 
 const QuoteResponse: FunctionComponent<QuoteResponseProps> = ({
   quoteText,
-}) => {
-  return (
-    <Response>
-      <BlockQuote>
-        <Paragraph>{quoteText}</Paragraph>
-      </BlockQuote>
-    </Response>
-  )
-}
+}) => (
+  <Response>
+    <BlockQuote>
+      <Paragraph>{quoteText}</Paragraph>
+    </BlockQuote>
+  </Response>
+)
 
 export default QuoteResponse

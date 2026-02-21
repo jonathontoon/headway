@@ -1,5 +1,5 @@
-import { type ReactNode } from "react"
-import Prompt from "@common/Prompt"
+import { type ReactNode } from 'react'
+import Prompt from '@common/Prompt'
 
 /**
  * Adds a command to the terminal history with the prompt prefix.
@@ -7,7 +7,7 @@ import Prompt from "@common/Prompt"
  */
 const pushCommandToHistory = (
   command: string,
-  pushToHistory: (content: ReactNode) => void
+  pushToHistory: (content: ReactNode) => void,
 ) => {
   pushToHistory(<Prompt value={command} disabled />)
 }

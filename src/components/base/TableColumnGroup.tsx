@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react"
+} from 'react'
 
 interface TableColumnGroupProps extends HTMLAttributes<HTMLTableColElement> {
   className?: string
@@ -10,12 +10,10 @@ interface TableColumnGroupProps extends HTMLAttributes<HTMLTableColElement> {
 
 const TableColumnGroup: FunctionComponent<
   PropsWithChildren<TableColumnGroupProps>
-> = ({ className, children, ...attrs }) => {
-  return (
-    <colgroup className={className} {...attrs}>
-      {children}
-    </colgroup>
-  )
-}
+> = ({ className, children, ...attrs }) => (
+  <colgroup className={className} {...attrs}>
+    {children}
+  </colgroup>
+)
 
 export default TableColumnGroup

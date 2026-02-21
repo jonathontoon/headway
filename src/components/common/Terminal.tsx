@@ -6,12 +6,12 @@ import {
   type KeyboardEvent,
   type FunctionComponent,
   type RefObject,
-} from "react"
+} from 'react'
 
-import ScrollView from "../common/ScrollView.tsx"
-import Prompt from "../common/Prompt.tsx"
+import ScrollView from '../common/ScrollView.tsx'
+import Prompt from '../common/Prompt.tsx'
 
-import { type TerminalHistoryItem } from "../../hooks/useTerminal.ts"
+import { type TerminalHistoryItem } from '../../hooks/useTerminal.ts'
 
 interface TerminalProps {
   className?: string
@@ -26,7 +26,7 @@ interface TerminalProps {
 }
 
 const Terminal: FunctionComponent<TerminalProps> = ({
-  className = "",
+  className = '',
   history,
   input,
   inputRef,

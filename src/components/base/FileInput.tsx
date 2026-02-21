@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type FunctionComponent } from "react"
+import { type HTMLAttributes, type FunctionComponent } from 'react'
 
 interface FileInputProps extends HTMLAttributes<HTMLInputElement> {
   className?: string
@@ -7,8 +7,6 @@ interface FileInputProps extends HTMLAttributes<HTMLInputElement> {
 const FileInput: FunctionComponent<FileInputProps> = ({
   className,
   ...attrs
-}) => {
-  return <input type="file" className={className} {...attrs} />
-}
+}) => <input type="file" className={className} {...attrs} />
 
 export default FileInput

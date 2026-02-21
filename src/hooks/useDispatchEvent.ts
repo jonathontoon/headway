@@ -1,5 +1,5 @@
-import { useEffect } from "react"
-import delay from "../utilities/delay"
+import { useEffect } from 'react'
+import delay from '../utilities/delay'
 
 /**
  * Custom hook to dispatch a custom event after component mount

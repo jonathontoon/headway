@@ -1,8 +1,8 @@
-import type { FunctionComponent } from "react"
+import type { FunctionComponent } from 'react'
 
-import Paragraph from "../base/Paragraph.tsx"
-import Hint from "../common/Hint.tsx"
-import Response from "../common/Response.tsx"
+import Paragraph from '../base/Paragraph.tsx'
+import Hint from '../common/Hint.tsx'
+import Response from '../common/Response.tsx'
 
 interface DefaultResponseProps {
   responseText: string
@@ -12,13 +12,11 @@ interface DefaultResponseProps {
 const IntroResponse: FunctionComponent<DefaultResponseProps> = ({
   responseText,
   hintText,
-}) => {
-  return (
-    <Response>
-      <Paragraph>{responseText}</Paragraph>
-      {hintText && <Hint>{hintText}</Hint>}
-    </Response>
-  )
-}
+}) => (
+  <Response>
+    <Paragraph>{responseText}</Paragraph>
+    {hintText && <Hint>{hintText}</Hint>}
+  </Response>
+)
 
 export default IntroResponse

@@ -1,7 +1,7 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react'
 
-import DefaultResponse from "@common/DefaultResponse"
-import QuoteResponse from "@common/QuoteResponse"
+import DefaultResponse from '@common/DefaultResponse'
+import QuoteResponse from '@common/QuoteResponse'
 
 /**
  * Handles the 'complete' command by initiating an interactive sentence completion.
@@ -11,17 +11,17 @@ const handleCompleteCommand = async (
   setIsProcessing: (isProcessing: boolean) => void,
   pushToHistory: (content: ReactNode) => void,
   setAwaitingInput: (
-    awaitingInput: { callback: (input: string) => void } | null
-  ) => void
+    awaitingInput: { callback: (input: string) => void } | null,
+  ) => void,
 ) => {
   setIsProcessing(true)
 
   await pushToHistory(
-    <DefaultResponse responseText="Let's complete this sentence:" />
+    <DefaultResponse responseText="Let's complete this sentence:" />,
   )
 
   await pushToHistory(
-    <QuoteResponse quoteText="The quick brown fox jumps over..." />
+    <QuoteResponse quoteText="The quick brown fox jumps over..." />,
   )
 
   // Set up the awaiting input state without the type

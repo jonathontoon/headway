@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react"
+} from 'react'
 
 interface LinkProps extends HTMLAttributes<HTMLAnchorElement> {
   className?: string
@@ -14,17 +14,15 @@ const Link: FunctionComponent<PropsWithChildren<LinkProps>> = ({
   href,
   children,
   ...attrs
-}) => {
-  return (
-    <a
-      rel="preload"
-      className={`underline hover:no-underline ${className}`}
-      href={href}
-      {...attrs}
-    >
-      {children}
-    </a>
-  )
-}
+}) => (
+  <a
+    rel="preload"
+    className={`underline hover:no-underline ${className}`}
+    href={href}
+    {...attrs}
+  >
+    {children}
+  </a>
+)
 
 export default Link

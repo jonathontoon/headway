@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react"
+} from 'react'
 
 interface ProgressProps extends HTMLAttributes<HTMLProgressElement> {
   className?: string
@@ -16,12 +16,10 @@ const Progress: FunctionComponent<PropsWithChildren<ProgressProps>> = ({
   max,
   value,
   ...attrs
-}) => {
-  return (
-    <progress className={className} max={max} value={value} {...attrs}>
-      {children}
-    </progress>
-  )
-}
+}) => (
+  <progress className={className} max={max} value={value} {...attrs}>
+    {children}
+  </progress>
+)
 
 export default Progress

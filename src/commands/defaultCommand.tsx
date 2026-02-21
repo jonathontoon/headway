@@ -1,5 +1,5 @@
-import { type ReactNode } from "react"
-import StatusResponse from "@common/StatusResponse"
+import { type ReactNode } from 'react'
+import StatusResponse from '@common/StatusResponse'
 
 /**
  * Handles unrecognized commands by displaying an error message.
@@ -7,14 +7,14 @@ import StatusResponse from "@common/StatusResponse"
  */
 const handleDefaultCommand = async (
   command: string,
-  pushToHistory: (content: ReactNode) => void
+  pushToHistory: (content: ReactNode) => void,
 ) => {
   pushToHistory(
     <StatusResponse
       statusType="error"
       statusText={`'${command}' was not recognized.`}
       hintText="Type 'help' for a list of available commands."
-    />
+    />,
   )
 }
 

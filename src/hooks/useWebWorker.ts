@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, useState } from "react"
+import { useEffect, useCallback, useRef, useState } from 'react'
 
 interface WorkerArguments {
   path: string
@@ -7,21 +7,21 @@ interface WorkerArguments {
 
 const useWebWorker = ({ path, options }: WorkerArguments) => {
   const workerRef = useRef<Worker | null>(null)
-  const [isSupported] = useState<boolean | null>(() => {
-    return typeof window !== "undefined" && "Worker" in window
-  })
+  const [isSupported] = useState<boolean | null>(
+    () => typeof window !== 'undefined' && 'Worker' in window,
+  )
 
   const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null)
   const errorHandlerRef = useRef<((event: ErrorEvent) => void) | null>(null)
   const messageErrorHandlerRef = useRef<((event: MessageEvent) => void) | null>(
-    null
+    null,
   )
 
   useEffect(() => {
     if (isSupported) {
       workerRef.current = new Worker(new URL(path, import.meta.url), options)
     } else {
-      console.error("Web Workers are not supported in this environment.")
+      console.error('Web Workers are not supported in this environment.')
     }
 
     return () => {
@@ -34,12 +34,12 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
     (message: unknown, transfer: Transferable[] = []) => {
       if (!workerRef.current) {
         throw new Error(
-          "Worker not initialized or Web Workers are not supported."
+          'Worker not initialized or Web Workers are not supported.',
         )
       }
       workerRef.current.postMessage(message, transfer)
     },
-    []
+    [],
   )
 
   const onMessage = useCallback((callback: (event: MessageEvent) => void) => {
@@ -54,7 +54,7 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
     (callback: (event: MessageEvent) => void) => {
       messageErrorHandlerRef.current = callback
     },
-    []
+    [],
   )
 
   useEffect(() => {
@@ -73,14 +73,14 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
       messageErrorHandlerRef.current?.(event)
     }
 
-    worker.addEventListener("message", handleMessage)
-    worker.addEventListener("error", handleError)
-    worker.addEventListener("messageerror", handleMessageError)
+    worker.addEventListener('message', handleMessage)
+    worker.addEventListener('error', handleError)
+    worker.addEventListener('messageerror', handleMessageError)
 
     return () => {
-      worker.removeEventListener("message", handleMessage)
-      worker.removeEventListener("error", handleError)
-      worker.removeEventListener("messageerror", handleMessageError)
+      worker.removeEventListener('message', handleMessage)
+      worker.removeEventListener('error', handleError)
+      worker.removeEventListener('messageerror', handleMessageError)
     }
   }, [])
 
