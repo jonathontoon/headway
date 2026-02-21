@@ -1,21 +1,22 @@
-import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
+import { Button } from './components/Button'
+import { useCounter } from './hooks/useCounter'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { count, increment } = useCounter(0)
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-8">
       <div className="flex space-x-8 mb-8">
-        <a href="https://vite.dev" target="_blank">
+        <a href="https://vite.dev" target="_blank" rel="noreferrer">
           <img
             src={viteLogo}
             className="h-24 p-6 hover:drop-shadow-[0_0_2em_#646cffaa] transition-all"
             alt="Vite logo"
           />
         </a>
-        <a href="https://react.dev" target="_blank">
+        <a href="https://react.dev" target="_blank" rel="noreferrer">
           <img
             src={reactLogo}
             className="h-24 p-6 hover:drop-shadow-[0_0_2em_#61dafbaa] transition-all animate-[spin_20s_linear_infinite]"
@@ -27,15 +28,13 @@ function App() {
         Vite + React + Tailwind
       </h1>
       <div className="bg-white p-8 rounded-xl shadow-md text-center">
-        <button
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors mb-4"
-          onClick={() => setCount((count) => count + 1)}
-        >
+        <Button onClick={increment} className="mb-4">
           count is {count}
-        </button>
+        </Button>
         <p className="text-gray-600">
-          Edit <code className="bg-gray-200 px-1 rounded">src/App.tsx</code> and
-          save to test HMR
+          Edit{' '}
+          <code className="bg-gray-200 px-1 rounded text-sm">src/App.tsx</code>{' '}
+          and save to test HMR
         </p>
       </div>
       <p className="mt-8 text-gray-500 italic">
