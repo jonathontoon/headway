@@ -17,8 +17,8 @@ interface TerminalProps {
   className?: string
   history: TerminalHistoryItem[]
   input: string
-  inputRef: RefObject<HTMLInputElement>
-  terminalRef: RefObject<HTMLDivElement>
+  inputRef: RefObject<HTMLInputElement | null>
+  terminalRef: RefObject<HTMLDivElement | null>
   onInputChange: (e: ChangeEvent<HTMLInputElement>) => void
   onInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void
   disabled?: boolean

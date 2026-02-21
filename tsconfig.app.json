@@ -21,7 +21,16 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@organisms/*": ["src/components/common/*"],
+      "@atoms/*": ["src/components/base/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utilities/*": ["src/utilities/*"]
+    }
   },
   "include": ["src"]
 }
