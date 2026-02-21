@@ -1,7 +1,7 @@
 import { type ReactNode } from "react"
-import DefaultResponse from "@organisms/DefaultResponse"
-import StatusResponse from "@organisms/StatusResponse"
-import CountdownResponse from "@organisms/CountdownResponse"
+import DefaultResponse from "@common/DefaultResponse"
+import StatusResponse from "@common/StatusResponse"
+import CountdownResponse from "@common/CountdownResponse"
 
 /**
  * Handles the 'countdown' command by displaying a countdown sequence.

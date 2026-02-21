@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react"
 import CodeMirror from "@uiw/react-codemirror"
-import { editorTheme } from "../../theme/editorTheme"
-import { baseExtensions } from "../../services/editorService"
-import Footer from "./Footer"
+import { editorTheme } from "@theme/editorTheme"
+import { baseExtensions } from "@services/editorService"
+import Summary from "@common/Summary"
 
 function computeStats(content: string) {
   const trimmed = content.trim()
@@ -52,7 +52,7 @@ function Editor() {
         }}
         className="flex-1 overflow-hidden"
       />
-      <Footer {...stats} />
+      <Summary {...stats} />
     </div>
   )
 }

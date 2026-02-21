@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
-import DefaultResponse from "@organisms/DefaultResponse"
-import QuoteResponse from "@organisms/QuoteResponse"
+import DefaultResponse from "@common/DefaultResponse"
+import QuoteResponse from "@common/QuoteResponse"
 
 /**
  * Handles the 'complete' command by initiating an interactive sentence completion.

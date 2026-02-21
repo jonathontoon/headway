@@ -1,5 +1,5 @@
 import { type ReactNode } from "react"
-import StatusResponse from "@organisms/StatusResponse"
+import StatusResponse from "@common/StatusResponse"
 
 /**
  * Handles unrecognized commands by displaying an error message.

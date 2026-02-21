@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import VersionResponse from "@organisms/VersionResponse"
+import VersionResponse from "@common/VersionResponse"
 
 /**
  * Handles the 'version' command by displaying the current version number.

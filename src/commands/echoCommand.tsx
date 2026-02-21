@@ -1,7 +1,7 @@
 import { type ReactNode } from "react"
 
-import StatusResponse from "@organisms/StatusResponse"
-import DefaultResponse from "@organisms/DefaultResponse"
+import StatusResponse from "@common/StatusResponse"
+import DefaultResponse from "@common/DefaultResponse"
 
 /**
  * Handles the 'echo' command by displaying the provided text.

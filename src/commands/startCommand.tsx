@@ -1,5 +1,5 @@
 import { type ReactNode } from "react"
-import DefaultResponse from "@organisms/DefaultResponse"
+import DefaultResponse from "@common/DefaultResponse"
 
 /**
  * Handles the 'start' command by displaying a server start message.

@@ -1,5 +1,5 @@
 import { type ReactNode } from "react"
-import Prompt from "@organisms/Prompt"
+import Prompt from "@common/Prompt"
 
 /**
  * Adds a command to the terminal history with the prompt prefix.

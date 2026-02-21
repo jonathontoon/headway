@@ -1,4 +1,4 @@
-import Button, { type ButtonProps } from "@atoms/Button.tsx"
+import Button, { type ButtonProps } from "@base/Button.tsx"
 
 import type { FunctionComponent, PropsWithChildren } from "react"
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import HelpResponse from "@organisms/HelpResponse"
+import HelpResponse from "@common/HelpResponse"
 
 const helpCommand = (pushToHistory: (content: ReactNode) => void) => {
   pushToHistory(<HelpResponse />)

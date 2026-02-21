@@ -26,10 +26,12 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@organisms/*": ["src/components/common/*"],
-      "@atoms/*": ["src/components/base/*"],
+      "@common/*": ["src/components/common/*"],
+      "@base/*": ["src/components/base/*"],
       "@hooks/*": ["src/hooks/*"],
-      "@utilities/*": ["src/utilities/*"]
+      "@utilities/*": ["src/utilities/*"],
+      "@theme/*": ["src/theme/*"],
+      "@services/*": ["src/services/*"]
     }
   },
   "include": ["src"]
