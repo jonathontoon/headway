@@ -7,7 +7,7 @@ import {
 export interface ButtonProps extends HTMLAttributes<HTMLButtonElement> {
   className?: string
   disabled?: boolean
-  type?: string
+  type?: "submit" | "reset" | "button"
 }
 
 const Button: FunctionComponent<PropsWithChildren<ButtonProps>> = ({
