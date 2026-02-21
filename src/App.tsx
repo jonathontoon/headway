@@ -1,34 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Fragment } from "react"
+import Div from "./components/base/Div"
+import Section from "./components/base/Section"
+import Span from "./components/base/Span"
+import LoadingResponse from "./components/common/LoadingResponse"
+import MainApp from "./pages/MainApp.tsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <Fragment>
+      {/* <Div id="loading-state">
+        <Section className="flex flex-col-reverse p-4 scroll-smooth">
+          <Span id="loading-response">
+            <LoadingResponse />
+          </Span>
+        </Section>
+      </Div> */}
+      <MainApp />
+    </Fragment>
   )
 }
 
