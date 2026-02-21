@@ -6,20 +6,7 @@ interface FooterProps {
 
 function Footer({ wordCount, charCount, readingTime }: FooterProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: "24px",
-        padding: "6px 16px env(safe-area-inset-bottom)",
-        background: "#000000",
-        borderTop: "1px solid #1a1a1a",
-        fontFamily: "'Departure Mono', monospace",
-        fontSize: "12px",
-        color: "#444444",
-        userSelect: "none",
-        flexShrink: 0,
-      }}
-    >
+    <div className="flex shrink-0 gap-6 pt-1.5 px-4 pb-safe-or-1.5 bg-black border-t border-[#1a1a1a] font-departure text-xs text-[#444444] select-none">
       <span>{readingTime} min read</span>
       <span>{wordCount} words</span>
       <span>{charCount} characters</span>
