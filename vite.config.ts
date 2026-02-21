@@ -8,10 +8,30 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@organisms': resolve(__dirname, 'src/components/common'),
-      '@atoms': resolve(__dirname, 'src/components/base'),
+      '@common': resolve(__dirname, 'src/components/common'),
+      '@base': resolve(__dirname, 'src/components/base'),
       '@hooks': resolve(__dirname, 'src/hooks'),
       '@utilities': resolve(__dirname, 'src/utilities'),
+      '@theme': resolve(__dirname, 'src/theme'),
+      '@services': resolve(__dirname, 'src/services'),
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'codemirror': [
+            '@uiw/react-codemirror',
+            '@uiw/codemirror-themes',
+            '@codemirror/state',
+            '@codemirror/view',
+            '@codemirror/lang-markdown',
+            '@lezer/highlight',
+          ],
+          'react-vendor': ['react', 'react-dom'],
+        },
+      },
     },
   },
 })
