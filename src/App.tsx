@@ -24,7 +24,7 @@ function App() {
           />
         </a>
       </div>
-      <h1 className="text-5xl font-bold mb-8 text-gray-800">
+      <h1 className="text-5xl font-bold mb-8 text-gray-800 font-departure">
         Vite + React + Tailwind
       </h1>
       <div className="bg-white p-8 rounded-xl shadow-md text-center">
