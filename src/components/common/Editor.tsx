@@ -1,8 +1,24 @@
+import { useState, useCallback } from "react"
 import CodeMirror from "@uiw/react-codemirror"
 import { editorTheme } from "../../theme/editorTheme"
 import { baseExtensions } from "../../services/editorService"
+import Footer from "./Footer"
+
+function computeStats(content: string) {
+  const trimmed = content.trim()
+  const wordCount = trimmed === "" ? 0 : trimmed.split(/\s+/).length
+  const charCount = content.length
+  const readingTime = Math.ceil(wordCount / 200)
+  return { wordCount, charCount, readingTime }
+}
 
 function Editor() {
+  const [stats, setStats] = useState({ wordCount: 0, charCount: 0, readingTime: 0 })
+
+  const handleChange = useCallback((value: string) => {
+    setStats(computeStats(value))
+  }, [])
+
   return (
     <div
       style={{
@@ -18,6 +34,7 @@ function Editor() {
         value=""
         theme={editorTheme}
         extensions={baseExtensions}
+        onChange={handleChange}
         basicSetup={{
           lineNumbers: true,
           foldGutter: false,
@@ -44,9 +61,10 @@ function Editor() {
         }}
         style={{
           flex: 1,
-          height: "100%",
+          overflow: "hidden",
         }}
       />
+      <Footer {...stats} />
     </div>
   )
 }
