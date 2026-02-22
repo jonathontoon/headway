@@ -35,8 +35,17 @@ const parseTodoStats = (content: string) => {
   return { totalTasks, overdue, dueToday, contexts: contexts.size, projects: projects.size };
 };
 
+const defaultContent = `(A) Review project proposal +webapp @work due:2026-02-22
+(B) Fix login bug +webapp @work due:2026-02-20
+(C) Buy groceries +groceries @home due:2026-02-22
+2026-02-21 Update documentation +webapp @work
+Call dentist @phone due:2026-02-28
+Organise notes @home +personal
+x 2026-02-20 2026-02-19 Set up repository +webapp @work
+`;
+
 const Editor = () => {
-  const [stats, setStats] = useState({ totalTasks: 0, overdue: 0, dueToday: 0, contexts: 0, projects: 0 });
+  const [stats, setStats] = useState(() => parseTodoStats(defaultContent));
 
   const handleChange = useCallback((value: string) => {
     setStats(parseTodoStats(value));
@@ -45,7 +54,7 @@ const Editor = () => {
   return (
     <div className="flex flex-col w-screen h-dvh bg-black overflow-hidden">
       <CodeMirror
-        value=""
+        value={defaultContent}
         theme={editorTheme}
         extensions={baseExtensions}
         onChange={handleChange}
