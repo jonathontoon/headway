@@ -79,7 +79,7 @@ const Editor = () => {
           closeBracketsKeymap: false,
           searchKeymap: false,
           foldKeymap: false,
-          completionKeymap: false,
+          completionKeymap: true,
           lintKeymap: false,
         }}
         className="flex-1 overflow-hidden"
