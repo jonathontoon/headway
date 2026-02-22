@@ -1,7 +1,20 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
+import type { EditorView } from "@codemirror/view";
 import { editorTheme } from "@theme/editorTheme";
 import { baseExtensions } from "@services/editorService";
+import {
+  initStorage,
+  createFile,
+  readFile,
+  saveFile,
+  renameFile,
+  deleteFile,
+  setActiveFileId,
+  type FileEntry,
+} from "@services/storageService";
+import Tabs from "@common/Tabs";
+import ActionBar from "@common/ActionBar";
 import Summary from "@common/Summary";
 
 const parseTodoStats = (content: string) => {
@@ -44,20 +57,93 @@ Organise notes @home +personal
 x 2026-02-20 2026-02-19 Set up repository +webapp @work
 `;
 
+// initStorage is idempotent after first call — safe to call twice for two useState initialisers
 const Editor = () => {
-  const [stats, setStats] = useState(() => parseTodoStats(defaultContent));
+  const [files, setFiles] = useState<FileEntry[]>(() => initStorage(defaultContent).files);
+  const [activeId, setActiveId] = useState<string>(() => initStorage(defaultContent).activeId);
+  const [stats, setStats] = useState(() => parseTodoStats(readFile(activeId)));
 
-  const handleChange = useCallback((value: string) => {
-    setStats(parseTodoStats(value));
+  const editorViewRef = useRef<EditorView | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushSave = useCallback(
+    (id: string) => {
+      if (saveTimer.current && editorViewRef.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        saveFile(id, editorViewRef.current.state.doc.toString());
+      }
+    },
+    [],
+  );
+
+  const switchFile = useCallback(
+    (id: string) => {
+      flushSave(activeId);
+      setActiveFileId(id);
+      setActiveId(id);
+      setStats(parseTodoStats(readFile(id)));
+    },
+    [activeId, flushSave],
+  );
+
+  const handleCreate = useCallback(() => {
+    flushSave(activeId);
+    const entry = createFile(`todo-${files.length + 1}`);
+    setFiles((f) => [...f, entry]);
+    setActiveFileId(entry.id);
+    setActiveId(entry.id);
+    setStats(parseTodoStats(""));
+  }, [activeId, files.length, flushSave]);
+
+  const handleRename = useCallback((id: string, name: string) => {
+    renameFile(id, name);
+    setFiles((f) => f.map((file) => (file.id === id ? { ...file, name } : file)));
   }, []);
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteFile(id);
+      const remaining = files.filter((f) => f.id !== id);
+      setFiles(remaining);
+      if (activeId === id) {
+        const next = remaining[0];
+        setActiveFileId(next.id);
+        setActiveId(next.id);
+        setStats(parseTodoStats(readFile(next.id)));
+      }
+    },
+    [files, activeId],
+  );
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setStats(parseTodoStats(value));
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => saveFile(activeId, value), 500);
+    },
+    [activeId],
+  );
 
   return (
     <div className="flex flex-col w-screen h-dvh bg-black overflow-hidden">
+      <Tabs
+        files={files}
+        activeId={activeId}
+        onSwitch={switchFile}
+        onCreate={handleCreate}
+        onRename={handleRename}
+        onDelete={handleDelete}
+      />
       <CodeMirror
-        value={defaultContent}
+        key={activeId}
+        value={readFile(activeId)}
         theme={editorTheme}
         extensions={baseExtensions}
         onChange={handleChange}
+        onCreateEditor={(view) => {
+          editorViewRef.current = view;
+        }}
         basicSetup={{
           lineNumbers: true,
           foldGutter: false,
@@ -84,6 +170,7 @@ const Editor = () => {
         }}
         className="flex-1 overflow-hidden"
       />
+      <ActionBar editorView={editorViewRef.current} />
       <Summary {...stats} />
     </div>
   );
