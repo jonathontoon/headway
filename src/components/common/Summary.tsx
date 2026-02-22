@@ -10,7 +10,7 @@ interface SummaryProps {
 }
 
 const Summary = ({ totalTasks, overdue, dueToday, contexts, projects }: SummaryProps) => (
-  <Footer className="flex flex-row flex-wrap shrink-0 gap-x-6 gap-y-1 py-1.5 px-4 sm:px-9 pb-safe-or-1.5 bg-black border-t border-[#1a1a1a] font-departure text-xs text-[#444444] select-none">
+  <Footer className="flex flex-row shrink-0 gap-6 py-1.5 px-4 sm:px-9 pb-safe-or-1.5 overflow-x-auto bg-black border-t border-[#1a1a1a] font-departure text-xs text-[#444444] select-none">
     <Span>{totalTasks} tasks</Span>
     <Span>{overdue} overdue</Span>
     <Span>{dueToday} due today</Span>
