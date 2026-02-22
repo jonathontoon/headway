@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { editorTheme } from "@theme/editorTheme";
 import { baseExtensions } from "@services/editorService";
@@ -35,6 +35,8 @@ const parseTodoStats = (content: string) => {
   return { totalTasks, overdue, dueToday, contexts: contexts.size, projects: projects.size };
 };
 
+const STORAGE_KEY = "headway:content";
+
 const defaultContent = `(A) Review project proposal +webapp @work due:2026-02-22
 (B) Fix login bug +webapp @work due:2026-02-20
 (C) Buy groceries +groceries @home due:2026-02-22
@@ -45,16 +47,22 @@ x 2026-02-20 2026-02-19 Set up repository +webapp @work
 `;
 
 const Editor = () => {
-  const [stats, setStats] = useState(() => parseTodoStats(defaultContent));
+  const initialContent = useRef(localStorage.getItem(STORAGE_KEY) ?? defaultContent);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [stats, setStats] = useState(() => parseTodoStats(initialContent.current));
 
   const handleChange = useCallback((value: string) => {
     setStats(parseTodoStats(value));
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, value);
+    }, 500);
   }, []);
 
   return (
     <div className="flex flex-col w-screen h-dvh bg-black overflow-hidden">
       <CodeMirror
-        value={defaultContent}
+        value={initialContent.current}
         theme={editorTheme}
         extensions={baseExtensions}
         onChange={handleChange}
