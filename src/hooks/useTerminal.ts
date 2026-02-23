@@ -1,39 +1,58 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type ReactNode,
-  useRef,
-} from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import useViewportResize from '@hooks/useViewportResize';
 import delay from '@utilities/delay';
-
-export type TerminalHistoryItem = ReactNode | string;
-
-export type TerminalHistory = TerminalHistoryItem[];
-
-export type TerminalCommands = {
-  [command: string]: () => void;
-};
-
-export type TerminalProps = {
-  history: TerminalHistory;
-  promptLabel?: TerminalHistoryItem;
-  commands: TerminalCommands;
-};
+import type { TerminalResponse } from '@models/terminalResponse';
 
 export type TerminalInputCallback = (input: string) => void;
 
-const useTerminal = (initialHistory: TerminalHistory = []) => {
-  const terminalRef = useRef<HTMLElement | null>(null);
+type TerminalAction =
+  | { type: 'PUSH'; payload: TerminalResponse[] }
+  | { type: 'RESET' }
+  | { type: 'SET_INPUT'; payload: string }
+  | { type: 'SET_PROCESSING'; payload: boolean };
+
+type TerminalState = {
+  history: TerminalResponse[];
+  input: string;
+  isProcessing: boolean;
+};
+
+const terminalReducer = (
+  state: TerminalState,
+  action: TerminalAction
+): TerminalState => {
+  switch (action.type) {
+    case 'PUSH':
+      return { ...state, history: [...state.history, ...action.payload] };
+    case 'RESET':
+      return { ...state, history: [] };
+    case 'SET_INPUT':
+      return { ...state, input: action.payload };
+    case 'SET_PROCESSING':
+      return { ...state, isProcessing: action.payload };
+  }
+};
+
+const useTerminal = (initialHistory: TerminalResponse[] = []) => {
+  const terminalRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const [history, setHistory] = useState<TerminalHistory>(initialHistory);
-  const [input, setInput] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [awaitingInput, setAwaitingInput] = useState<{
-    callback: TerminalInputCallback;
-  } | null>(null);
+  const [{ history, input, isProcessing }, dispatch] = useReducer(
+    terminalReducer,
+    {
+      history: initialHistory,
+      input: '',
+      isProcessing: false,
+    }
+  );
+
+  const [awaitingInput, setAwaitingInput] = useReducer(
+    (
+      _: { callback: TerminalInputCallback } | null,
+      next: { callback: TerminalInputCallback } | null
+    ) => next,
+    null
+  );
 
   const windowResizeEvent = useCallback(() => {
     if (terminalRef?.current) {
@@ -54,47 +73,43 @@ const useTerminal = (initialHistory: TerminalHistory = []) => {
     inputRef.current?.focus();
   }, []);
 
-  /**
-   * Focus input when terminal is ready
-   */
   useEffect(() => {
     focusInput();
   }, [focusInput]);
 
-  /**
-   * Scroll to the bottom of the terminal on every new history item
-   */
   useEffect(() => {
     windowResizeEvent();
     focusInput();
   }, [history, windowResizeEvent, focusInput]);
 
-  const pushToHistory = useCallback((item: TerminalHistoryItem) => {
-    setHistory((old) => [...old, item]);
+  const pushResponses = useCallback((responses: TerminalResponse[]) => {
+    if (responses.some((r) => r.type === 'clear')) {
+      dispatch({ type: 'RESET' });
+    } else {
+      dispatch({ type: 'PUSH', payload: responses });
+    }
   }, []);
 
-  /**
-   * Write text to terminal with optional delay
-   */
+  const setInput = useCallback((value: string) => {
+    dispatch({ type: 'SET_INPUT', payload: value });
+  }, []);
+
+  const setIsProcessing = useCallback((value: boolean) => {
+    dispatch({ type: 'SET_PROCESSING', payload: value });
+  }, []);
+
   const pushToHistoryWithDelay = useCallback(
-    async (content: ReactNode, delayTime: number = 0) => {
+    async (response: TerminalResponse, delayTime: number = 0) => {
       await delay(delayTime);
-      pushToHistory(content);
-      return content;
+      pushResponses([response]);
+      return response;
     },
-    [pushToHistory]
+    [pushResponses]
   );
-
-  /**
-   * Reset the terminal window
-   */
-  const resetTerminal = useCallback(() => {
-    setHistory([]);
-  }, []);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInput(e.target.value);
+      dispatch({ type: 'SET_INPUT', payload: e.target.value });
     },
     []
   );
@@ -107,11 +122,10 @@ const useTerminal = (initialHistory: TerminalHistory = []) => {
     setInput,
     setIsProcessing,
     setAwaitingInput,
-    pushToHistory,
+    pushResponses,
     pushToHistoryWithDelay,
     terminalRef,
     inputRef,
-    resetTerminal,
     focusInput,
     handleInputChange,
   };

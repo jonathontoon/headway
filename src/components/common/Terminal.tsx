@@ -1,5 +1,4 @@
 import {
-  Fragment,
   useCallback,
   useEffect,
   type ChangeEvent,
@@ -10,12 +9,13 @@ import {
 
 import ScrollView from '@common/ScrollView';
 import Prompt from '@common/Prompt';
+import renderResponse from '@common/renderResponse';
 
-import { type TerminalHistoryItem } from '@hooks/useTerminal';
+import type { TerminalResponse } from '@models/terminalResponse';
 
 interface TerminalProps {
   className?: string;
-  history: TerminalHistoryItem[];
+  history: TerminalResponse[];
   input: string;
   inputRef: RefObject<HTMLInputElement | null>;
   terminalRef: RefObject<HTMLDivElement | null>;
@@ -52,9 +52,7 @@ const Terminal: FunctionComponent<TerminalProps> = ({
 
   return (
     <ScrollView className={className} ref={terminalRef}>
-      {history.map((line: TerminalHistoryItem, index: number) => (
-        <Fragment key={`${index}-${line}`}>{line}</Fragment>
-      ))}
+      {history.map((item, index) => renderResponse(item, index))}
       {!hidden && (
         <Prompt
           value={input}

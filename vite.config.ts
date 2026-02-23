@@ -13,6 +13,7 @@ export default defineConfig({
       '@utilities': resolve(__dirname, 'src/utilities'),
       '@commands': resolve(__dirname, 'src/commands'),
       '@services': resolve(__dirname, 'src/services'),
+      '@models': resolve(__dirname, 'src/models'),
     },
   },
   build: {

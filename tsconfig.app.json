@@ -30,7 +30,8 @@
       "@hooks/*": ["src/hooks/*"],
       "@utilities/*": ["src/utilities/*"],
       "@commands/*": ["src/commands/*"],
-      "@services/*": ["src/services/*"]
+      "@services/*": ["src/services/*"],
+      "@models/*": ["src/models/*"]
     }
   },
   "include": ["src"]

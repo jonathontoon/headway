@@ -1,24 +1,19 @@
-import type { ReactNode } from 'react';
-import TodoListResponse from '@common/TodoListResponse';
+import type { TerminalResponse } from '@models/terminalResponse';
 import { loadContent } from '@services/storageService';
 import { parseTodos, filterTodos } from '@services/todoService';
 
-/**
- * Handles the 'list' command to display todos.
- */
-const listCommand = async (
-  filter: string,
-  pushToHistory: (content: ReactNode) => void
-) => {
+const listCommand = (args: string[]): TerminalResponse => {
+  const filter = args[0] ?? '';
+
   try {
     const content = loadContent();
     const todos = parseTodos(content);
     const filtered = filter ? filterTodos(filter, todos) : todos;
-
     const title = filter ? `Todos matching ${filter}` : 'All todos';
-    pushToHistory(<TodoListResponse todos={filtered} title={title} />);
+
+    return { type: 'todo-list', todos: filtered, title };
   } catch {
-    pushToHistory(<TodoListResponse todos={[]} />);
+    return { type: 'todo-list', todos: [] };
   }
 };
 
