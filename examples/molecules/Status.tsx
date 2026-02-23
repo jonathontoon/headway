@@ -1,13 +1,13 @@
 import {
   useCallback,
   type FunctionComponent,
-  type PropsWithChildren
-} from "react";
+  type PropsWithChildren,
+} from 'react';
 
-import Paragraph from "@atoms/Paragraph.tsx";
-import Span from "@atoms/Span.tsx";
+import Paragraph from '@atoms/Paragraph.tsx';
+import Span from '@atoms/Span.tsx';
 
-export type StatusType = "success" | "error" | "waiting" | "loading";
+export type StatusType = 'success' | 'error' | 'waiting' | 'loading';
 
 interface StatusProps {
   current: StatusType;
@@ -17,27 +17,27 @@ interface StatusProps {
 const Status: FunctionComponent<PropsWithChildren<StatusProps>> = ({
   current,
   className,
-  children
+  children,
 }) => {
   const getStatusSymbol = useCallback((): string => {
     switch (current) {
-      case "success":
-        return "[√]";
-      case "error":
-        return "[×]";
+      case 'success':
+        return '[√]';
+      case 'error':
+        return '[×]';
       default:
-        return "[~]";
+        return '[~]';
     }
   }, [current]);
 
   const getStatusColor = useCallback((): string => {
     switch (current) {
-      case "error":
-        return "text-red-500";
-      case "success":
-        return "text-green-500";
+      case 'error':
+        return 'text-red-500';
+      case 'success':
+        return 'text-green-500';
       default:
-        return "text-amber-500";
+        return 'text-amber-500';
     }
   }, [current]);
 

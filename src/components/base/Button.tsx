@@ -2,12 +2,12 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react";
+} from 'react';
 
 export interface ButtonProps extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
   disabled?: boolean;
-  type?: "submit" | "reset" | "button";
+  type?: 'submit' | 'reset' | 'button';
 }
 
 const Button: FunctionComponent<PropsWithChildren<ButtonProps>> = ({

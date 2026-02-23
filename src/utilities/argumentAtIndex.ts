@@ -1,5 +1,3 @@
-const argumentAtIndex = (args: string[], index: number) => {
-  return args[index] || "";
-};
+const argumentAtIndex = (args: string[], index: number) => args[index] || '';
 
 export default argumentAtIndex;

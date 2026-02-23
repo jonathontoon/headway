@@ -2,7 +2,7 @@
  * Terminal
  */
 
-type CommandType = "logo" | "intro" | "echo" | "clear" | "unknown";
+type CommandType = 'logo' | 'intro' | 'echo' | 'clear' | 'unknown';
 
 interface CommandResponse {
   type: CommandType;
@@ -19,11 +19,11 @@ interface TerminalEntry {
  */
 
 type Status =
-  | "initialized"
-  | "encrypting"
-  | "encrypting_complete"
-  | "decrypting"
-  | "decrypting_complete";
+  | 'initialized'
+  | 'encrypting'
+  | 'encrypting_complete'
+  | 'decrypting'
+  | 'decrypting_complete';
 
 /**
  * Chunks
@@ -38,7 +38,7 @@ interface ChunkData {
 type ChunkArguments = {
   file: File;
   password: string;
-  type: WebWorkerIncomingMessageChunk["type"];
+  type: WebWorkerIncomingMessageChunk['type'];
   writerId: string;
 };
 
@@ -54,7 +54,7 @@ interface HTMLInputEvent extends Event {
   target: HTMLInputElement & EventTarget;
 }
 
-type Action = "Encrypt" | "Decrypt";
+type Action = 'Encrypt' | 'Decrypt';
 
 /**
  * File Download
@@ -75,18 +75,18 @@ type WorkerArguments = {
 };
 
 type CipherOperationState =
-  | "encrypt"
-  | "encryption_in_progress"
-  | "encryption_last_chunk"
-  | "encryption_done"
-  | "decrypt"
-  | "decryption_in_progress"
-  | "decryption_last_chunk"
-  | "decryption_done"
-  | "mixed";
+  | 'encrypt'
+  | 'encryption_in_progress'
+  | 'encryption_last_chunk'
+  | 'encryption_done'
+  | 'decrypt'
+  | 'decryption_in_progress'
+  | 'decryption_last_chunk'
+  | 'decryption_done'
+  | 'mixed';
 
 interface AbstractWebWorkerMessage {
-  type: Exclude<CipherOperationState, "mixed">;
+  type: Exclude<CipherOperationState, 'mixed'>;
   password: string;
 }
 
@@ -101,5 +101,7 @@ interface WebWorkerIncomingMessageChunk extends AbstractWebWorkerMessageChunk {
   isFirstChunk?: boolean;
 }
 
-interface WebWorkerOutgoingMessageChunk
-  extends Omit<AbstractWebWorkerMessageChunk, "password"> {}
+type WebWorkerOutgoingMessageChunk = Omit<
+  AbstractWebWorkerMessageChunk,
+  'password'
+>;

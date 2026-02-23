@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react";
+} from 'react';
 
 interface PreProps extends HTMLAttributes<HTMLPreElement> {
   className?: string;

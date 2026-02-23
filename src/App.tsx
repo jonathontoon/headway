@@ -1,23 +1,23 @@
-import { Fragment, useCallback } from "react";
+import { Fragment, useCallback } from 'react';
 
-import LogoResponse from "@common/LogoResponse";
-import IntroResponse from "@common/IntroResponse";
-import Terminal from "@common/Terminal";
+import LogoResponse from '@common/LogoResponse';
+import IntroResponse from '@common/IntroResponse';
+import Terminal from '@common/Terminal';
 
-import pushCommandToHistory from "@commands/pushCommandToHistory";
-import addCommand from "@commands/addCommand";
-import listCommand from "@commands/listCommand";
-import doneCommand from "@commands/doneCommand";
-import deleteCommand from "@commands/deleteCommand";
-import clearCommand from "@commands/clearCommand";
-import helpCommand from "@commands/helpCommand";
-import defaultCommand from "@commands/defaultCommand";
+import pushCommandToHistory from '@commands/pushCommandToHistory';
+import addCommand from '@commands/addCommand';
+import listCommand from '@commands/listCommand';
+import doneCommand from '@commands/doneCommand';
+import deleteCommand from '@commands/deleteCommand';
+import clearCommand from '@commands/clearCommand';
+import helpCommand from '@commands/helpCommand';
+import defaultCommand from '@commands/defaultCommand';
 
-import useTerminal from "@hooks/useTerminal";
+import useTerminal from '@hooks/useTerminal';
 
-import parseCommand from "@utilities/parseCommand";
-import parseArguments from "@utilities/parseArguments";
-import argumentAtIndex from "@utilities/argumentAtIndex";
+import parseCommand from '@utilities/parseCommand';
+import parseArguments from '@utilities/parseArguments';
+import argumentAtIndex from '@utilities/argumentAtIndex';
 
 const App = () => {
   const {
@@ -30,12 +30,12 @@ const App = () => {
     terminalRef,
     inputRef,
     resetTerminal,
-    handleInputChange
+    handleInputChange,
   } = useTerminal([
     <Fragment>
       <LogoResponse />
       <IntroResponse />
-    </Fragment>
+    </Fragment>,
   ]);
 
   /**
@@ -47,37 +47,25 @@ const App = () => {
       const args = parseArguments(prompt, command);
 
       switch (command) {
-        case "add":
-        case "a":
-          await addCommand(
-            args.join(" "),
-            pushToHistory
-          );
+        case 'add':
+        case 'a':
+          await addCommand(args.join(' '), pushToHistory);
           break;
-        case "list":
-        case "ls":
-          await listCommand(
-            argumentAtIndex(args, 0),
-            pushToHistory
-          );
+        case 'list':
+        case 'ls':
+          await listCommand(argumentAtIndex(args, 0), pushToHistory);
           break;
-        case "done":
-          await doneCommand(
-            argumentAtIndex(args, 0),
-            pushToHistory
-          );
+        case 'done':
+          await doneCommand(argumentAtIndex(args, 0), pushToHistory);
           break;
-        case "delete":
-        case "rm":
-          await deleteCommand(
-            argumentAtIndex(args, 0),
-            pushToHistory
-          );
+        case 'delete':
+        case 'rm':
+          await deleteCommand(argumentAtIndex(args, 0), pushToHistory);
           break;
-        case "clear":
+        case 'clear':
           await clearCommand(resetTerminal);
           break;
-        case "help":
+        case 'help':
           await helpCommand(pushToHistory);
           break;
         default:
@@ -93,7 +81,7 @@ const App = () => {
       clearCommand,
       helpCommand,
       pushToHistory,
-      resetTerminal
+      resetTerminal,
     ]
   );
 
@@ -103,7 +91,7 @@ const App = () => {
    */
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         if (awaitingInput) {
           pushCommandToHistory(input, pushToHistory);
           awaitingInput.callback(input);
@@ -111,10 +99,17 @@ const App = () => {
           pushCommandToHistory(input, pushToHistory);
           executePrompt(input);
         }
-        setInput("");
+        setInput('');
       }
     },
-    [executePrompt, input, pushCommandToHistory, awaitingInput, pushToHistory, setInput]
+    [
+      executePrompt,
+      input,
+      pushCommandToHistory,
+      awaitingInput,
+      pushToHistory,
+      setInput,
+    ]
   );
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from 'react';
 
 interface WorkerArguments {
   path: string;
@@ -19,13 +19,13 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
 
   useEffect(() => {
     const isWorkerSupported =
-      typeof window !== "undefined" && "Worker" in window;
+      typeof window !== 'undefined' && 'Worker' in window;
     setIsSupported(isWorkerSupported);
 
     if (isWorkerSupported) {
       workerRef.current = new Worker(new URL(path, import.meta.url), options);
     } else {
-      console.error("Web Workers are not supported in this environment.");
+      console.error('Web Workers are not supported in this environment.');
     }
 
     return () => {
@@ -38,7 +38,7 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
     (message: any, transfer: Transferable[] = []) => {
       if (!workerRef.current) {
         throw new Error(
-          "Worker not initialized or Web Workers are not supported."
+          'Worker not initialized or Web Workers are not supported.'
         );
       }
       workerRef.current.postMessage(message, transfer);
@@ -77,14 +77,14 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
       messageErrorHandlerRef.current?.(event);
     };
 
-    worker.addEventListener("message", handleMessage);
-    worker.addEventListener("error", handleError);
-    worker.addEventListener("messageerror", handleMessageError);
+    worker.addEventListener('message', handleMessage);
+    worker.addEventListener('error', handleError);
+    worker.addEventListener('messageerror', handleMessageError);
 
     return () => {
-      worker.removeEventListener("message", handleMessage);
-      worker.removeEventListener("error", handleError);
-      worker.removeEventListener("messageerror", handleMessageError);
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+      worker.removeEventListener('messageerror', handleMessageError);
     };
   }, []);
 
@@ -93,7 +93,7 @@ const useWebWorker = ({ path, options }: WorkerArguments) => {
     onMessage,
     onError,
     onMessageError,
-    isSupported
+    isSupported,
   };
 };
 

@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ForwardedRef, forwardRef } from "react";
+import { type HTMLAttributes, type ForwardedRef, forwardRef } from 'react';
 
 interface TextInputProps extends HTMLAttributes<HTMLInputElement> {
   className?: string;
@@ -36,6 +36,6 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
   )
 );
 
-TextInput.displayName = "TextInput";
+TextInput.displayName = 'TextInput';
 
 export default TextInput;

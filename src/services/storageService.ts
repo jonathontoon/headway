@@ -1,4 +1,4 @@
-const STORAGE_KEY = "headway:content";
+const STORAGE_KEY = 'headway:content';
 
 const defaultContent = `(A) Review project proposal +webapp @work
 (B) Fix login bug +webapp @work

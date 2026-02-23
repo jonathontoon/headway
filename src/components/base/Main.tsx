@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes, type ForwardedRef } from "react";
+import { forwardRef, type HTMLAttributes, type ForwardedRef } from 'react';
 
 interface MainProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
@@ -12,6 +12,6 @@ const Main = forwardRef<HTMLDivElement, MainProps>(
   )
 );
 
-Main.displayName = "Main";
+Main.displayName = 'Main';
 
 export default Main;

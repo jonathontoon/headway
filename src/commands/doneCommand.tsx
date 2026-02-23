@@ -1,7 +1,11 @@
-import type { ReactNode } from "react";
-import StatusResponse from "@common/StatusResponse";
-import { loadContent, saveContent } from "@services/storageService";
-import { parseTodos, completeTodo, serializeTodos } from "@services/todoService";
+import type { ReactNode } from 'react';
+import StatusResponse from '@common/StatusResponse';
+import { loadContent, saveContent } from '@services/storageService';
+import {
+  parseTodos,
+  completeTodo,
+  serializeTodos,
+} from '@services/todoService';
 
 /**
  * Handles the 'done' command to mark a todo as complete.
@@ -47,7 +51,7 @@ const doneCommand = async (
         statusText={`Marked todo #${index} as complete.`}
       />
     );
-  } catch (error) {
+  } catch {
     pushToHistory(
       <StatusResponse
         statusType="error"

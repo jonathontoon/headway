@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react";
+} from 'react';
 
 interface LegendProps extends HTMLAttributes<HTMLLegendElement> {
   className?: string;

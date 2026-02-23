@@ -1,6 +1,6 @@
-import type { FunctionComponent, PropsWithChildren, ReactNode } from "react";
-import OrderedList from "@atoms/OrderedList.tsx";
-import UnorderedList from "@atoms/UnorderedList.tsx";
+import type { FunctionComponent, PropsWithChildren, ReactNode } from 'react';
+import OrderedList from '@atoms/OrderedList.tsx';
+import UnorderedList from '@atoms/UnorderedList.tsx';
 
 interface ListProps {
   className?: string;
@@ -11,21 +11,20 @@ interface ListProps {
 const List: FunctionComponent<PropsWithChildren<ListProps>> = ({
   className,
   children,
-  ordered = false
-}) => {
-  return ordered ? (
+  ordered = false,
+}) =>
+  ordered ? (
     <OrderedList
-      className={`list-inside list-decimal space-y-1${className ? ` ${className}` : ""}`}
+      className={`list-inside list-decimal space-y-1${className ? ` ${className}` : ''}`}
     >
       {children}
     </OrderedList>
   ) : (
     <UnorderedList
-      className={`list-inside list-none space-y-1${className ? ` ${className}` : ""}`}
+      className={`list-inside list-none space-y-1${className ? ` ${className}` : ''}`}
     >
       {children}
     </UnorderedList>
   );
-};
 
 export default List;

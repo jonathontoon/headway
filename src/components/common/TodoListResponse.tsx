@@ -1,10 +1,10 @@
-import { type FunctionComponent, type JSX } from "react";
-import type { TodoItem } from "@services/todoService";
+import { type FunctionComponent, type JSX } from 'react';
+import type { TodoItem } from '@services/todoService';
 
-import Response from "@common/Response";
-import Paragraph from "@base/Paragraph";
-import Span from "@base/Span";
-import Div from "@base/Div";
+import Response from '@common/Response';
+import Paragraph from '@base/Paragraph';
+import Span from '@base/Span';
+import Div from '@base/Div';
 
 interface TodoListResponseProps {
   todos: TodoItem[];
@@ -13,7 +13,7 @@ interface TodoListResponseProps {
 
 const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
   todos,
-  title
+  title,
 }) => {
   if (todos.length === 0) {
     return (
@@ -26,9 +26,7 @@ const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
   return (
     <Response className="flex flex-col gap-2">
       <Div className="flex flex-col gap-1">
-        {title && (
-          <Paragraph className="text-gray-400 mb-2">{title}</Paragraph>
-        )}
+        {title && <Paragraph className="text-gray-400 mb-2">{title}</Paragraph>}
         {todos.map((todo, index) => (
           <TodoLineItem key={index} number={index + 1} todo={todo} />
         ))}
@@ -42,11 +40,14 @@ interface TodoLineItemProps {
   todo: TodoItem;
 }
 
-const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({ number, todo }) => {
+const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({
+  number,
+  todo,
+}) => {
   const { done, priority, text, contexts, projects } = todo;
 
   // Base class with strikethrough for done items
-  const contentClass = done ? "line-through text-gray-600" : "text-gray-100";
+  const contentClass = done ? 'line-through text-gray-600' : 'text-gray-100';
 
   return (
     <Paragraph className="flex">
@@ -56,9 +57,7 @@ const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({ number, todo }) =>
         {priority && !done && (
           <Span className={getPriorityColor(priority)}>({priority})</Span>
         )}
-        <Span className="pl-1">
-          {renderTodoText(text, contexts, projects)}
-        </Span>
+        <Span className="pl-1">{renderTodoText(text, contexts, projects)}</Span>
       </Span>
     </Paragraph>
   );
@@ -67,27 +66,27 @@ const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({ number, todo }) =>
 /**
  * Get color class based on priority
  */
-function getPriorityColor(priority: string): string {
+const getPriorityColor = (priority: string): string => {
   switch (priority) {
-    case "A":
-      return "text-red-500";
-    case "B":
-      return "text-yellow-500";
-    case "C":
-      return "text-green-500";
+    case 'A':
+      return 'text-red-500';
+    case 'B':
+      return 'text-yellow-500';
+    case 'C':
+      return 'text-green-500';
     default:
-      return "text-gray-500";
+      return 'text-gray-500';
   }
-}
+};
 
 /**
  * Render todo text with colored @contexts and +projects
  */
-function renderTodoText(
+const renderTodoText = (
   text: string,
   contexts: string[],
   projects: string[]
-): JSX.Element {
+): JSX.Element => {
   // Split text into words
   const words = text.split(/(\s+)/);
 
@@ -120,6 +119,6 @@ function renderTodoText(
       })}
     </>
   );
-}
+};
 
 export default TodoListResponse;

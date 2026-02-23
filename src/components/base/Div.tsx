@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ForwardedRef, forwardRef } from "react";
+import { type HTMLAttributes, type ForwardedRef, forwardRef } from 'react';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   className?: string;
@@ -15,6 +15,6 @@ const Div = forwardRef(
   )
 );
 
-Div.displayName = "Div";
+Div.displayName = 'Div';
 
 export default Div;

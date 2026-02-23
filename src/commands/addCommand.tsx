@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
-import StatusResponse from "@common/StatusResponse";
-import { loadContent, saveContent } from "@services/storageService";
-import { parseTodos, addTodo, serializeTodos } from "@services/todoService";
+import type { ReactNode } from 'react';
+import StatusResponse from '@common/StatusResponse';
+import { loadContent, saveContent } from '@services/storageService';
+import { parseTodos, addTodo, serializeTodos } from '@services/todoService';
 
 /**
  * Handles the 'add' command to add a new todo.
@@ -29,17 +29,11 @@ const addCommand = async (
     saveContent(serialized);
 
     pushToHistory(
-      <StatusResponse
-        statusType="success"
-        statusText={`Added: ${text}`}
-      />
+      <StatusResponse statusType="success" statusText={`Added: ${text}`} />
     );
-  } catch (error) {
+  } catch {
     pushToHistory(
-      <StatusResponse
-        statusType="error"
-        statusText="Failed to add todo."
-      />
+      <StatusResponse statusType="error" statusText="Failed to add todo." />
     );
   }
 };

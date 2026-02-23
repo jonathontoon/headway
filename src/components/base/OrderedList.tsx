@@ -2,7 +2,7 @@ import {
   type HTMLAttributes,
   type FunctionComponent,
   type PropsWithChildren,
-} from "react";
+} from 'react';
 
 interface OrderedListProps extends HTMLAttributes<HTMLOListElement> {
   className?: string;

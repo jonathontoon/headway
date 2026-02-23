@@ -1,8 +1,8 @@
-import type { FunctionComponent } from "react";
+import type { FunctionComponent } from 'react';
 
-import Status, { type StatusType } from "@common/Status";
-import Hint from "@common/Hint";
-import Response from "@common/Response";
+import Status, { type StatusType } from '@common/Status';
+import Hint from '@common/Hint';
+import Response from '@common/Response';
 
 interface StatusResponseProps {
   statusType: StatusType;
@@ -13,14 +13,12 @@ interface StatusResponseProps {
 const StatusResponse: FunctionComponent<StatusResponseProps> = ({
   statusType,
   statusText,
-  hintText
-}) => {
-  return (
-    <Response>
-      <Status current={statusType}>{statusText}</Status>
-      {hintText && <Hint>{hintText}</Hint>}
-    </Response>
-  );
-};
+  hintText,
+}) => (
+  <Response>
+    <Status current={statusType}>{statusText}</Status>
+    {hintText && <Hint>{hintText}</Hint>}
+  </Response>
+);
 
 export default StatusResponse;

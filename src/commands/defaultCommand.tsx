@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import DefaultResponse from "@common/DefaultResponse";
+import type { ReactNode } from 'react';
+import DefaultResponse from '@common/DefaultResponse';
 
 /**
  * Handles unknown commands by displaying an error message.

@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type FunctionComponent } from "react";
+import { type HTMLAttributes, type FunctionComponent } from 'react';
 
 interface FileInputProps extends HTMLAttributes<HTMLInputElement> {
   className?: string;

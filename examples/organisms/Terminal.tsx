@@ -1,9 +1,17 @@
-import { Fragment, useCallback, useEffect, type ChangeEvent, type KeyboardEvent, type FunctionComponent, type RefObject } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type FunctionComponent,
+  type RefObject,
+} from 'react';
 
-import ScrollView from "@molecules/ScrollView.tsx";
-import Prompt from "@organisms/Prompt.tsx";
+import ScrollView from '@molecules/ScrollView.tsx';
+import Prompt from '@organisms/Prompt.tsx';
 
-import { type TerminalHistoryItem } from "@hooks/useTerminal.ts";
+import { type TerminalHistoryItem } from '@hooks/useTerminal.ts';
 
 interface TerminalProps {
   className?: string;
@@ -18,7 +26,7 @@ interface TerminalProps {
 }
 
 const Terminal: FunctionComponent<TerminalProps> = ({
-  className = "",
+  className = '',
   history,
   input,
   inputRef,
@@ -26,7 +34,7 @@ const Terminal: FunctionComponent<TerminalProps> = ({
   onInputChange,
   onInputKeyDown,
   disabled = false,
-  hidden = false
+  hidden = false,
 }) => {
   const focusInput = useCallback(() => {
     inputRef.current?.focus();

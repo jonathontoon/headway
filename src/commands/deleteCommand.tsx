@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
-import StatusResponse from "@common/StatusResponse";
-import { loadContent, saveContent } from "@services/storageService";
-import { parseTodos, deleteTodo, serializeTodos } from "@services/todoService";
+import type { ReactNode } from 'react';
+import StatusResponse from '@common/StatusResponse';
+import { loadContent, saveContent } from '@services/storageService';
+import { parseTodos, deleteTodo, serializeTodos } from '@services/todoService';
 
 /**
  * Handles the 'delete' command to remove a todo.
@@ -47,12 +47,9 @@ const deleteCommand = async (
         statusText={`Deleted todo #${index}.`}
       />
     );
-  } catch (error) {
+  } catch {
     pushToHistory(
-      <StatusResponse
-        statusType="error"
-        statusText="Failed to delete todo."
-      />
+      <StatusResponse statusType="error" statusText="Failed to delete todo." />
     );
   }
 };

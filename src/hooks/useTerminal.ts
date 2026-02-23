@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useState, type ReactNode, useRef } from "react";
-import useViewportResize from "@hooks/useViewportResize";
-import delay from "@utilities/delay";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+  useRef,
+} from 'react';
+import useViewportResize from '@hooks/useViewportResize';
+import delay from '@utilities/delay';
 
 export type TerminalHistoryItem = ReactNode | string;
 
@@ -23,7 +29,7 @@ const useTerminal = (initialHistory: TerminalHistory = []) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [history, setHistory] = useState<TerminalHistory>(initialHistory);
-  const [input, setInput] = useState<string>("");
+  const [input, setInput] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [awaitingInput, setAwaitingInput] = useState<{
     callback: TerminalInputCallback;
@@ -37,7 +43,7 @@ const useTerminal = (initialHistory: TerminalHistory = []) => {
 
       terminalRef.current.scrollTo({
         top: terminalRef.current.scrollHeight + paddingTop + paddingBottom,
-        behavior: "instant"
+        behavior: 'instant',
       });
     }
   }, [terminalRef]);
@@ -107,7 +113,7 @@ const useTerminal = (initialHistory: TerminalHistory = []) => {
     inputRef,
     resetTerminal,
     focusInput,
-    handleInputChange
+    handleInputChange,
   };
 };
 

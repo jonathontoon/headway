@@ -1,5 +1,3 @@
-const sanitizeString = (command: string) => {
-  return command.trim().toLowerCase();
-};
+const sanitizeString = (command: string) => command.trim().toLowerCase();
 
 export default sanitizeString;

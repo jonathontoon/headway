@@ -13,7 +13,7 @@ export interface TodoItem {
  * Parse todo.txt format text into TodoItem objects
  */
 export const parseTodos = (text: string): TodoItem[] => {
-  const lines = text.split("\n").filter((line) => line.trim().length > 0);
+  const lines = text.split('\n').filter((line) => line.trim().length > 0);
   return lines.map((raw) => parseTodoLine(raw));
 };
 
@@ -58,8 +58,8 @@ const parseTodoLine = (raw: string): TodoItem => {
   }
 
   // Extract @contexts and +projects from the whole line
-  const contexts = extractTokens(remaining, "@");
-  const projects = extractTokens(remaining, "+");
+  const contexts = extractTokens(remaining, '@');
+  const projects = extractTokens(remaining, '+');
 
   return {
     raw,
@@ -69,7 +69,7 @@ const parseTodoLine = (raw: string): TodoItem => {
     creationDate,
     text: remaining,
     contexts,
-    projects
+    projects,
   };
 };
 
@@ -78,7 +78,7 @@ const parseTodoLine = (raw: string): TodoItem => {
  */
 const extractTokens = (text: string, prefix: string): string[] => {
   const tokens: string[] = [];
-  const regex = new RegExp(`\\${prefix}(\\w+)`, "g");
+  const regex = new RegExp(`\\${prefix}(\\w+)`, 'g');
   let match;
   while ((match = regex.exec(text)) !== null) {
     tokens.push(`${prefix}${match[1]}`);
@@ -89,18 +89,17 @@ const extractTokens = (text: string, prefix: string): string[] => {
 /**
  * Serialize TodoItem array back to todo.txt format
  */
-export const serializeTodos = (items: TodoItem[]): string => {
-  return items.map((item) => serializeTodoLine(item)).join("\n");
-};
+export const serializeTodos = (items: TodoItem[]): string =>
+  items.map((item) => serializeTodoLine(item)).join('\n');
 
 /**
  * Serialize a single TodoItem to todo.txt format
  */
 const serializeTodoLine = (item: TodoItem): string => {
-  let line = "";
+  let line = '';
 
   if (item.done) {
-    line += "x";
+    line += 'x';
     if (item.completionDate) {
       line += ` ${item.completionDate}`;
     }
@@ -109,7 +108,7 @@ const serializeTodoLine = (item: TodoItem): string => {
     }
   } else {
     if (item.creationDate) {
-      line += item.creationDate + " ";
+      line += item.creationDate + ' ';
     }
   }
 
@@ -132,10 +131,7 @@ export const addTodo = (text: string, items: TodoItem[]): TodoItem[] => {
 /**
  * Mark a todo as complete (1-indexed)
  */
-export const completeTodo = (
-  n: number,
-  items: TodoItem[]
-): TodoItem[] => {
+export const completeTodo = (n: number, items: TodoItem[]): TodoItem[] => {
   if (n < 1 || n > items.length) {
     return items;
   }
@@ -144,7 +140,7 @@ export const completeTodo = (
   updated[index] = {
     ...updated[index],
     done: true,
-    completionDate: new Date().toISOString().split("T")[0]
+    completionDate: new Date().toISOString().split('T')[0],
   };
   return updated;
 };
@@ -167,9 +163,9 @@ export const filterTodos = (query: string, items: TodoItem[]): TodoItem[] => {
     return items;
   }
 
-  if (query.startsWith("@")) {
+  if (query.startsWith('@')) {
     return items.filter((item) => item.contexts.includes(query));
-  } else if (query.startsWith("+")) {
+  } else if (query.startsWith('+')) {
     return items.filter((item) => item.projects.includes(query));
   }
 

@@ -1,25 +1,25 @@
-import { Fragment, useCallback, useState, useRef } from "react";
+import { Fragment, useCallback } from 'react';
 
-import LogoResponse from "@organisms/LogoResponse.tsx";
-import IntroResponse from "@organisms/IntroResponse.tsx";
-import Terminal from "@organisms/Terminal.tsx";
+import LogoResponse from '@organisms/LogoResponse.tsx';
+import IntroResponse from '@organisms/IntroResponse.tsx';
+import Terminal from '@organisms/Terminal.tsx';
 
-import pushCommandToHistory from "@commands/pushCommandToHistory.tsx";
-import handleDefaultCommand from "@commands/defaultCommand.tsx";
-import handleStartCommand from "@commands/startCommand.tsx";
-import handleCountdownCommand from "@commands/countdownCommand.tsx";
-import handleEchoCommand from "@commands/echoCommand.tsx";
-import handleClearCommand from "@commands/clearCommand.tsx";
-import handleHelpCommand from "@commands/helpCommand.tsx";
-import handleCompleteCommand from "@commands/completeCommand.tsx";
-import handleVersionCommand from "@commands/versionCommand.tsx";
+import pushCommandToHistory from '@commands/pushCommandToHistory.tsx';
+import handleDefaultCommand from '@commands/defaultCommand.tsx';
+import handleStartCommand from '@commands/startCommand.tsx';
+import handleCountdownCommand from '@commands/countdownCommand.tsx';
+import handleEchoCommand from '@commands/echoCommand.tsx';
+import handleClearCommand from '@commands/clearCommand.tsx';
+import handleHelpCommand from '@commands/helpCommand.tsx';
+import handleCompleteCommand from '@commands/completeCommand.tsx';
+import handleVersionCommand from '@commands/versionCommand.tsx';
 
-import useTerminal from "@hooks/useTerminal.ts";
-import useDispatchEvent from "@hooks/useDispatchEvent.ts";
+import useTerminal from '@hooks/useTerminal.ts';
+import useDispatchEvent from '@hooks/useDispatchEvent.ts';
 
-import parseCommand from "@utilities/parseCommand.ts";
-import parseArguments from "@utilities/parseArguments.ts";
-import argumentAtIndex from "@utilities/argumentAtIndex.ts";
+import parseCommand from '@utilities/parseCommand.ts';
+import parseArguments from '@utilities/parseArguments.ts';
+import argumentAtIndex from '@utilities/argumentAtIndex.ts';
 
 const App = () => {
   const {
@@ -35,15 +35,15 @@ const App = () => {
     terminalRef,
     inputRef,
     resetTerminal,
-    handleInputChange
+    handleInputChange,
   } = useTerminal([
     <Fragment>
       <LogoResponse />
       <IntroResponse />
-    </Fragment>
+    </Fragment>,
   ]);
 
-  useDispatchEvent("react-loaded");
+  useDispatchEvent('react-loaded');
 
   /**
    * Executes the appropriate command handler based on the input prompt.
@@ -55,41 +55,38 @@ const App = () => {
       const args = parseArguments(prompt, command);
 
       switch (command) {
-        case "start":
+        case 'start':
           await handleStartCommand(pushToHistory);
           break;
-        case "countdown":
+        case 'countdown':
           await handleCountdownCommand(
-            argumentAtIndex(args, 0), 
-            pushToHistory, 
-            setIsProcessing, 
+            argumentAtIndex(args, 0),
+            pushToHistory,
+            setIsProcessing,
             pushToHistoryWithDelay
           );
           break;
-        case "echo":
+        case 'echo':
           await handleEchoCommand(args, pushToHistory);
           break;
-        case "clear":
+        case 'clear':
           await handleClearCommand(resetTerminal);
           break;
-        case "complete":
+        case 'complete':
           await handleCompleteCommand(
-            setIsProcessing, 
-            pushToHistory, 
+            setIsProcessing,
+            pushToHistory,
             setAwaitingInput
           );
           break;
-        case "help":
+        case 'help':
           await handleHelpCommand(pushToHistory);
           break;
-        case "version":
+        case 'version':
           await handleVersionCommand(pushToHistory);
           break;
         default:
-          await handleDefaultCommand(
-            command, 
-            pushToHistory
-          );
+          await handleDefaultCommand(command, pushToHistory);
           break;
       }
     },
@@ -101,7 +98,7 @@ const App = () => {
       handleDefaultCommand,
       handleCompleteCommand,
       handleHelpCommand,
-      handleVersionCommand
+      handleVersionCommand,
     ]
   );
 
@@ -111,7 +108,7 @@ const App = () => {
    */
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         if (awaitingInput) {
           pushCommandToHistory(input, pushToHistory);
           awaitingInput.callback(input);
@@ -119,10 +116,17 @@ const App = () => {
           pushCommandToHistory(input, pushToHistory);
           executePrompt(input);
         }
-        setInput("");
+        setInput('');
       }
     },
-    [executePrompt, input, pushCommandToHistory, awaitingInput, pushToHistory, setInput]
+    [
+      executePrompt,
+      input,
+      pushCommandToHistory,
+      awaitingInput,
+      pushToHistory,
+      setInput,
+    ]
   );
 
   return (
