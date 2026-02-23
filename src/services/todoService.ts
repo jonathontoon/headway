@@ -171,3 +171,152 @@ export const filterTodos = (query: string, items: TodoItem[]): TodoItem[] => {
 
   return items;
 };
+
+/**
+ * Set priority on a todo (1-indexed)
+ */
+export const setPriority = (
+  n: number,
+  priority: string,
+  items: TodoItem[]
+): TodoItem[] => {
+  if (n < 1 || n > items.length || !/^[A-Z]$/.test(priority)) {
+    return items;
+  }
+  const index = n - 1;
+  const updated = [...items];
+  updated[index] = {
+    ...updated[index],
+    priority,
+  };
+  return updated;
+};
+
+/**
+ * Remove priority from a todo (1-indexed)
+ */
+export const removePriority = (n: number, items: TodoItem[]): TodoItem[] => {
+  if (n < 1 || n > items.length) {
+    return items;
+  }
+  const index = n - 1;
+  const updated = [...items];
+  updated[index] = {
+    ...updated[index],
+    priority: undefined,
+  };
+  return updated;
+};
+
+/**
+ * Append text to a todo (1-indexed)
+ */
+export const appendToTodo = (
+  n: number,
+  text: string,
+  items: TodoItem[]
+): TodoItem[] => {
+  if (n < 1 || n > items.length) {
+    return items;
+  }
+  const index = n - 1;
+  const updated = [...items];
+  updated[index] = {
+    ...updated[index],
+    text: updated[index].text + ' ' + text,
+  };
+  return updated;
+};
+
+/**
+ * Prepend text to a todo (1-indexed)
+ */
+export const prependToTodo = (
+  n: number,
+  text: string,
+  items: TodoItem[]
+): TodoItem[] => {
+  if (n < 1 || n > items.length) {
+    return items;
+  }
+  const index = n - 1;
+  const updated = [...items];
+  updated[index] = {
+    ...updated[index],
+    text: text + ' ' + updated[index].text,
+  };
+  return updated;
+};
+
+/**
+ * Replace entire todo content (1-indexed), re-parsing to extract contexts/projects
+ */
+export const replaceTodo = (
+  n: number,
+  text: string,
+  items: TodoItem[]
+): TodoItem[] => {
+  if (n < 1 || n > items.length) {
+    return items;
+  }
+  const index = n - 1;
+  const newItem = parseTodoLine(text.trim());
+  const updated = [...items];
+  updated[index] = newItem;
+  return updated;
+};
+
+/**
+ * Filter todos by priority (A-Z)
+ */
+export const filterByPriority = (
+  priority: string,
+  items: TodoItem[]
+): TodoItem[] => {
+  if (!/^[A-Z]$/.test(priority)) {
+    return [];
+  }
+  return items.filter((item) => item.priority === priority && !item.done);
+};
+
+/**
+ * Get unique priority levels present in todos (sorted A-Z)
+ */
+export const getUniquePriorities = (items: TodoItem[]): string[] => {
+  const priorities = new Set<string>();
+  items.forEach((item) => {
+    if (item.priority && !item.done) {
+      priorities.add(item.priority);
+    }
+  });
+  return Array.from(priorities).sort();
+};
+
+/**
+ * Get unique @context tags (sorted)
+ */
+export const getUniqueContexts = (items: TodoItem[]): string[] => {
+  const contexts = new Set<string>();
+  items.forEach((item) => {
+    item.contexts.forEach((ctx) => contexts.add(ctx));
+  });
+  return Array.from(contexts).sort();
+};
+
+/**
+ * Get unique +project tags (sorted)
+ */
+export const getUniqueProjects = (items: TodoItem[]): string[] => {
+  const projects = new Set<string>();
+  items.forEach((item) => {
+    item.projects.forEach((proj) => projects.add(proj));
+  });
+  return Array.from(projects).sort();
+};
+
+/**
+ * Archive (remove) completed todos, keep only active items
+ */
+export const archiveTodos = (items: TodoItem[]): TodoItem[] => {
+  return items.filter((item) => !item.done);
+};

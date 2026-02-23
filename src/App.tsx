@@ -12,6 +12,15 @@ import deleteCommand from '@commands/deleteCommand';
 import clearCommand from '@commands/clearCommand';
 import helpCommand from '@commands/helpCommand';
 import defaultCommand from '@commands/defaultCommand';
+import priCommand from '@commands/priCommand';
+import depriCommand from '@commands/depriCommand';
+import appendCommand from '@commands/appendCommand';
+import prependCommand from '@commands/prependCommand';
+import replaceCommand from '@commands/replaceCommand';
+import listpriCommand from '@commands/listpriCommand';
+import listconCommand from '@commands/listconCommand';
+import listprojCommand from '@commands/listprojCommand';
+import archiveCommand from '@commands/archiveCommand';
 
 import useTerminal from '@hooks/useTerminal';
 
@@ -68,21 +77,46 @@ const App = () => {
         case 'help':
           await helpCommand(pushToHistory);
           break;
+        case 'pri':
+        case 'p':
+          await priCommand(args.join(' '), pushToHistory);
+          break;
+        case 'depri':
+        case 'dp':
+          await depriCommand(argumentAtIndex(args, 0), pushToHistory);
+          break;
+        case 'append':
+        case 'app':
+          await appendCommand(args.join(' '), pushToHistory);
+          break;
+        case 'prepend':
+        case 'prep':
+          await prependCommand(args.join(' '), pushToHistory);
+          break;
+        case 'replace':
+          await replaceCommand(args.join(' '), pushToHistory);
+          break;
+        case 'listpri':
+        case 'lsp':
+          await listpriCommand(argumentAtIndex(args, 0), pushToHistory);
+          break;
+        case 'listcon':
+        case 'lsc':
+          await listconCommand(args.join(' '), pushToHistory);
+          break;
+        case 'listproj':
+        case 'lsprj':
+          await listprojCommand(args.join(' '), pushToHistory);
+          break;
+        case 'archive':
+          await archiveCommand(args.join(' '), pushToHistory);
+          break;
         default:
           await defaultCommand(command, pushToHistory);
           break;
       }
     },
-    [
-      addCommand,
-      listCommand,
-      doneCommand,
-      deleteCommand,
-      clearCommand,
-      helpCommand,
-      pushToHistory,
-      resetTerminal,
-    ]
+    [pushToHistory, resetTerminal]
   );
 
   /**
@@ -102,14 +136,7 @@ const App = () => {
         setInput('');
       }
     },
-    [
-      executePrompt,
-      input,
-      pushCommandToHistory,
-      awaitingInput,
-      pushToHistory,
-      setInput,
-    ]
+    [executePrompt, input, awaitingInput, pushToHistory, setInput]
   );
 
   return (
