@@ -67,10 +67,7 @@ const prependCommand = async (
     );
   } catch {
     pushToHistory(
-      <StatusResponse
-        statusType="error"
-        statusText="Failed to prepend text."
-      />
+      <StatusResponse statusType="error" statusText="Failed to prepend text." />
     );
   }
 };

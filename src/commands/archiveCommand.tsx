@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react';
 import StatusResponse from '@common/StatusResponse';
 import { loadContent, saveContent } from '@services/storageService';
-import { parseTodos, archiveTodos, serializeTodos } from '@services/todoService';
+import {
+  parseTodos,
+  archiveTodos,
+  serializeTodos,
+} from '@services/todoService';
 
 /**
  * Handles the 'archive' command to remove completed todos.
@@ -37,7 +41,10 @@ const archiveCommand = async (
     );
   } catch {
     pushToHistory(
-      <StatusResponse statusType="error" statusText="Failed to archive todos." />
+      <StatusResponse
+        statusType="error"
+        statusText="Failed to archive todos."
+      />
     );
   }
 };

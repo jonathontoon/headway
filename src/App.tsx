@@ -4,7 +4,7 @@ import LogoResponse from '@common/LogoResponse';
 import IntroResponse from '@common/IntroResponse';
 import Terminal from '@common/Terminal';
 
-import pushCommandToHistory from '@commands/pushCommandToHistory';
+import pushCommandToHistory from '@utilities/pushCommandToHistory';
 import addCommand from '@commands/addCommand';
 import listCommand from '@commands/listCommand';
 import doneCommand from '@commands/doneCommand';

@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  type FunctionComponent,
-  type PropsWithChildren,
-} from 'react';
-
-import Paragraph from '@base/Paragraph';
-import Span from '@base/Span';
+import { type FunctionComponent, type PropsWithChildren } from 'react';
 
 export type StatusType = 'success' | 'error' | 'waiting' | 'loading';
 
@@ -19,7 +12,7 @@ const Status: FunctionComponent<PropsWithChildren<StatusProps>> = ({
   className,
   children,
 }) => {
-  const getStatusSymbol = useCallback((): string => {
+  const getStatusSymbol = (): string => {
     switch (current) {
       case 'success':
         return '[√]';
@@ -28,9 +21,9 @@ const Status: FunctionComponent<PropsWithChildren<StatusProps>> = ({
       default:
         return '[~]';
     }
-  }, [current]);
+  };
 
-  const getStatusColor = useCallback((): string => {
+  const getStatusColor = (): string => {
     switch (current) {
       case 'error':
         return 'text-red-500';
@@ -39,13 +32,13 @@ const Status: FunctionComponent<PropsWithChildren<StatusProps>> = ({
       default:
         return 'text-amber-500';
     }
-  }, [current]);
+  };
 
   return (
-    <Paragraph className={`${getStatusColor()} ${className}`}>
+    <p className={`${getStatusColor()} ${className}`}>
       {getStatusSymbol()}
-      <Span className="pl-2">{children}</Span>
-    </Paragraph>
+      <span className="pl-2">{children}</span>
+    </p>
   );
 };
 

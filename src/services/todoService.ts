@@ -317,6 +317,5 @@ export const getUniqueProjects = (items: TodoItem[]): string[] => {
 /**
  * Archive (remove) completed todos, keep only active items
  */
-export const archiveTodos = (items: TodoItem[]): TodoItem[] => {
-  return items.filter((item) => !item.done);
-};
+export const archiveTodos = (items: TodoItem[]): TodoItem[] =>
+  items.filter((item) => !item.done);

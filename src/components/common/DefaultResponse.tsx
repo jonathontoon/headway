@@ -1,6 +1,5 @@
 import type { FunctionComponent } from 'react';
 
-import Paragraph from '@base/Paragraph';
 import Hint from '@common/Hint';
 import Response from '@common/Response';
 
@@ -14,7 +13,7 @@ const DefaultResponse: FunctionComponent<DefaultResponseProps> = ({
   hintText,
 }) => (
   <Response>
-    <Paragraph>{responseText}</Paragraph>
+    <p>{responseText}</p>
     {hintText && <Hint>{hintText}</Hint>}
   </Response>
 );

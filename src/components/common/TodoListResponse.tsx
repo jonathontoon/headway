@@ -2,9 +2,6 @@ import { type FunctionComponent, type JSX } from 'react';
 import type { TodoItem } from '@services/todoService';
 
 import Response from '@common/Response';
-import Paragraph from '@base/Paragraph';
-import Span from '@base/Span';
-import Div from '@base/Div';
 
 interface TodoListResponseProps {
   todos: TodoItem[];
@@ -18,19 +15,19 @@ const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
   if (todos.length === 0) {
     return (
       <Response className="flex flex-col gap-2">
-        <Paragraph className="text-gray-500">No todos to display.</Paragraph>
+        <p className="text-gray-500">No todos to display.</p>
       </Response>
     );
   }
 
   return (
     <Response className="flex flex-col gap-2">
-      <Div className="flex flex-col gap-1">
-        {title && <Paragraph className="text-gray-400 mb-2">{title}</Paragraph>}
+      <div className="flex flex-col gap-1">
+        {title && <p className="text-gray-400 mb-2">{title}</p>}
         {todos.map((todo, index) => (
           <TodoLineItem key={index} number={index + 1} todo={todo} />
         ))}
-      </Div>
+      </div>
     </Response>
   );
 };
@@ -50,16 +47,16 @@ const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({
   const contentClass = done ? 'line-through text-gray-600' : 'text-gray-100';
 
   return (
-    <Paragraph className="flex">
-      <Span className="text-gray-500 shrink-0 w-6">{number}.</Span>
-      <Span className={contentClass}>
-        {done && <Span className="text-gray-500 mr-1">✓</Span>}
+    <p className="flex">
+      <span className="text-gray-500 shrink-0 w-6">{number}.</span>
+      <span className={contentClass}>
+        {done && <span className="text-gray-500 mr-1">✓</span>}
         {priority && !done && (
-          <Span className={getPriorityColor(priority)}>({priority})</Span>
+          <span className={getPriorityColor(priority)}>({priority})</span>
         )}
-        <Span className="pl-1">{renderTodoText(text, contexts, projects)}</Span>
-      </Span>
-    </Paragraph>
+        <span className="pl-1">{renderTodoText(text, contexts, projects)}</span>
+      </span>
+    </p>
   );
 };
 
@@ -95,24 +92,24 @@ const renderTodoText = (
       {words.map((word, idx) => {
         if (contexts.includes(word)) {
           return (
-            <Span key={idx} className="text-cyan-400">
+            <span key={idx} className="text-cyan-400">
               {word}
-            </Span>
+            </span>
           );
         }
         if (projects.includes(word)) {
           return (
-            <Span key={idx} className="text-blue-400">
+            <span key={idx} className="text-blue-400">
               {word}
-            </Span>
+            </span>
           );
         }
         // Check if word is a date (YYYY-MM-DD)
         if (/^\d{4}-\d{2}-\d{2}$/.test(word)) {
           return (
-            <Span key={idx} className="text-gray-500">
+            <span key={idx} className="text-gray-500">
               {word}
-            </Span>
+            </span>
           );
         }
         return word;

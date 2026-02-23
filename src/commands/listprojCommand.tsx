@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import StatusResponse from '@common/StatusResponse';
 import Response from '@common/Response';
-import Paragraph from '@base/Paragraph';
 import { loadContent } from '@services/storageService';
 import { parseTodos, getUniqueProjects } from '@services/todoService';
 
@@ -19,18 +18,15 @@ const listprojCommand = async (
 
     if (projects.length === 0) {
       pushToHistory(
-        <StatusResponse
-          statusType="waiting"
-          statusText="No projects found."
-        />
+        <StatusResponse statusType="waiting" statusText="No projects found." />
       );
     } else {
       pushToHistory(
         <Response>
           {projects.map((proj, i) => (
-            <Paragraph key={i} className="text-blue-400">
+            <p key={i} className="text-blue-400">
               {proj}
-            </Paragraph>
+            </p>
           ))}
         </Response>
       );

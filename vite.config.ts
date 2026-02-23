@@ -9,9 +9,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@common': resolve(__dirname, 'src/components/common'),
-      '@base': resolve(__dirname, 'src/components/base'),
-      '@molecules': resolve(__dirname, 'src/components/common'),
-      '@organisms': resolve(__dirname, 'src/components/common'),
       '@hooks': resolve(__dirname, 'src/hooks'),
       '@utilities': resolve(__dirname, 'src/utilities'),
       '@commands': resolve(__dirname, 'src/commands'),

@@ -1,8 +1,5 @@
 import { type KeyboardEvent, type ChangeEvent, forwardRef } from 'react';
 
-import Span from '@base/Span';
-import TextInput from '@base/TextInput';
-
 import Response from '@common/Response';
 
 interface PromptProps {
@@ -16,9 +13,9 @@ interface PromptProps {
 const Prompt = forwardRef<HTMLInputElement, PromptProps>(
   ({ value = '', disabled = false, placeholder, onChange, onKeyDown }, ref) => (
     <Response className="flex items-center">
-      <Span className="text-sky-400">~</Span>
-      <Span className="text-zinc-50">$</Span>
-      <TextInput
+      <span className="text-sky-400">~</span>
+      <span className="text-zinc-50">$</span>
+      <input
         className="ml-2 w-full border-none bg-transparent text-zinc-50 placeholder-zinc-600 outline-none"
         ref={ref}
         value={value}

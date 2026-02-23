@@ -27,9 +27,6 @@
     "baseUrl": ".",
     "paths": {
       "@common/*": ["src/components/common/*"],
-      "@base/*": ["src/components/base/*"],
-      "@molecules/*": ["src/components/common/*"],
-      "@organisms/*": ["src/components/common/*"],
       "@hooks/*": ["src/hooks/*"],
       "@utilities/*": ["src/utilities/*"],
       "@commands/*": ["src/commands/*"],

@@ -1,5 +1,4 @@
 import type { FunctionComponent, PropsWithChildren } from 'react';
-import Div from '@base/Div';
 
 interface ResponseProps {
   className?: string;
@@ -8,6 +7,6 @@ interface ResponseProps {
 const Response: FunctionComponent<PropsWithChildren<ResponseProps>> = ({
   className = '',
   children,
-}) => <Div className={`py-2 ${className}`}>{children}</Div>;
+}) => <div className={`py-2 ${className}`}>{children}</div>;
 
 export default Response;

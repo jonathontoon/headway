@@ -1,19 +1,10 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 
 const useViewportResize = (callback: (event: Event) => void) => {
-  const handleResize = useCallback(
-    (event: Event) => {
-      callback(event);
-    },
-    [callback]
-  );
-
   useEffect(() => {
-    window.visualViewport?.addEventListener('resize', handleResize);
-    return () => {
-      window.visualViewport?.removeEventListener('resize', handleResize);
-    };
-  }, [handleResize]);
+    window.visualViewport?.addEventListener('resize', callback);
+    return () => window.visualViewport?.removeEventListener('resize', callback);
+  }, [callback]);
 };
 
 export default useViewportResize;

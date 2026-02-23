@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react';
 import StatusResponse from '@common/StatusResponse';
 import { loadContent, saveContent } from '@services/storageService';
-import { parseTodos, removePriority, serializeTodos } from '@services/todoService';
+import {
+  parseTodos,
+  removePriority,
+  serializeTodos,
+} from '@services/todoService';
 
 /**
  * Handles the 'depri' command to remove priority from a todo.

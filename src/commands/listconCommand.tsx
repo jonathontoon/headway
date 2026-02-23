@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import StatusResponse from '@common/StatusResponse';
 import Response from '@common/Response';
-import Paragraph from '@base/Paragraph';
 import { loadContent } from '@services/storageService';
 import { parseTodos, getUniqueContexts } from '@services/todoService';
 
@@ -19,18 +18,15 @@ const listconCommand = async (
 
     if (contexts.length === 0) {
       pushToHistory(
-        <StatusResponse
-          statusType="waiting"
-          statusText="No contexts found."
-        />
+        <StatusResponse statusType="waiting" statusText="No contexts found." />
       );
     } else {
       pushToHistory(
         <Response>
           {contexts.map((ctx, i) => (
-            <Paragraph key={i} className="text-cyan-400">
+            <p key={i} className="text-cyan-400">
               {ctx}
-            </Paragraph>
+            </p>
           ))}
         </Response>
       );

@@ -25,7 +25,7 @@ export type TerminalProps = {
 export type TerminalInputCallback = (input: string) => void;
 
 const useTerminal = (initialHistory: TerminalHistory = []) => {
-  const terminalRef = useRef<HTMLDivElement | null>(null);
+  const terminalRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [history, setHistory] = useState<TerminalHistory>(initialHistory);
