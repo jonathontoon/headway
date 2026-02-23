@@ -3,64 +3,49 @@ import { useCallback } from 'react';
 import Terminal from '@common/Terminal';
 
 import pushCommandToHistory from '@utilities/pushCommandToHistory';
+import pushResponses from '@utilities/pushResponses';
 import { resolveCommand } from '@commands/registry';
-import useTerminal from '@hooks/useTerminal';
+import { useTerminalState, useTerminalDispatch } from '@context/TerminalContext';
 import parseCommand from '@utilities/parseCommand';
 import parseArguments from '@utilities/parseArguments';
 
-import type { TerminalResponse } from '@models/terminalResponse';
-
-const INITIAL_HISTORY: TerminalResponse[] = [
-  { type: 'logo' },
-  { type: 'intro' },
-];
-
 const App = () => {
-  const {
-    history,
-    input,
-    isProcessing,
-    awaitingInput,
-    setInput,
-    pushResponses,
-    terminalRef,
-    inputRef,
-    handleInputChange,
-  } = useTerminal(INITIAL_HISTORY);
+  const { input, isProcessing, awaitingInput } = useTerminalState();
+  const dispatch = useTerminalDispatch();
 
   const executePrompt = useCallback(
     (prompt: string) => {
       const command = parseCommand(prompt);
       const args = parseArguments(prompt, command);
       const responses = resolveCommand(command, args);
-      pushResponses(responses);
+      pushResponses(dispatch, responses);
     },
-    [pushResponses]
+    [dispatch]
   );
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: 'SET_INPUT', payload: e.target.value });
+  }, [dispatch]);
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
         if (awaitingInput) {
-          pushCommandToHistory(input, pushResponses);
+          pushCommandToHistory(input, (responses) => pushResponses(dispatch, responses));
           awaitingInput.callback(input);
         } else {
-          pushCommandToHistory(input, pushResponses);
+          pushCommandToHistory(input, (responses) => pushResponses(dispatch, responses));
           executePrompt(input);
         }
-        setInput('');
+        dispatch({ type: 'SET_INPUT', payload: '' });
       }
     },
-    [executePrompt, input, awaitingInput, pushResponses, setInput]
+    [executePrompt, input, awaitingInput, dispatch]
   );
 
   return (
     <div className="w-screen h-dvh bg-black">
       <Terminal
-        history={history}
-        input={input}
-        inputRef={inputRef}
-        terminalRef={terminalRef}
         onInputChange={handleInputChange}
         onInputKeyDown={handleInputKeyDown}
         hidden={isProcessing && !awaitingInput}

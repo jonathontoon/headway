@@ -4,21 +4,15 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
   type FunctionComponent,
-  type RefObject,
 } from 'react';
 
 import ScrollView from '@common/ScrollView';
 import Prompt from '@common/Prompt';
 import renderResponse from '@common/renderResponse';
-
-import type { TerminalResponse } from '@models/terminalResponse';
+import { useTerminalState, useTerminalRefs } from '@context/TerminalContext';
 
 interface TerminalProps {
   className?: string;
-  history: TerminalResponse[];
-  input: string;
-  inputRef: RefObject<HTMLInputElement | null>;
-  terminalRef: RefObject<HTMLDivElement | null>;
   onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   disabled?: boolean;
@@ -27,15 +21,14 @@ interface TerminalProps {
 
 const Terminal: FunctionComponent<TerminalProps> = ({
   className = '',
-  history,
-  input,
-  inputRef,
-  terminalRef,
   onInputChange,
   onInputKeyDown,
   disabled = false,
   hidden = false,
 }) => {
+  const { history, input } = useTerminalState();
+  const { inputRef, terminalRef } = useTerminalRefs();
+
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
   }, [inputRef]);
