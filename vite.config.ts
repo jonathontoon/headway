@@ -10,29 +10,15 @@ export default defineConfig({
     alias: {
       '@common': resolve(__dirname, 'src/components/common'),
       '@base': resolve(__dirname, 'src/components/base'),
+      '@molecules': resolve(__dirname, 'src/components/common'),
+      '@organisms': resolve(__dirname, 'src/components/common'),
       '@hooks': resolve(__dirname, 'src/hooks'),
       '@utilities': resolve(__dirname, 'src/utilities'),
-      '@theme': resolve(__dirname, 'src/theme'),
+      '@commands': resolve(__dirname, 'src/commands'),
       '@services': resolve(__dirname, 'src/services'),
-      '@plugins': resolve(__dirname, 'src/plugins'),
     },
   },
   build: {
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'codemirror': [
-            '@uiw/react-codemirror',
-            '@uiw/codemirror-themes',
-            '@codemirror/state',
-            '@codemirror/view',
-            '@codemirror/language',
-            '@lezer/highlight',
-          ],
-          'react-vendor': ['react', 'react-dom'],
-        },
-      },
-    },
   },
 });

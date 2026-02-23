@@ -28,11 +28,12 @@
     "paths": {
       "@common/*": ["src/components/common/*"],
       "@base/*": ["src/components/base/*"],
+      "@molecules/*": ["src/components/common/*"],
+      "@organisms/*": ["src/components/common/*"],
       "@hooks/*": ["src/hooks/*"],
       "@utilities/*": ["src/utilities/*"],
-      "@theme/*": ["src/theme/*"],
-      "@services/*": ["src/services/*"],
-      "@plugins/*": ["src/plugins/*"]
+      "@commands/*": ["src/commands/*"],
+      "@services/*": ["src/services/*"]
     }
   },
   "include": ["src"]
