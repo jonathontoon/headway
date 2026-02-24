@@ -25,7 +25,7 @@ const generateId = (raw: string, index: number): string => {
  */
 const parseTodoLine = (raw: string, index: number = 0): TodoItem => {
   let remaining = raw;
-  let done = false;
+  let completed = false;
   let completionDate: string | undefined;
   let creationDate: string | undefined;
   let priority: string | undefined;
@@ -33,7 +33,7 @@ const parseTodoLine = (raw: string, index: number = 0): TodoItem => {
   // Check for completion marker
   const completionMatch = remaining.match(/^x\s+/);
   if (completionMatch) {
-    done = true;
+    completed = true;
     remaining = remaining.slice(completionMatch[0].length);
 
     // Check for completion date YYYY-MM-DD
@@ -44,8 +44,8 @@ const parseTodoLine = (raw: string, index: number = 0): TodoItem => {
     }
   }
 
-  // Check for creation date YYYY-MM-DD (at the start if not done)
-  if (!done) {
+  // Check for creation date YYYY-MM-DD (at the start if not completed)
+  if (!completed) {
     const dateMatch = remaining.match(/^(\d{4}-\d{2}-\d{2})\s+/);
     if (dateMatch) {
       creationDate = dateMatch[1];
@@ -67,7 +67,7 @@ const parseTodoLine = (raw: string, index: number = 0): TodoItem => {
   return {
     id: generateId(raw, index),
     raw,
-    done,
+    completed,
     priority,
     completionDate,
     creationDate,
@@ -102,7 +102,7 @@ export const serializeTodos = (items: TodoItem[]): string =>
 const serializeTodoLine = (item: TodoItem): string => {
   let line = "";
 
-  if (item.done) {
+  if (item.completed) {
     line += "x";
     if (item.completionDate) {
       line += ` ${item.completionDate}`;
@@ -116,11 +116,11 @@ const serializeTodoLine = (item: TodoItem): string => {
     }
   }
 
-  if (item.priority && !item.done) {
+  if (item.priority && !item.completed) {
     line += `(${item.priority}) `;
   }
 
-  line += item.done ? " " + item.text : item.text;
+  line += item.completed ? " " + item.text : item.text;
   return line;
 };
 
@@ -143,7 +143,7 @@ export const completeTodo = (n: number, items: TodoItem[]): TodoItem[] => {
   const updated = [...items];
   updated[index] = {
     ...updated[index],
-    done: true,
+    completed: true,
     completionDate: new Date().toISOString().split("T")[0],
   };
   return updated;
@@ -172,7 +172,7 @@ export const filterTodos = (query: string, items: TodoItem[]): TodoItem[] => {
 
   if (query === "completed") {
     // Show only completed todos
-    return items.filter((item) => item.done);
+    return items.filter((item) => item.completed);
   } else if (query === "archived") {
     // Show only archived todos
     return items.filter((item) => item.archived);
@@ -295,7 +295,7 @@ export const filterByPriority = (
   if (!/^[A-Z]$/.test(priority)) {
     return [];
   }
-  return items.filter((item) => item.priority === priority && !item.done);
+  return items.filter((item) => item.priority === priority && !item.completed);
 };
 
 /**
@@ -304,7 +304,7 @@ export const filterByPriority = (
 export const getUniquePriorities = (items: TodoItem[]): string[] => {
   const priorities = new Set<string>();
   items.forEach((item) => {
-    if (item.priority && !item.done) {
+    if (item.priority && !item.completed) {
       priorities.add(item.priority);
     }
   });
@@ -337,4 +337,4 @@ export const getUniqueProjects = (items: TodoItem[]): string[] => {
  * Archive completed todos (mark as archived, don't delete)
  */
 export const archiveTodos = (items: TodoItem[]): TodoItem[] =>
-  items.map((item) => (item.done && !item.archived ? { ...item, archived: true } : item));
+  items.map((item) => (item.completed && !item.archived ? { ...item, archived: true } : item));

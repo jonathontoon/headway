@@ -1,69 +1,12 @@
-import { memo, Fragment, type FunctionComponent, type JSX } from "react";
+import { type FunctionComponent } from "react";
 import type { TodoItem } from "@types";
 import Response from "./Response";
+import Line from "./TodoLine";
 
 interface TodoListResponseProps {
   todos: TodoItem[];
   title?: string;
 }
-
-const PRIORITY_COLORS: Record<string, string> = {
-  A: "text-red-500",
-  B: "text-yellow-500",
-  C: "text-green-500",
-};
-
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-
-const colorWord = (
-  word: string,
-  contexts: Set<string>,
-  projects: Set<string>
-): JSX.Element | string => {
-  if (contexts.has(word)) return word;
-  if (projects.has(word)) return word;
-  if (DATE_REGEX.test(word))
-    return <span className="text-gray-500">{word}</span>;
-  return word;
-};
-
-const renderText = (text: string, contexts: string[], projects: string[], done = false) => {
-  if (done) return <>{text}</>;
-
-  const ctx = new Set(contexts);
-  const proj = new Set(projects);
-  const words = text.split(/(\s+)/);
-
-  return (
-    <Fragment>
-      {words.map((word, i) => (
-        <Fragment key={i}>{colorWord(word, ctx, proj)}</Fragment>
-      ))}
-    </Fragment>
-  );
-};
-
-interface LineProps {
-  num: number;
-  item: TodoItem;
-}
-
-const Line = memo(({ num, item }: LineProps) => {
-  const { done, priority, text, contexts, projects } = item;
-  const cls = done ? "line-through text-gray-600" : "text-gray-100";
-  const pri =
-    priority && !done ? PRIORITY_COLORS[priority] || "text-gray-500" : "";
-
-  return (
-    <p className="flex">
-      <span className="text-gray-500 shrink-0 w-6">{num}.</span>
-      <span className={cls}>
-{pri && <span className={pri}>({priority})</span>}
-        <span className="pl-1">{renderText(text, contexts, projects, done)}</span>
-      </span>
-    </p>
-  );
-});
 
 const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
   todos,

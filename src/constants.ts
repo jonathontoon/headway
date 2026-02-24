@@ -16,27 +16,27 @@ export const commandDefs: CommandDef[] = [
   },
   {
     usage: "add",
-    description: "Create a new todo",
+    description: "Create a new task",
     category: "Todo",
   },
   {
     usage: "list [filter]",
-    description: "List todos. Filters: completed, archived, @context, +project",
+    description: "List all tasks. Filters: completed, archived, @context, +project",
     category: "Todo",
   },
   {
     usage: "edit [number] [text]",
-    description: "Edit a todo's text",
+    description: "Edit a task's text",
     category: "Todo",
   },
   {
     usage: "done [number]",
-    description: "Mark a todo as complete",
+    description: "Mark a task as complete",
     category: "Todo",
   },
   {
     usage: "remove [number]",
-    description: "Delete a todo",
+    description: "Delete a task",
     category: "Todo",
   },
 ];

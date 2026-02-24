@@ -37,7 +37,7 @@ const Status: FunctionComponent<PropsWithChildren<StatusProps>> = ({
   return (
     <p className={`${getStatusColor()} ${className}`}>
       {getStatusSymbol()}
-      <span className="pl-2">{children}</span>
+      <span className="text-white pl-2">{children}</span>
     </p>
   );
 };

@@ -7,17 +7,14 @@ import {
   type FunctionComponent,
 } from "react";
 
-import {
-  ScrollView,
-  Prompt,
-  StatusResponse,
-  TodoListResponse,
-  TagListResponse,
-  HelpResponse,
-  IntroResponse,
-  LogoResponse,
-  DefaultResponse,
-} from ".";
+import ScrollView from "./ScrollView";
+import Prompt from "./Prompt";
+import StatusResponse from "./StatusResponse";
+import TodoListResponse from "./TodoListResponse";
+import TagListResponse from "./TagListResponse";
+import HelpResponse from "./HelpResponse";
+import IntroResponse from "./IntroResponse";
+import LogoResponse from "./LogoResponse";
 import useViewportResize from "@hooks/useViewportResize";
 import { useTerminalStore } from "@contexts/TerminalContext";
 
@@ -28,8 +25,6 @@ interface TerminalProps {
   disabled?: boolean;
   hidden?: boolean;
 }
-
-
 
 const Terminal: FunctionComponent<TerminalProps> = ({
   className = "",
@@ -77,9 +72,10 @@ const Terminal: FunctionComponent<TerminalProps> = ({
             return <LogoResponse key={item.id} />;
           case "default":
             return (
-              <DefaultResponse
+              <StatusResponse
                 key={item.id}
-                responseText={`Command '${item.commandName}' not recognized.`}
+                statusType="error"
+                statusText={`Command '${item.commandName}' not recognized.`}
                 hintText={item.hintText ?? "Type 'help' for available commands."}
               />
             );

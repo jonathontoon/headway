@@ -7,7 +7,7 @@ import type { StatusType } from "@components/Status";
 export interface TodoItem {
   id: string;
   raw: string;
-  done: boolean;
+  completed: boolean;
   archived?: boolean;
   priority?: string;
   completionDate?: string;

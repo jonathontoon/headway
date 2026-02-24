@@ -100,7 +100,7 @@ const Prompt = forwardRef<HTMLInputElement, PromptProps>(
             <span>{afterCursor}</span>
           </div>
           {/* Placeholder */}
-          {value === "" && placeholder && (
+          {value === "" && placeholder && !isFocused && (
             <span className="pointer-events-none absolute inset-0 flex items-center text-zinc-600">
               {placeholder}
             </span>
