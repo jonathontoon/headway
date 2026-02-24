@@ -29,8 +29,7 @@ const Line = memo(({ num, item }: LineProps) => {
     <p className="flex">
       <Muted className="shrink-0 w-6">{num}.</Muted>
       <span className={completed ? "line-through text-gray-600" : "text-gray-100"}>
-        {completed && <Muted className="mr-1">(✕)</Muted>}
-        {priority && !completed && (
+{priority && !completed && (
           <span className={PRIORITY_COLORS[priority] ?? "text-gray-500"}>
             ({priority})
           </span>

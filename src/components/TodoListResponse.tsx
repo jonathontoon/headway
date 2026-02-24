@@ -2,6 +2,8 @@ import { type FunctionComponent } from "react";
 import type { TodoItem } from "@types";
 import Response from "./Response";
 import Stack from "./Stack";
+import Hint from "./Hint";
+import Label from "./Label";
 import Line from "./TodoLine";
 
 interface TodoListResponseProps {
@@ -15,16 +17,16 @@ const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
 }) => {
   if (todos.length === 0) {
     return (
-      <Response className="flex flex-col gap-2">
-        <p className="text-gray-500">No tasks to display.</p>
+      <Response>
+        <Hint>No tasks to display.</Hint>
       </Response>
     );
   }
 
   return (
-    <Response className="flex flex-col gap-2">
+    <Response>
       <Stack>
-        {title && <p className="text-gray-400 mb-2">{title}</p>}
+        {title && <Label className="mb-2">{title}</Label>}
         {todos.map((todo, i) => (
           <Line key={todo.id} num={i + 1} item={todo} />
         ))}

@@ -5,8 +5,8 @@ interface HintProps {
 }
 
 const Hint: FunctionComponent<PropsWithChildren<HintProps>> = ({
-  className,
+  className = "",
   children,
-}) => <p className={`text-zinc-500 ${className}`}>{children}</p>;
+}) => <p className={`text-gray-500 ${className}`.trim()}>{children}</p>;
 
 export default Hint;

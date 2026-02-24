@@ -7,6 +7,6 @@ interface ResponseProps {
 const Response: FunctionComponent<PropsWithChildren<ResponseProps>> = ({
   className = "",
   children,
-}) => <div className={`text-[15px] leading-normal tracking-tight text-white py-2 ${className}`}>{children}</div>;
+}) => <div className={`text-[15px] leading-normal tracking-tight text-white py-2 ${className}`.trim()}>{children}</div>;
 
 export default Response;
