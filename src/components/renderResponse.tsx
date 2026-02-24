@@ -19,8 +19,8 @@ import {
   IntroResponse,
   LogoResponse,
   DefaultResponse,
-} from "./responses";
-import { Prompt } from "./base";
+  Prompt,
+} from ".";
 
 const renderStatus = (item: StatusHistoryItem): ReactNode => {
   const { id, statusType, statusText, hintText } = item;

@@ -7,7 +7,7 @@ import {
   type FunctionComponent,
 } from "react";
 
-import { ScrollView, Prompt } from "./base";
+import { ScrollView, Prompt } from ".";
 import renderResponse from "./renderResponse";
 import useViewportResize from "@hooks/useViewportResize";
 import { useTerminalStore } from "@contexts/TerminalContext";

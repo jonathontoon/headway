@@ -1,4 +1,4 @@
-import type { StatusType } from "@components/base/Status";
+import type { StatusType } from "@components/Status";
 import type { TodoItem } from "@lib/models";
 
 export type TerminalResponse =
