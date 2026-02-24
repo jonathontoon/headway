@@ -1,4 +1,5 @@
 import type { TodoItem } from "@types";
+import { MAX_TODO_COUNT } from "@constants";
 
 /**
  * Parse todo.txt format text into TodoItem objects
@@ -128,6 +129,9 @@ const serializeTodoLine = (item: TodoItem): string => {
  * Add a new todo to the list
  */
 export const addTodo = (text: string, items: TodoItem[]): TodoItem[] => {
+  if (items.length >= MAX_TODO_COUNT) {
+    throw new Error(`Maximum limit of ${MAX_TODO_COUNT} tasks reached.`);
+  }
   const newItem = parseTodoLine(text.trim(), items.length);
   return [...items, newItem];
 };
@@ -136,7 +140,7 @@ export const addTodo = (text: string, items: TodoItem[]): TodoItem[] => {
  * Mark a todo as complete (1-indexed)
  */
 export const completeTodo = (n: number, items: TodoItem[]): TodoItem[] => {
-  if (n < 1 || n > items.length) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length) {
     return items;
   }
   const index = n - 1;
@@ -153,7 +157,7 @@ export const completeTodo = (n: number, items: TodoItem[]): TodoItem[] => {
  * Delete a todo from the list (1-indexed)
  */
 export const deleteTodo = (n: number, items: TodoItem[]): TodoItem[] => {
-  if (n < 1 || n > items.length) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length) {
     return items;
   }
   return items.filter((_, i) => i !== n - 1);
@@ -193,7 +197,7 @@ export const setPriority = (
   priority: string,
   items: TodoItem[]
 ): TodoItem[] => {
-  if (n < 1 || n > items.length || !/^[A-Z]$/.test(priority)) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length || !/^[A-Z]$/.test(priority)) {
     return items;
   }
   const index = n - 1;
@@ -209,7 +213,7 @@ export const setPriority = (
  * Remove priority from a todo (1-indexed)
  */
 export const removePriority = (n: number, items: TodoItem[]): TodoItem[] => {
-  if (n < 1 || n > items.length) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length) {
     return items;
   }
   const index = n - 1;
@@ -229,7 +233,7 @@ export const appendToTodo = (
   text: string,
   items: TodoItem[]
 ): TodoItem[] => {
-  if (n < 1 || n > items.length) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length) {
     return items;
   }
   const index = n - 1;
@@ -252,7 +256,7 @@ export const prependToTodo = (
   text: string,
   items: TodoItem[]
 ): TodoItem[] => {
-  if (n < 1 || n > items.length) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length) {
     return items;
   }
   const index = n - 1;
@@ -275,7 +279,7 @@ export const replaceTodo = (
   text: string,
   items: TodoItem[]
 ): TodoItem[] => {
-  if (n < 1 || n > items.length) {
+  if (!Number.isInteger(n) || n < 1 || n > items.length) {
     return items;
   }
   const index = n - 1;
