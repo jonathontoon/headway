@@ -23,16 +23,17 @@ interface LineProps {
 
 const Line = memo(({ num, item }: LineProps) => {
   const { completed, priority, text } = item;
-  
-  const isCompleted = completed ? "line-through text-gray-600" : "text-gray-100";
-  const priorityColor = priority && !completed ? PRIORITY_COLORS[priority] ?? "text-gray-500" : null;
 
   return (
     <p className="flex">
       <span className="text-gray-500 shrink-0 w-6">{num}.</span>
-      <span className={isCompleted}>
+      <span className={completed ? "line-through text-gray-600" : "text-gray-100"}>
         {completed && <span className="text-gray-500 mr-1">(✕)</span>}
-        {priorityColor && <span className={priorityColor}>({priority})</span>}
+        {priority && !completed && (
+          <span className={PRIORITY_COLORS[priority] ?? "text-gray-500"}>
+            ({priority})
+          </span>
+        )}
         <span className="pl-1">{completed ? text : renderText(text)}</span>
       </span>
     </p>
