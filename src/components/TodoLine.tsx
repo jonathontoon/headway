@@ -10,12 +10,28 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
-const renderText = (text: string) =>
-  text.split(/(\s+)/).map((word, i) => (
-    <Fragment key={i}>
-      {DATE_REGEX.test(word) ? <Muted>{word}</Muted> : word}
-    </Fragment>
-  ));
+const renderText = (text: string, completed: boolean) =>
+  text.split(/(\s+)/).map((word, i) => {
+    if (DATE_REGEX.test(word)) {
+      return <Muted key={i}>{word}</Muted>;
+    }
+
+    if (!completed) {
+      const match = word.match(/^([@+]\w+)(.*)$/);
+      if (match) {
+        const [_, tag, rest] = match;
+        const colorClass = tag.startsWith("@") ? "text-cyan-400" : "text-blue-400";
+        return (
+          <Fragment key={i}>
+            <span className={colorClass}>{tag}</span>
+            {rest}
+          </Fragment>
+        );
+      }
+    }
+
+    return <Fragment key={i}>{word}</Fragment>;
+  });
 
 interface LineProps {
   num: number;
@@ -34,7 +50,7 @@ const Line = memo(({ num, item }: LineProps) => {
             ({priority})
           </span>
         )}
-        <span className="pl-1">{completed ? text : renderText(text)}</span>
+        <span className="pl-1">{renderText(text, completed)}</span>
       </span>
     </p>
   );
