@@ -8,6 +8,10 @@ export interface CommandDef {
   category: string;
 }
 
+// Security Limits
+export const MAX_TODO_LENGTH = 1000;
+export const MAX_TODO_COUNT = 500;
+
 export const commandDefs: CommandDef[] = [
   {
     usage: "help",
