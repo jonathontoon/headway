@@ -1,7 +1,8 @@
 import type { FunctionComponent } from "react";
 
-import { Status, Hint, Response } from "../base";
-import type { StatusType } from "../base/Status";
+import Status, { type StatusType } from "./Status";
+import Hint from "./Hint";
+import Response from "./Response";
 
 interface StatusResponseProps {
   statusType: StatusType;

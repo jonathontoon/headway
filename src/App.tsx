@@ -76,9 +76,6 @@ const App = () => {
           commands.remove(parseInt(args[0], 10));
         }
         break;
-      case "archive":
-        commands.archive();
-        break;
       case "help":
         addResponse([{ type: "help" }]);
         break;

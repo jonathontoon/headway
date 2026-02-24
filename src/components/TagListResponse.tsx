@@ -1,4 +1,4 @@
-import { Response } from "../base";
+import Response from "./Response";
 
 interface TagListResponseProps {
   tags: string[];

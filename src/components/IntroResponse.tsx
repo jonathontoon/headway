@@ -1,4 +1,5 @@
-import { Hint, Response } from "../base";
+import Hint from "./Hint";
+import Response from "./Response";
 
 const IntroResponse = () => (
   <Response>

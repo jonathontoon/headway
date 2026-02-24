@@ -14,7 +14,7 @@ export const parseTodos = (text: string): TodoItem[] => {
 const generateId = (raw: string, index: number): string => {
   let hash = index;
   for (let i = 0; i < raw.length; i++) {
-    hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+    hash = (hash << 5) - hash + raw.charCodeAt(i);
     hash = hash & hash; // Convert to 32-bit integer
   }
   return `todo-${Math.abs(hash)}`;
@@ -160,20 +160,29 @@ export const deleteTodo = (n: number, items: TodoItem[]): TodoItem[] => {
 };
 
 /**
- * Filter todos by @context or +project prefix
+ * Filter todos by @context, +project, or status prefix. Hides archived by default.
  */
 export const filterTodos = (query: string, items: TodoItem[]): TodoItem[] => {
+  // Filter out archived by default
+  let filtered = items.filter((item) => !item.archived);
+
   if (!query) {
-    return items;
+    return filtered;
   }
 
-  if (query.startsWith("@")) {
-    return items.filter((item) => item.contexts.includes(query));
+  if (query === "completed") {
+    // Show only completed todos
+    return items.filter((item) => item.done);
+  } else if (query === "archived") {
+    // Show only archived todos
+    return items.filter((item) => item.archived);
+  } else if (query.startsWith("@")) {
+    return filtered.filter((item) => item.contexts.includes(query));
   } else if (query.startsWith("+")) {
-    return items.filter((item) => item.projects.includes(query));
+    return filtered.filter((item) => item.projects.includes(query));
   }
 
-  return items;
+  return filtered;
 };
 
 /**
@@ -325,7 +334,7 @@ export const getUniqueProjects = (items: TodoItem[]): string[] => {
 };
 
 /**
- * Archive (remove) completed todos, keep only active items
+ * Archive completed todos (mark as archived, don't delete)
  */
 export const archiveTodos = (items: TodoItem[]): TodoItem[] =>
-  items.filter((item) => !item.done);
+  items.map((item) => (item.done && !item.archived ? { ...item, archived: true } : item));

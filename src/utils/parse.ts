@@ -21,7 +21,7 @@ export const parseArguments = (prompt: string, command: string): string[] => {
   for (let i = 0; i < argumentString.length; i++) {
     const char = argumentString[i];
 
-    if (char === "\"" || char === "'") {
+    if (char === '"' || char === "'") {
       inQuotes = !inQuotes;
       continue;
     }

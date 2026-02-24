@@ -9,7 +9,7 @@ import {
   filterTodos,
   archiveTodos,
   replaceTodo,
-} from "@utils/todos";
+} from "@utils/todos"; // archiveTodos is used by done command
 import { loadContent, saveContent } from "@utils/storage";
 import type { TerminalResponse } from "../types/terminal-response";
 
@@ -18,9 +18,9 @@ export const useCommands = () => {
 
   const executeWithTodos = useCallback(
     (
-      mutate: (todos: ReturnType<typeof parseTodos>) => ReturnType<
-        typeof parseTodos
-      >,
+      mutate: (
+        todos: ReturnType<typeof parseTodos>
+      ) => ReturnType<typeof parseTodos>,
       onSuccess: () => TerminalResponse,
       errorText: string = "Operation failed."
     ) => {
@@ -118,7 +118,8 @@ export const useCommands = () => {
       executeWithTodos(
         (todos) => {
           if (n < 1 || n > todos.length) return todos;
-          return completeTodo(n, todos);
+          const completed = completeTodo(n, todos);
+          return archiveTodos(completed);
         },
         () => ({
           type: "status",
@@ -149,49 +150,11 @@ export const useCommands = () => {
     [executeWithTodos]
   );
 
-  const archive = useCallback(() => {
-    try {
-      const content = loadContent();
-      const todos = parseTodos(content);
-      const completedCount = todos.filter((t) => t.done).length;
-
-      if (completedCount === 0) {
-        addResponse([
-          {
-            type: "status",
-            statusType: "waiting",
-            statusText: "No completed todos to archive.",
-          },
-        ]);
-        return;
-      }
-
-      const updated = archiveTodos(todos);
-      saveContent(serializeTodos(updated));
-      addResponse([
-        {
-          type: "status",
-          statusType: "success",
-          statusText: `Archived ${completedCount} completed todo(s).`,
-        },
-      ]);
-    } catch {
-      addResponse([
-        {
-          type: "status",
-          statusType: "error",
-          statusText: "Failed to archive todos.",
-        },
-      ]);
-    }
-  }, [addResponse]);
-
   return {
     add,
     list,
     edit,
     done,
     remove,
-    archive,
   };
 };
