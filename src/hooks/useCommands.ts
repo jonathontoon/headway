@@ -11,7 +11,7 @@ import {
   replaceTodo,
 } from "@utils/todos"; // archiveTodos is used by done command
 import { loadContent, saveContent } from "@utils/storage";
-import type { TerminalResponse } from "../types/terminal-response";
+import type { TerminalResponse } from "@types";
 
 export const useCommands = () => {
   const { addResponse } = useTerminalStore();

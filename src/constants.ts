@@ -1,3 +1,7 @@
+// ============================================================================
+// Command Definitions
+// ============================================================================
+
 export interface CommandDef {
   usage: string;
   description: string;
@@ -35,5 +39,4 @@ export const commandDefs: CommandDef[] = [
     description: "Delete a todo",
     category: "Todo",
   },
-
 ];

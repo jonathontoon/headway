@@ -1,6 +1,5 @@
 import { createContext, useContext, useReducer } from "react";
-import type { TerminalResponse } from "../types/terminal-response";
-import type { TerminalState, TerminalAction } from "../types/terminal";
+import type { TerminalResponse, TerminalState, TerminalAction } from "@types";
 
 const INITIAL_STATE: TerminalState = {
   history: [

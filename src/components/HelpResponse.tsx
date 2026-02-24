@@ -1,5 +1,5 @@
 import Response from "./Response";
-import { commandDefs } from "@lib/commands/registry";
+import { commandDefs } from "@constants";
 
 const HelpResponse = () => (
   <Response className="flex flex-col gap-2">

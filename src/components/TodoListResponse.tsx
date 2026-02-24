@@ -1,5 +1,5 @@
 import { memo, type FunctionComponent, type JSX } from "react";
-import type { TodoItem } from "@lib/models";
+import type { TodoItem } from "@types";
 import Response from "./Response";
 
 interface TodoListResponseProps {

@@ -28,9 +28,10 @@
     "paths": {
       "@components": ["src/components"],
       "@components/*": ["src/components/*"],
+      "@constants": ["src/constants.ts"],
       "@contexts/*": ["src/contexts/*"],
       "@hooks/*": ["src/hooks/*"],
-      "@lib/*": ["src/lib/*"],
+      "@types": ["src/types.ts"],
       "@utils/*": ["src/utils/*"]
     }
   },

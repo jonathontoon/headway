@@ -1,4 +1,4 @@
-import type { TodoItem } from "../lib/models";
+import type { TodoItem } from "@types";
 
 /**
  * Parse todo.txt format text into TodoItem objects
