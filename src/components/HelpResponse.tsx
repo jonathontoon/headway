@@ -1,10 +1,11 @@
+import { memo } from "react";
 import Response from "./Response";
 import Stack from "./Stack";
 import Label from "./Label";
 import Muted from "./Muted";
 import { commandDefs } from "@constants";
 
-const HelpResponse = () => (
+const HelpResponse = memo(() => (
   <Response>
     <Stack gap={2}>
       <Label>[command] [...arguments]</Label>
@@ -21,6 +22,6 @@ const HelpResponse = () => (
       </Stack>
     </Stack>
   </Response>
-);
+));
 
 export default HelpResponse;

@@ -1,4 +1,4 @@
-import { type FunctionComponent } from "react";
+import { memo, type FunctionComponent } from "react";
 import type { TodoItem } from "@types";
 import Response from "./Response";
 import Stack from "./Stack";
@@ -11,28 +11,27 @@ interface TodoListResponseProps {
   title?: string;
 }
 
-const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
-  todos,
-  title,
-}) => {
-  if (todos.length === 0) {
+const TodoListResponse: FunctionComponent<TodoListResponseProps> = memo(
+  ({ todos, title }) => {
+    if (todos.length === 0) {
+      return (
+        <Response>
+          <Hint>No tasks to display.</Hint>
+        </Response>
+      );
+    }
+
     return (
       <Response>
-        <Hint>No tasks to display.</Hint>
+        <Stack>
+          {title && <Label className="mb-2">{title}</Label>}
+          {todos.map((todo, i) => (
+            <Line key={todo.id} num={i + 1} item={todo} />
+          ))}
+        </Stack>
       </Response>
     );
   }
-
-  return (
-    <Response>
-      <Stack>
-        {title && <Label className="mb-2">{title}</Label>}
-        {todos.map((todo, i) => (
-          <Line key={todo.id} num={i + 1} item={todo} />
-        ))}
-      </Stack>
-    </Response>
-  );
-};
+);
 
 export default TodoListResponse;

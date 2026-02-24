@@ -168,7 +168,7 @@ export const deleteTodo = (n: number, items: TodoItem[]): TodoItem[] => {
  */
 export const filterTodos = (query: string, items: TodoItem[]): TodoItem[] => {
   // Filter out archived by default
-  let filtered = items.filter((item) => !item.archived);
+  const filtered = items.filter((item) => !item.archived);
 
   if (!query) {
     return filtered;
@@ -341,4 +341,6 @@ export const getUniqueProjects = (items: TodoItem[]): string[] => {
  * Archive completed todos (mark as archived, don't delete)
  */
 export const archiveTodos = (items: TodoItem[]): TodoItem[] =>
-  items.map((item) => (item.completed && !item.archived ? { ...item, archived: true } : item));
+  items.map((item) =>
+    item.completed && !item.archived ? { ...item, archived: true } : item
+  );

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Response from "./Response";
 
 interface TagListResponseProps {
@@ -8,7 +9,7 @@ interface TagListResponseProps {
 const cls = (v: "context" | "project") =>
   v === "context" ? "text-cyan-400" : "text-blue-400";
 
-const TagListResponse = ({ tags, variant }: TagListResponseProps) => (
+const TagListResponse = memo(({ tags, variant }: TagListResponseProps) => (
   <Response>
     {tags.map((tag) => (
       <p key={tag} className={cls(variant)}>
@@ -16,6 +17,6 @@ const TagListResponse = ({ tags, variant }: TagListResponseProps) => (
       </p>
     ))}
   </Response>
-);
+));
 
 export default TagListResponse;

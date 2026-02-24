@@ -23,4 +23,5 @@ export { default as IntroResponse } from "./IntroResponse";
 export { default as LogoResponse } from "./LogoResponse";
 export { default as StatusResponse } from "./StatusResponse";
 export { default as TagListResponse } from "./TagListResponse";
+export { default as TerminalHistory } from "./TerminalHistory";
 export { default as TodoListResponse } from "./TodoListResponse";
