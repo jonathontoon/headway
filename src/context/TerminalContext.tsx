@@ -1,81 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react';
-
-import useViewportResize from '@hooks/useViewportResize';
-
-import type { TerminalAction, TerminalState } from '@reducers/terminalReducer';
-import { terminalReducer, INITIAL_STATE } from '@reducers/terminalReducer';
-
-export type { TerminalAction, TerminalState, HistoryItem } from '@reducers/terminalReducer';
-
-const TerminalStateContext = createContext<TerminalState | undefined>(undefined);
-const TerminalDispatchContext = createContext<React.Dispatch<TerminalAction> | undefined>(undefined);
-const TerminalRefsContext = createContext<{
-  terminalRef: React.RefObject<HTMLDivElement | null>;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-} | undefined>(undefined);
+import type { ReactNode } from "react";
+import { useTerminal } from "@store/useTerminal";
+import { TerminalContext } from "./terminalContextValue";
 
 interface TerminalProviderProps {
   children: ReactNode;
 }
 
 export const TerminalProvider = ({ children }: TerminalProviderProps) => {
-  const terminalRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const [state, dispatch] = useReducer(terminalReducer, INITIAL_STATE);
-
-  const windowResizeEvent = useCallback(() => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  }, []);
-
-  useViewportResize(windowResizeEvent);
-
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    focusInput();
-  }, [focusInput]);
-
-  useEffect(() => {
-    windowResizeEvent();
-    focusInput();
-  }, [state.history, windowResizeEvent, focusInput]);
-
+  const terminal = useTerminal();
   return (
-    <TerminalStateContext.Provider value={state}>
-      <TerminalDispatchContext.Provider value={dispatch}>
-        <TerminalRefsContext.Provider value={{ terminalRef, inputRef }}>
-          {children}
-        </TerminalRefsContext.Provider>
-      </TerminalDispatchContext.Provider>
-    </TerminalStateContext.Provider>
+    <TerminalContext.Provider value={terminal}>
+      {children}
+    </TerminalContext.Provider>
   );
-};
-
-export const useTerminalState = (): TerminalState => {
-  const context = useContext(TerminalStateContext);
-  if (context === undefined) {
-    throw new Error('useTerminalState must be used within a TerminalProvider');
-  }
-  return context;
-};
-
-export const useTerminalDispatch = () => {
-  const context = useContext(TerminalDispatchContext);
-  if (context === undefined) {
-    throw new Error('useTerminalDispatch must be used within a TerminalProvider');
-  }
-  return context;
-};
-
-export const useTerminalRefs = () => {
-  const context = useContext(TerminalRefsContext);
-  if (context === undefined) {
-    throw new Error('useTerminalRefs must be used within a TerminalProvider');
-  }
-  return context;
 };

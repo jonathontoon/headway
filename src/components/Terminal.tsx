@@ -1,15 +1,16 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   type ChangeEvent,
   type KeyboardEvent,
   type FunctionComponent,
-} from 'react';
+} from "react";
 
-import ScrollView from '@components/ScrollView';
-import Prompt from '@components/Prompt';
-import renderResponse from '@components/renderResponse';
-import { useTerminalState, useTerminalRefs } from '@context/TerminalContext';
+import { ScrollView, Prompt } from "./base";
+import renderResponse from "./renderResponse";
+import useViewportResize from "@hooks/useViewportResize";
+import { useTerminalStore } from "@context/useTerminalStore";
 
 interface TerminalProps {
   className?: string;
@@ -20,18 +21,27 @@ interface TerminalProps {
 }
 
 const Terminal: FunctionComponent<TerminalProps> = ({
-  className = '',
+  className = "",
   onInputChange,
   onInputKeyDown,
   disabled = false,
   hidden = false,
 }) => {
-  const { history, input } = useTerminalState();
-  const { inputRef, terminalRef } = useTerminalRefs();
+  const { history, input } = useTerminalStore();
+  const terminalRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
-  }, [inputRef]);
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, []);
+
+  useViewportResize(scrollToBottom);
 
   useEffect(() => {
     focusInput();
@@ -43,9 +53,16 @@ const Terminal: FunctionComponent<TerminalProps> = ({
     }
   }, [hidden, disabled, focusInput]);
 
+  useEffect(() => {
+    scrollToBottom();
+    focusInput();
+  }, [history, scrollToBottom, focusInput]);
+
   return (
     <ScrollView className={className} ref={terminalRef}>
-      {history.map((item) => renderResponse(item))}
+      {history.map((item) => (
+        <div key={item.id}>{renderResponse(item)}</div>
+      ))}
       {!hidden && (
         <Prompt
           value={input}

@@ -1,8 +1,8 @@
-import type { Config } from 'tailwindcss';
+import type { Config } from "tailwindcss";
 
 export default {
   content: [
-    './index.html',
-    './src/**/*.{tsx,ts,jsx,js}',
+    "./index.html",
+    "./src/**/*.{tsx,ts,jsx,js}",
   ],
 } satisfies Config;
