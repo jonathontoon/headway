@@ -30,11 +30,13 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
-      'prettier/prettier': 'error',
       // Arrow functions
       'prefer-arrow-callback': 'error',
       'arrow-body-style': ['error', 'as-needed'],
       'func-style': ['error', 'expression'],
+      // Semicolons and quotes
+      'semi': ['error', 'always'],
+      'quotes': ['error', 'double'],
       // TypeScript return types
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',

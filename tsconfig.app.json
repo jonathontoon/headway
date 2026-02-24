@@ -26,13 +26,13 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@common/*": ["src/components/common/*"],
-      "@base/*": ["src/components/base/*"],
+      "@components": ["src/components"],
+      "@components/*": ["src/components/*"],
+      "@constants": ["src/constants.ts"],
+      "@contexts/*": ["src/contexts/*"],
       "@hooks/*": ["src/hooks/*"],
-      "@utilities/*": ["src/utilities/*"],
-      "@theme/*": ["src/theme/*"],
-      "@services/*": ["src/services/*"],
-      "@plugins/*": ["src/plugins/*"]
+      "@types": ["src/types.ts"],
+      "@utils/*": ["src/utils/*"]
     }
   },
   "include": ["src"]

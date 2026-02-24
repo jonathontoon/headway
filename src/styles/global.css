@@ -35,6 +35,32 @@
   touch-action: pan-x pan-y;
 }
 
+/* Ensure Departure Mono is applied to all text elements and form inputs */
+body,
+p,
+div,
+span,
+input,
+button,
+textarea,
+select {
+  font-family:
+    "Departure Mono",
+    monospace,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
 html {
   height: -webkit-fill-available;
+}
+
+@keyframes terminal-blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
 }
