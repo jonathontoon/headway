@@ -1,6 +1,5 @@
 // Main component
 export { default as Terminal } from "./Terminal";
-export { default as renderResponse } from "./renderResponse";
 
 // Base components
 export { default as Hint } from "./Hint";

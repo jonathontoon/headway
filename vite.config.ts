@@ -9,9 +9,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@components": resolve(__dirname, "src/components"),
+      "@constants": resolve(__dirname, "src/constants.ts"),
       "@contexts": resolve(__dirname, "src/contexts"),
       "@hooks": resolve(__dirname, "src/hooks"),
       "@lib": resolve(__dirname, "src/lib"),
+      "@types": resolve(__dirname, "src/types.ts"),
       "@utils": resolve(__dirname, "src/utils"),
     },
   },

@@ -7,8 +7,17 @@ import {
   type FunctionComponent,
 } from "react";
 
-import { ScrollView, Prompt } from ".";
-import renderResponse from "./renderResponse";
+import {
+  ScrollView,
+  Prompt,
+  StatusResponse,
+  TodoListResponse,
+  TagListResponse,
+  HelpResponse,
+  IntroResponse,
+  LogoResponse,
+  DefaultResponse,
+} from ".";
 import useViewportResize from "@hooks/useViewportResize";
 import { useTerminalStore } from "@contexts/TerminalContext";
 
@@ -19,6 +28,8 @@ interface TerminalProps {
   disabled?: boolean;
   hidden?: boolean;
 }
+
+
 
 const Terminal: FunctionComponent<TerminalProps> = ({
   className = "",
@@ -50,9 +61,34 @@ const Terminal: FunctionComponent<TerminalProps> = ({
 
   return (
     <ScrollView className={className} ref={terminalRef}>
-      {history.map((item) => (
-        <div key={item.id}>{renderResponse(item)}</div>
-      ))}
+      {history.map((item) => {
+        switch (item.type) {
+          case "status":
+            return <StatusResponse key={item.id} {...item} />;
+          case "todo":
+            return <TodoListResponse key={item.id} {...item} />;
+          case "tag":
+            return <TagListResponse key={item.id} {...item} />;
+          case "help":
+            return <HelpResponse key={item.id} />;
+          case "intro":
+            return <IntroResponse key={item.id} />;
+          case "logo":
+            return <LogoResponse key={item.id} />;
+          case "default":
+            return (
+              <DefaultResponse
+                key={item.id}
+                responseText={`Command '${item.commandName}' not recognized.`}
+                hintText={item.hintText ?? "Type 'help' for available commands."}
+              />
+            );
+          case "prompt":
+            return <Prompt key={item.id} {...item} />;
+          case "clear":
+            return null;
+        }
+      })}
       {!hidden && (
         <Prompt
           value={input}
