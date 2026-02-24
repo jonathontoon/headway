@@ -2,7 +2,7 @@ import type { TerminalResponse } from "../../types/terminal-response";
 import { replaceTodo } from "@utils/todos";
 import withTodos from "./withTodos";
 
-const replaceCommand = (args: string[]): TerminalResponse => {
+const editCommand = (args: string[]): TerminalResponse => {
   const indexStr = args[0] ?? "";
   const text = args.slice(1).join(" ");
 
@@ -11,7 +11,7 @@ const replaceCommand = (args: string[]): TerminalResponse => {
       type: "status",
       statusType: "error",
       statusText: "Missing arguments.",
-      hintText: "Usage: replace [number] [text]",
+      hintText: "Usage: edit [number] [text]",
     };
   }
 
@@ -21,7 +21,7 @@ const replaceCommand = (args: string[]): TerminalResponse => {
       type: "status",
       statusType: "error",
       statusText: "Invalid todo number.",
-      hintText: "Usage: replace [number] [text]",
+      hintText: "Usage: edit [number] [text]",
     };
   }
 
@@ -31,10 +31,10 @@ const replaceCommand = (args: string[]): TerminalResponse => {
     () => ({
       type: "status",
       statusType: "success",
-      statusText: `Replaced todo #${index}.`,
+      statusText: `Edited todo #${index}.`,
     }),
-    "Failed to replace todo."
+    "Failed to edit todo."
   );
 };
 
-export default replaceCommand;
+export default editCommand;
