@@ -1,5 +1,5 @@
 import type { TerminalResponse } from "../../types/terminal-response";
-import { completeTodo } from "../todoService";
+import { completeTodo } from "@utils/todos";
 import withTodos from "./withTodos";
 
 const doneCommand = (args: string[]): TerminalResponse => {

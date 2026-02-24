@@ -1,5 +1,5 @@
 import type { TerminalResponse } from "../../types/terminal-response";
-import { deleteTodo } from "../todoService";
+import { deleteTodo } from "@utils/todos";
 import withTodos from "./withTodos";
 
 const deleteCommand = (args: string[]): TerminalResponse => {

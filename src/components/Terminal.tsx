@@ -10,7 +10,7 @@ import {
 import { ScrollView, Prompt } from "./base";
 import renderResponse from "./renderResponse";
 import useViewportResize from "@hooks/useViewportResize";
-import { useTerminalStore } from "@context/useTerminalStore";
+import { useTerminalStore } from "@contexts/TerminalContext";
 
 interface TerminalProps {
   className?: string;
@@ -42,16 +42,6 @@ const Terminal: FunctionComponent<TerminalProps> = ({
   }, []);
 
   useViewportResize(scrollToBottom);
-
-  useEffect(() => {
-    focusInput();
-  }, [focusInput]);
-
-  useEffect(() => {
-    if (!hidden && !disabled) {
-      focusInput();
-    }
-  }, [hidden, disabled, focusInput]);
 
   useEffect(() => {
     scrollToBottom();

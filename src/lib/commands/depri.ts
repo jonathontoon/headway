@@ -1,5 +1,5 @@
 import type { TerminalResponse } from "../../types/terminal-response";
-import { removePriority } from "../todoService";
+import { removePriority } from "@utils/todos";
 import withTodos from "./withTodos";
 
 const depriCommand = (args: string[]): TerminalResponse => {

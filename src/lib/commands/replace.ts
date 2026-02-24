@@ -1,5 +1,5 @@
 import type { TerminalResponse } from "../../types/terminal-response";
-import { replaceTodo } from "../todoService";
+import { replaceTodo } from "@utils/todos";
 import withTodos from "./withTodos";
 
 const replaceCommand = (args: string[]): TerminalResponse => {

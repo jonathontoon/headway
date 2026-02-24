@@ -1,8 +1,7 @@
 import { Terminal } from "@components";
-import { useTerminalStore } from "@context/useTerminalStore";
+import { useTerminalStore } from "@contexts/TerminalContext";
 import { resolveCommand } from "@lib/commands";
-import parseCommand from "@utils/parse/parseCommand";
-import parseArguments from "@utils/parse/parseArguments";
+import { parseCommand, parseArguments } from "@utils/parse";
 
 const App = () => {
   const {

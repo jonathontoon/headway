@@ -1,17 +1,29 @@
-import type { TodoItem } from "./models";
+import type { TodoItem } from "../lib/models";
 
 /**
  * Parse todo.txt format text into TodoItem objects
  */
 export const parseTodos = (text: string): TodoItem[] => {
   const lines = text.split("\n").filter((line) => line.trim().length > 0);
-  return lines.map((raw) => parseTodoLine(raw));
+  return lines.map((raw, index) => parseTodoLine(raw, index));
+};
+
+/**
+ * Simple hash function for generating consistent IDs
+ */
+const generateId = (raw: string, index: number): string => {
+  let hash = index;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return `todo-${Math.abs(hash)}`;
 };
 
 /**
  * Parse a single todo.txt line
  */
-const parseTodoLine = (raw: string): TodoItem => {
+const parseTodoLine = (raw: string, index: number = 0): TodoItem => {
   let remaining = raw;
   let done = false;
   let completionDate: string | undefined;
@@ -53,6 +65,7 @@ const parseTodoLine = (raw: string): TodoItem => {
   const projects = extractTokens(remaining, "+");
 
   return {
+    id: generateId(raw, index),
     raw,
     done,
     priority,
@@ -115,7 +128,7 @@ const serializeTodoLine = (item: TodoItem): string => {
  * Add a new todo to the list
  */
 export const addTodo = (text: string, items: TodoItem[]): TodoItem[] => {
-  const newItem = parseTodoLine(text.trim());
+  const newItem = parseTodoLine(text.trim(), items.length);
   return [...items, newItem];
 };
 
@@ -257,9 +270,9 @@ export const replaceTodo = (
     return items;
   }
   const index = n - 1;
-  const newItem = parseTodoLine(text.trim());
+  const newItem = parseTodoLine(text.trim(), index);
   const updated = [...items];
-  updated[index] = newItem;
+  updated[index] = { ...newItem, id: items[index].id };
   return updated;
 };
 

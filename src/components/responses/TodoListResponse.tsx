@@ -81,7 +81,7 @@ const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
       <div className="flex flex-col gap-1">
         {title && <p className="text-gray-400 mb-2">{title}</p>}
         {todos.map((todo, i) => (
-          <Line key={i} num={i + 1} item={todo} />
+          <Line key={todo.id} num={i + 1} item={todo} />
         ))}
       </div>
     </Response>

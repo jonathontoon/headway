@@ -1,4 +1,5 @@
 export interface TodoItem {
+  id: string;
   raw: string;
   done: boolean;
   priority?: string;

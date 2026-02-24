@@ -1,6 +1,6 @@
 import type { TerminalResponse } from "../../types/terminal-response";
 import { loadContent } from "../../utils/storage";
-import { parseTodos, filterByPriority } from "../todoService";
+import { parseTodos, filterByPriority } from "@utils/todos";
 
 const listpriCommand = (args: string[]): TerminalResponse => {
   const priorityStr = args[0] ?? "";

@@ -1,6 +1,6 @@
 import type { TerminalResponse } from "../../types/terminal-response";
 import { loadContent } from "../../utils/storage";
-import { parseTodos, filterTodos } from "../todoService";
+import { parseTodos, filterTodos } from "@utils/todos";
 
 const listCommand = (args: string[]): TerminalResponse => {
   const filter = args[0] ?? "";

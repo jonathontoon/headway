@@ -1,6 +1,6 @@
 import type { TerminalResponse } from "../../types/terminal-response";
 import { loadContent } from "../../utils/storage";
-import { parseTodos, getUniqueContexts } from "../todoService";
+import { parseTodos, getUniqueContexts } from "@utils/todos";
 
 const listconCommand = (): TerminalResponse => {
   try {

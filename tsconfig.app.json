@@ -28,11 +28,10 @@
     "paths": {
       "@components": ["src/components"],
       "@components/*": ["src/components/*"],
-      "@context/*": ["src/context/*"],
+      "@contexts/*": ["src/contexts/*"],
       "@hooks/*": ["src/hooks/*"],
       "@lib/*": ["src/lib/*"],
-      "@utils/*": ["src/utils/*"],
-      "@store/*": ["src/store/*"]
+      "@utils/*": ["src/utils/*"]
     }
   },
   "include": ["src"]

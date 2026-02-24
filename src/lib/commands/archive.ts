@@ -1,6 +1,6 @@
 import type { TerminalResponse } from "../../types/terminal-response";
 import { loadContent, saveContent } from "../../utils/storage";
-import { parseTodos, archiveTodos, serializeTodos } from "../todoService";
+import { parseTodos, archiveTodos, serializeTodos } from "@utils/todos";
 
 const archiveCommand = (): TerminalResponse => {
   try {

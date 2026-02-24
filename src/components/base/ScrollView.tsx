@@ -18,7 +18,7 @@ const ScrollView = forwardRef<HTMLElement, PropsWithChildren<ScrollViewProps>>(
 
     const handleResize = useCallback(() => {
       const newHeight = window.visualViewport?.height || window.innerHeight;
-      setHeight((h) => (h === newHeight ? h : newHeight));
+      setHeight(newHeight);
     }, []);
 
     useViewportResize(handleResize);

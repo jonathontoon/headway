@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { useTerminal } from "@store/useTerminal";
-import { TerminalContext } from "./terminalContextValue";
+import { useTerminal } from "../contexts/TerminalContext";
+import { TerminalContext } from "../contexts/TerminalContext";
 
 interface TerminalProviderProps {
   children: ReactNode;

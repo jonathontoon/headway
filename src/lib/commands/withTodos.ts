@@ -1,6 +1,6 @@
 import type { TerminalResponse } from "../../types/terminal-response";
 import { loadContent, saveContent } from "../../utils/storage";
-import { parseTodos, serializeTodos } from "../todoService";
+import { parseTodos, serializeTodos } from "@utils/todos";
 import type { TodoItem } from "../models";
 
 const withTodos = (

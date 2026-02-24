@@ -9,11 +9,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@components": resolve(__dirname, "src/components"),
-      "@context": resolve(__dirname, "src/context"),
+      "@contexts": resolve(__dirname, "src/contexts"),
       "@hooks": resolve(__dirname, "src/hooks"),
       "@lib": resolve(__dirname, "src/lib"),
       "@utils": resolve(__dirname, "src/utils"),
-      "@store": resolve(__dirname, "src/store"),
     },
   },
   build: {

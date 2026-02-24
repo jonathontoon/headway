@@ -1,10 +1,13 @@
 /**
- * Extracts arguments from a prompt string after removing the command.
- * @param {string} prompt - The full command string
- * @param {string} command - The command to remove from the prompt
- * @returns {string[]} Array of argument strings
+ * Extracts the command from a full prompt string.
  */
-const parseArguments = (prompt: string, command: string): string[] => {
+export const parseCommand = (prompt: string): string =>
+  prompt.trim().split(/\s+/)[0].toLowerCase();
+
+/**
+ * Extracts arguments from a prompt string after removing the command.
+ */
+export const parseArguments = (prompt: string, command: string): string[] => {
   const argumentString: string = prompt.trim().slice(command.length).trim();
 
   if (!argumentString) {
@@ -39,5 +42,3 @@ const parseArguments = (prompt: string, command: string): string[] => {
 
   return args;
 };
-
-export default parseArguments;

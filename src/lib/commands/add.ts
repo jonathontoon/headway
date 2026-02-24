@@ -1,6 +1,6 @@
 import type { TerminalResponse } from "../../types/terminal-response";
 import { loadContent, saveContent } from "../../utils/storage";
-import { parseTodos, addTodo, serializeTodos } from "../todoService";
+import { parseTodos, addTodo, serializeTodos } from "@utils/todos";
 
 const addCommand = (args: string[]): TerminalResponse => {
   const text = args.join(" ");

@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { createContext, useContext, useReducer } from "react";
 import type { TerminalResponse } from "../types/terminal-response";
 import type { TerminalState, TerminalAction } from "../types/terminal";
 
@@ -99,4 +99,18 @@ export const useTerminal = () => {
     addCommand,
     navigateHistory,
   };
+};
+
+export type TerminalContextType = ReturnType<typeof useTerminal>;
+
+export const TerminalContext = createContext<TerminalContextType | undefined>(
+  undefined
+);
+
+export const useTerminalStore = () => {
+  const context = useContext(TerminalContext);
+  if (!context) {
+    throw new Error("useTerminalStore must be used within TerminalProvider");
+  }
+  return context;
 };
