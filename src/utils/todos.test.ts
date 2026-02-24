@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { addTodo, completeTodo, replaceTodo } from "./todos";
-import { MAX_TODO_COUNT, MAX_TODO_LENGTH } from "@constants";
+import { MAX_TODO_COUNT } from "@constants";
 
 describe("Todo Utilities Security Hardening", () => {
   it("should enforce MAX_TODO_COUNT in addTodo", () => {
