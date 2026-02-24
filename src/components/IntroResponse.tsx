@@ -1,16 +1,18 @@
 import Hint from "./Hint";
 import Response from "./Response";
+import Stack from "./Stack";
+import Text from "./Text";
 
 const IntroResponse = () => (
   <Response>
-    <div className="flex flex-col gap-1">
-      <p>Welcome to Headway — a terminal-based todo.txt manager.</p>
-      <p>
+    <Stack>
+      <Text>Welcome to Headway — a terminal-based todo.txt manager.</Text>
+      <Text>
         Manage your tasks with simple commands. All todos are stored locally in
         your browser.
-      </p>
+      </Text>
       <Hint>Type 'help' to see available commands.</Hint>
-    </div>
+    </Stack>
   </Response>
 );
 

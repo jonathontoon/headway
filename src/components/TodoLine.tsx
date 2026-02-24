@@ -1,5 +1,6 @@
 import { memo, Fragment } from "react";
 import type { TodoItem } from "@types";
+import Muted from "./Muted";
 
 const PRIORITY_COLORS: Record<string, string> = {
   A: "text-red-500",
@@ -12,7 +13,7 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const renderText = (text: string) =>
   text.split(/(\s+)/).map((word, i) => (
     <Fragment key={i}>
-      {DATE_REGEX.test(word) ? <span className="text-gray-500">{word}</span> : word}
+      {DATE_REGEX.test(word) ? <Muted>{word}</Muted> : word}
     </Fragment>
   ));
 
@@ -26,9 +27,9 @@ const Line = memo(({ num, item }: LineProps) => {
 
   return (
     <p className="flex">
-      <span className="text-gray-500 shrink-0 w-6">{num}.</span>
+      <Muted className="shrink-0 w-6">{num}.</Muted>
       <span className={completed ? "line-through text-gray-600" : "text-gray-100"}>
-        {completed && <span className="text-gray-500 mr-1">(✕)</span>}
+        {completed && <Muted className="mr-1">(✕)</Muted>}
         {priority && !completed && (
           <span className={PRIORITY_COLORS[priority] ?? "text-gray-500"}>
             ({priority})

@@ -1,6 +1,7 @@
 import { type FunctionComponent } from "react";
 import type { TodoItem } from "@types";
 import Response from "./Response";
+import Stack from "./Stack";
 import Line from "./TodoLine";
 
 interface TodoListResponseProps {
@@ -15,19 +16,19 @@ const TodoListResponse: FunctionComponent<TodoListResponseProps> = ({
   if (todos.length === 0) {
     return (
       <Response className="flex flex-col gap-2">
-        <p className="text-gray-500">No todos to display.</p>
+        <p className="text-gray-500">No tasks to display.</p>
       </Response>
     );
   }
 
   return (
     <Response className="flex flex-col gap-2">
-      <div className="flex flex-col gap-1">
+      <Stack>
         {title && <p className="text-gray-400 mb-2">{title}</p>}
         {todos.map((todo, i) => (
           <Line key={todo.id} num={i + 1} item={todo} />
         ))}
-      </div>
+      </Stack>
     </Response>
   );
 };
