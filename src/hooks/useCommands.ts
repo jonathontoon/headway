@@ -43,7 +43,7 @@ export const useCommands = () => {
     [addResponse]
   );
 
-  const addCommand = useCallback(
+  const add = useCallback(
     (text: string) => {
       if (!text.trim()) {
         addResponse([
@@ -69,7 +69,7 @@ export const useCommands = () => {
     [executeWithTodos, addResponse]
   );
 
-  const listCommand = useCallback(
+  const list = useCallback(
     (filter?: string) => {
       try {
         const content = loadContent();
@@ -84,7 +84,7 @@ export const useCommands = () => {
     [addResponse]
   );
 
-  const editCommand = useCallback(
+  const edit = useCallback(
     (n: number, text: string) => {
       if (!text.trim()) {
         addResponse([
@@ -113,7 +113,7 @@ export const useCommands = () => {
     [executeWithTodos, addResponse]
   );
 
-  const doneCommand = useCallback(
+  const done = useCallback(
     (n: number) => {
       executeWithTodos(
         (todos) => {
@@ -131,7 +131,7 @@ export const useCommands = () => {
     [executeWithTodos]
   );
 
-  const deleteCommand = useCallback(
+  const remove = useCallback(
     (n: number) => {
       executeWithTodos(
         (todos) => {
@@ -141,15 +141,15 @@ export const useCommands = () => {
         () => ({
           type: "status",
           statusType: "success",
-          statusText: `Deleted todo #${n}.`,
+          statusText: `Removed todo #${n}.`,
         }),
-        "Failed to delete todo."
+        "Failed to remove todo."
       );
     },
     [executeWithTodos]
   );
 
-  const archiveCommand = useCallback(() => {
+  const archive = useCallback(() => {
     try {
       const content = loadContent();
       const todos = parseTodos(content);
@@ -187,11 +187,11 @@ export const useCommands = () => {
   }, [addResponse]);
 
   return {
-    addCommand,
-    listCommand,
-    editCommand,
-    doneCommand,
-    deleteCommand,
-    archiveCommand,
+    add,
+    list,
+    edit,
+    done,
+    remove,
+    archive,
   };
 };

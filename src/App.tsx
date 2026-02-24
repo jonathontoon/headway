@@ -27,11 +27,11 @@ const App = () => {
     switch (command) {
       case "add":
       case "a":
-        commands.addCommand(args.join(" "));
+        commands.add(args.join(" "));
         break;
       case "list":
       case "ls":
-        commands.listCommand(args[0]);
+        commands.list(args[0]);
         break;
       case "edit":
         if (args.length < 2) {
@@ -44,7 +44,7 @@ const App = () => {
             },
           ]);
         } else {
-          commands.editCommand(parseInt(args[0], 10), args.slice(1).join(" "));
+          commands.edit(parseInt(args[0], 10), args.slice(1).join(" "));
         }
         break;
       case "done":
@@ -58,10 +58,10 @@ const App = () => {
             },
           ]);
         } else {
-          commands.doneCommand(parseInt(args[0], 10));
+          commands.done(parseInt(args[0], 10));
         }
         break;
-      case "delete":
+      case "remove":
       case "rm":
         if (!args[0]) {
           addResponse([
@@ -69,15 +69,15 @@ const App = () => {
               type: "status",
               statusType: "error",
               statusText: "Invalid todo number.",
-              hintText: "Usage: delete [number]",
+              hintText: "Usage: remove [number]",
             },
           ]);
         } else {
-          commands.deleteCommand(parseInt(args[0], 10));
+          commands.remove(parseInt(args[0], 10));
         }
         break;
       case "archive":
-        commands.archiveCommand();
+        commands.archive();
         break;
       case "help":
         addResponse([{ type: "help" }]);
