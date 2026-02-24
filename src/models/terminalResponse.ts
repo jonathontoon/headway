@@ -1,4 +1,4 @@
-import type { StatusType } from '@common/Status';
+import type { StatusType } from '@components/Status';
 import type { TodoItem } from '@services/todoService';
 
 export type TerminalResponse =

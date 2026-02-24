@@ -116,7 +116,7 @@ const serializeTodoLine = (item: TodoItem): string => {
     line += `(${item.priority}) `;
   }
 
-  line += item.text;
+  line += item.done ? ' ' + item.text : item.text;
   return line;
 };
 
@@ -220,10 +220,13 @@ export const appendToTodo = (
     return items;
   }
   const index = n - 1;
+  const newText = items[index].text + ' ' + text;
   const updated = [...items];
   updated[index] = {
     ...updated[index],
-    text: updated[index].text + ' ' + text,
+    text: newText,
+    contexts: extractTokens(newText, '@'),
+    projects: extractTokens(newText, '+'),
   };
   return updated;
 };
@@ -240,10 +243,13 @@ export const prependToTodo = (
     return items;
   }
   const index = n - 1;
+  const newText = text + ' ' + items[index].text;
   const updated = [...items];
   updated[index] = {
     ...updated[index],
-    text: text + ' ' + updated[index].text,
+    text: newText,
+    contexts: extractTokens(newText, '@'),
+    projects: extractTokens(newText, '+'),
   };
   return updated;
 };

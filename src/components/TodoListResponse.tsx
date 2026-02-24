@@ -1,7 +1,7 @@
 import { type FunctionComponent, type JSX } from 'react';
 import type { TodoItem } from '@services/todoService';
 
-import Response from '@common/Response';
+import Response from '@components/Response';
 
 interface TodoListResponseProps {
   todos: TodoItem[];

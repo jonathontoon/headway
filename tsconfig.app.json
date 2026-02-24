@@ -26,11 +26,12 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@common/*": ["src/components/common/*"],
+      "@components/*": ["src/components/*"],
       "@context/*": ["src/context/*"],
       "@hooks/*": ["src/hooks/*"],
       "@utilities/*": ["src/utilities/*"],
-      "@commands/*": ["src/commands/*"],
+      "@actions/*": ["src/actions/*"],
+      "@reducers/*": ["src/reducers/*"],
       "@services/*": ["src/services/*"],
       "@models/*": ["src/models/*"]
     }

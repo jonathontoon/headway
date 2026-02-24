@@ -1,6 +1,6 @@
 import { type KeyboardEvent, type ChangeEvent, forwardRef } from 'react';
 
-import Response from '@common/Response';
+import Response from '@components/Response';
 
 interface PromptProps {
   value?: string;

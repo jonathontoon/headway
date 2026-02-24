@@ -1,4 +1,4 @@
-import type { TerminalAction } from '@context/TerminalContext';
+import type { TerminalAction } from '@reducers/terminalReducer';
 import type { TerminalResponse } from '@models/terminalResponse';
 
 const pushResponses = (

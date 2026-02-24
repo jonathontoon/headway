@@ -1,7 +1,7 @@
 import type { FunctionComponent } from 'react';
 
-import Hint from '@common/Hint';
-import Response from '@common/Response';
+import Hint from '@components/Hint';
+import Response from '@components/Response';
 
 interface DefaultResponseProps {
   responseText: string;

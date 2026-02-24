@@ -9,13 +9,15 @@
     "check": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "vitest": "^4.0.18",
     "@eslint/js": "^9.17.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",

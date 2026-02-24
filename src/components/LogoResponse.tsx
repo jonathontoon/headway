@@ -1,6 +1,6 @@
 import type { FunctionComponent } from 'react';
 
-import Response from '@common/Response';
+import Response from '@components/Response';
 
 interface LogoResponseProps {
   className?: string;

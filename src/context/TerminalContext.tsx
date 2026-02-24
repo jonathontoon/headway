@@ -2,45 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useReducer, useRef, 
 
 import useViewportResize from '@hooks/useViewportResize';
 
-import type { TerminalResponse } from '@models/terminalResponse';
+import type { TerminalAction, TerminalState } from '@reducers/terminalReducer';
+import { terminalReducer, INITIAL_STATE } from '@reducers/terminalReducer';
 
-export type TerminalInputCallback = (input: string) => void;
-
-export type TerminalAction =
-  | { type: 'PUSH'; payload: TerminalResponse[] }
-  | { type: 'RESET' }
-  | { type: 'SET_INPUT'; payload: string }
-  | { type: 'SET_PROCESSING'; payload: boolean }
-  | { type: 'SET_AWAITING_INPUT'; payload: { callback: TerminalInputCallback } | null };
-
-export type TerminalState = {
-  history: TerminalResponse[];
-  input: string;
-  isProcessing: boolean;
-  awaitingInput: { callback: TerminalInputCallback } | null;
-};
-
-const INITIAL_STATE: TerminalState = {
-  history: [{ type: 'logo' }, { type: 'intro' }],
-  input: '',
-  isProcessing: false,
-  awaitingInput: null,
-};
-
-const terminalReducer = (state: TerminalState, action: TerminalAction): TerminalState => {
-  switch (action.type) {
-    case 'PUSH':
-      return { ...state, history: [...state.history, ...action.payload] };
-    case 'RESET':
-      return { ...state, history: [] };
-    case 'SET_INPUT':
-      return { ...state, input: action.payload };
-    case 'SET_PROCESSING':
-      return { ...state, isProcessing: action.payload };
-    case 'SET_AWAITING_INPUT':
-      return { ...state, awaitingInput: action.payload };
-  }
-};
+export type { TerminalAction, TerminalState } from '@reducers/terminalReducer';
 
 const TerminalStateContext = createContext<TerminalState | undefined>(undefined);
 const TerminalDispatchContext = createContext<React.Dispatch<TerminalAction> | undefined>(undefined);

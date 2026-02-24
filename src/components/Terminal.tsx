@@ -6,9 +6,9 @@ import {
   type FunctionComponent,
 } from 'react';
 
-import ScrollView from '@common/ScrollView';
-import Prompt from '@common/Prompt';
-import renderResponse from '@common/renderResponse';
+import ScrollView from '@components/ScrollView';
+import Prompt from '@components/Prompt';
+import renderResponse from '@components/renderResponse';
 import { useTerminalState, useTerminalRefs } from '@context/TerminalContext';
 
 interface TerminalProps {
