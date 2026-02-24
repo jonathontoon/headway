@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useTerminalStore } from "@contexts/TerminalContext";
+import { MAX_TODO_LENGTH } from "@constants";
 import {
   parseTodos,
   serializeTodos,
@@ -37,12 +38,12 @@ export const useCommands = () => {
           responses.push({ type: "todo", todos: updatedTodos, title: undefined });
         }
         addResponse(responses);
-      } catch {
+      } catch (e: any) {
         addResponse([
           {
             type: "status",
             statusType: "error",
-            statusText: errorText,
+            statusText: e instanceof Error ? e.message : errorText,
           },
         ]);
       }
@@ -52,7 +53,8 @@ export const useCommands = () => {
 
   const add = useCallback(
     (text: string) => {
-      if (!text.trim()) {
+      const trimmedText = text.trim();
+      if (!trimmedText) {
         addResponse([
           {
             type: "status",
@@ -63,6 +65,19 @@ export const useCommands = () => {
         ]);
         return;
       }
+
+      if (trimmedText.length > MAX_TODO_LENGTH) {
+        addResponse([
+          {
+            type: "status",
+            statusType: "error",
+            statusText: "Task text too long.",
+            hintText: `Maximum length is ${MAX_TODO_LENGTH} characters.`,
+          },
+        ]);
+        return;
+      }
+
       executeWithTodos(
         (todos) => addTodo(text, todos),
         () => ({
@@ -94,7 +109,20 @@ export const useCommands = () => {
 
   const edit = useCallback(
     (n: number, text: string) => {
-      if (!text.trim()) {
+      if (!Number.isInteger(n)) {
+        addResponse([
+          {
+            type: "status",
+            statusType: "error",
+            statusText: "Invalid task number.",
+            hintText: "Please provide a valid task number.",
+          },
+        ]);
+        return;
+      }
+
+      const trimmedText = text.trim();
+      if (!trimmedText) {
         addResponse([
           {
             type: "status",
@@ -105,6 +133,19 @@ export const useCommands = () => {
         ]);
         return;
       }
+
+      if (trimmedText.length > MAX_TODO_LENGTH) {
+        addResponse([
+          {
+            type: "status",
+            statusType: "error",
+            statusText: "Task text too long.",
+            hintText: `Maximum length is ${MAX_TODO_LENGTH} characters.`,
+          },
+        ]);
+        return;
+      }
+
       executeWithTodos(
         (todos) => {
           if (n < 1 || n > todos.length) return todos;
@@ -124,6 +165,18 @@ export const useCommands = () => {
 
   const done = useCallback(
     (n: number) => {
+      if (!Number.isInteger(n)) {
+        addResponse([
+          {
+            type: "status",
+            statusType: "error",
+            statusText: "Invalid task number.",
+            hintText: "Please provide a valid task number.",
+          },
+        ]);
+        return;
+      }
+
       executeWithTodos(
         (todos) => {
           if (n < 1 || n > todos.length) return todos;
@@ -144,6 +197,18 @@ export const useCommands = () => {
 
   const remove = useCallback(
     (n: number) => {
+      if (!Number.isInteger(n)) {
+        addResponse([
+          {
+            type: "status",
+            statusType: "error",
+            statusText: "Invalid task number.",
+            hintText: "Please provide a valid task number.",
+          },
+        ]);
+        return;
+      }
+
       executeWithTodos(
         (todos) => {
           if (n < 1 || n > todos.length) return todos;
