@@ -27,7 +27,7 @@ const App = () => {
     switch (command) {
       case "add":
       case "a":
-        commands.add(args.join(" "));
+        commands.addCommand(args.join(" "));
         break;
       case "list":
       case "ls":
@@ -73,7 +73,7 @@ const App = () => {
             },
           ]);
         } else {
-          commands.delete(parseInt(args[0], 10));
+          commands.deleteCommand(parseInt(args[0], 10));
         }
         break;
       case "archive":

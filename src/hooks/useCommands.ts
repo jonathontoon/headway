@@ -43,7 +43,7 @@ export const useCommands = () => {
     [addResponse]
   );
 
-  const add = useCallback(
+  const addCommand = useCallback(
     (text: string) => {
       if (!text.trim()) {
         addResponse([
@@ -131,7 +131,7 @@ export const useCommands = () => {
     [executeWithTodos]
   );
 
-  const deleteCmd = useCallback(
+  const deleteCommand = useCallback(
     (n: number) => {
       executeWithTodos(
         (todos) => {
@@ -187,11 +187,11 @@ export const useCommands = () => {
   }, [addResponse]);
 
   return {
-    add,
+    addCommand,
     list,
     edit,
     done,
-    delete: deleteCmd,
+    deleteCommand,
     archive,
   };
 };
