@@ -69,7 +69,7 @@ export const useCommands = () => {
     [executeWithTodos, addResponse]
   );
 
-  const list = useCallback(
+  const listCommand = useCallback(
     (filter?: string) => {
       try {
         const content = loadContent();
@@ -84,7 +84,7 @@ export const useCommands = () => {
     [addResponse]
   );
 
-  const edit = useCallback(
+  const editCommand = useCallback(
     (n: number, text: string) => {
       if (!text.trim()) {
         addResponse([
@@ -113,7 +113,7 @@ export const useCommands = () => {
     [executeWithTodos, addResponse]
   );
 
-  const done = useCallback(
+  const doneCommand = useCallback(
     (n: number) => {
       executeWithTodos(
         (todos) => {
@@ -149,7 +149,7 @@ export const useCommands = () => {
     [executeWithTodos]
   );
 
-  const archive = useCallback(() => {
+  const archiveCommand = useCallback(() => {
     try {
       const content = loadContent();
       const todos = parseTodos(content);
@@ -188,10 +188,10 @@ export const useCommands = () => {
 
   return {
     addCommand,
-    list,
-    edit,
-    done,
+    listCommand,
+    editCommand,
+    doneCommand,
     deleteCommand,
-    archive,
+    archiveCommand,
   };
 };

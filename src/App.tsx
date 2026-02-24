@@ -31,7 +31,7 @@ const App = () => {
         break;
       case "list":
       case "ls":
-        commands.list(args[0]);
+        commands.listCommand(args[0]);
         break;
       case "edit":
         if (args.length < 2) {
@@ -44,7 +44,7 @@ const App = () => {
             },
           ]);
         } else {
-          commands.edit(parseInt(args[0], 10), args.slice(1).join(" "));
+          commands.editCommand(parseInt(args[0], 10), args.slice(1).join(" "));
         }
         break;
       case "done":
@@ -58,7 +58,7 @@ const App = () => {
             },
           ]);
         } else {
-          commands.done(parseInt(args[0], 10));
+          commands.doneCommand(parseInt(args[0], 10));
         }
         break;
       case "delete":
@@ -77,7 +77,7 @@ const App = () => {
         }
         break;
       case "archive":
-        commands.archive();
+        commands.archiveCommand();
         break;
       case "help":
         addResponse([{ type: "help" }]);
