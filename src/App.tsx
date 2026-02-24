@@ -19,7 +19,7 @@ const App = () => {
 
   // Merge command history and navigation index into a single state object so
   // arrow-key handling always sees consistent values via the functional updater.
-  const [cmdHist, setCmdHist] = useState<{ items: string[]; idx: number }>({
+  const [, setCmdHist] = useState<{ items: string[]; idx: number }>({
     items: [],
     idx: -1,
   });
