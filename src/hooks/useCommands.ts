@@ -22,14 +22,21 @@ export const useCommands = () => {
         todos: ReturnType<typeof parseTodos>
       ) => ReturnType<typeof parseTodos>,
       onSuccess: () => TerminalResponse,
-      errorText: string = "Operation failed."
+      errorText: string = "Operation failed.",
+      showList: boolean = false
     ) => {
       try {
         const content = loadContent();
         const todos = parseTodos(content);
         const updated = mutate(todos);
         saveContent(serializeTodos(updated));
-        addResponse([onSuccess()]);
+        const responses: TerminalResponse[] = [onSuccess()];
+        if (showList) {
+          const updatedContent = loadContent();
+          const updatedTodos = parseTodos(updatedContent);
+          responses.push({ type: "todo", todos: updatedTodos, title: undefined });
+        }
+        addResponse(responses);
       } catch {
         addResponse([
           {
@@ -50,8 +57,8 @@ export const useCommands = () => {
           {
             type: "status",
             statusType: "error",
-            statusText: "No todo text provided.",
-            hintText: "Usage: add [todo text]",
+            statusText: "No text provided.",
+            hintText: "Usage: add [task text]",
           },
         ]);
         return;
@@ -63,7 +70,8 @@ export const useCommands = () => {
           statusType: "success",
           statusText: `Added: ${text}`,
         }),
-        "Failed to add todo."
+        "Failed to add task.",
+        true
       );
     },
     [executeWithTodos, addResponse]
@@ -75,7 +83,7 @@ export const useCommands = () => {
         const content = loadContent();
         const todos = parseTodos(content);
         const filtered = filter ? filterTodos(filter, todos) : todos;
-        const title = filter ? `Todos matching ${filter}` : "All todos";
+        const title = filter ? `Tasks matching ${filter}` : undefined;
         addResponse([{ type: "todo", todos: filtered, title }]);
       } catch {
         addResponse([{ type: "todo", todos: [] }]);
@@ -105,9 +113,10 @@ export const useCommands = () => {
         () => ({
           type: "status",
           statusType: "success",
-          statusText: `Edited todo #${n}.`,
+          statusText: `Edited task #${n}.`,
         }),
-        "Failed to edit todo."
+        "Failed to edit task.",
+        true
       );
     },
     [executeWithTodos, addResponse]
@@ -124,9 +133,10 @@ export const useCommands = () => {
         () => ({
           type: "status",
           statusType: "success",
-          statusText: `Marked todo #${n} as complete.`,
+          statusText: `Marked task #${n} as complete.`,
         }),
-        "Failed to mark todo complete."
+        "Failed to mark task complete.",
+        true
       );
     },
     [executeWithTodos]
@@ -142,9 +152,10 @@ export const useCommands = () => {
         () => ({
           type: "status",
           statusType: "success",
-          statusText: `Removed todo #${n}.`,
+          statusText: `Removed task #${n}.`,
         }),
-        "Failed to remove todo."
+        "Failed to remove task.",
+        true
       );
     },
     [executeWithTodos]

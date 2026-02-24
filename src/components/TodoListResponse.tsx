@@ -1,4 +1,4 @@
-import { memo, type FunctionComponent, type JSX } from "react";
+import { memo, Fragment, type FunctionComponent, type JSX } from "react";
 import type { TodoItem } from "@types";
 import Response from "./Response";
 
@@ -20,24 +20,26 @@ const colorWord = (
   contexts: Set<string>,
   projects: Set<string>
 ): JSX.Element | string => {
-  if (contexts.has(word)) return <span className="text-cyan-400">{word}</span>;
-  if (projects.has(word)) return <span className="text-blue-400">{word}</span>;
+  if (contexts.has(word)) return word;
+  if (projects.has(word)) return word;
   if (DATE_REGEX.test(word))
     return <span className="text-gray-500">{word}</span>;
   return word;
 };
 
-const renderText = (text: string, contexts: string[], projects: string[]) => {
+const renderText = (text: string, contexts: string[], projects: string[], done = false) => {
+  if (done) return <>{text}</>;
+
   const ctx = new Set(contexts);
   const proj = new Set(projects);
   const words = text.split(/(\s+)/);
 
   return (
-    <>
+    <Fragment>
       {words.map((word, i) => (
-        <span key={i}>{colorWord(word, ctx, proj)}</span>
+        <Fragment key={i}>{colorWord(word, ctx, proj)}</Fragment>
       ))}
-    </>
+    </Fragment>
   );
 };
 
@@ -56,9 +58,8 @@ const Line = memo(({ num, item }: LineProps) => {
     <p className="flex">
       <span className="text-gray-500 shrink-0 w-6">{num}.</span>
       <span className={cls}>
-        {done && <span className="text-gray-500 mr-1">✓</span>}
-        {pri && <span className={pri}>({priority})</span>}
-        <span className="pl-1">{renderText(text, contexts, projects)}</span>
+{pri && <span className={pri}>({priority})</span>}
+        <span className="pl-1">{renderText(text, contexts, projects, done)}</span>
       </span>
     </p>
   );
