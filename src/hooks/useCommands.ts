@@ -32,9 +32,11 @@ export const useCommands = () => {
         saveContent(serializeTodos(updated));
         const responses: TerminalResponse[] = [onSuccess()];
         if (showList) {
-          const updatedContent = loadContent();
-          const updatedTodos = parseTodos(updatedContent);
-          responses.push({ type: "todo", todos: updatedTodos, title: undefined });
+          /**
+           * Optimization: use the updated todos directly instead of re-parsing from storage.
+           * This avoids an unnecessary O(n) parsing operation.
+           */
+          responses.push({ type: "todo", todos: updated, title: undefined });
         }
         addResponse(responses);
       } catch {

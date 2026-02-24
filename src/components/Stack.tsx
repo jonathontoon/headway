@@ -11,6 +11,10 @@ const Stack: FunctionComponent<PropsWithChildren<StackProps>> = ({
   gap = 1,
   className = "",
   children,
-}) => <div className={`flex flex-col ${GAP[gap]} ${className}`.trim()}>{children}</div>;
+}) => (
+  <div className={`flex flex-col ${GAP[gap]} ${className}`.trim()}>
+    {children}
+  </div>
+);
 
 export default Stack;

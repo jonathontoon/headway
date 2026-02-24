@@ -21,7 +21,8 @@ export const commandDefs: CommandDef[] = [
   },
   {
     usage: "list [filter]",
-    description: "List all tasks. Filters: completed, archived, @context, +project",
+    description:
+      "List all tasks. Filters: completed, archived, @context, +project",
     category: "Todo",
   },
   {

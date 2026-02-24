@@ -11,11 +11,13 @@ const PRIORITY_COLORS: Record<string, string> = {
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 const renderText = (text: string) =>
-  text.split(/(\s+)/).map((word, i) => (
-    <Fragment key={i}>
-      {DATE_REGEX.test(word) ? <Muted>{word}</Muted> : word}
-    </Fragment>
-  ));
+  text
+    .split(/(\s+)/)
+    .map((word, i) => (
+      <Fragment key={i}>
+        {DATE_REGEX.test(word) ? <Muted>{word}</Muted> : word}
+      </Fragment>
+    ));
 
 interface LineProps {
   num: number;
@@ -28,8 +30,10 @@ const Line = memo(({ num, item }: LineProps) => {
   return (
     <p className="flex">
       <Muted className="shrink-0 w-6">{num}.</Muted>
-      <span className={completed ? "line-through text-gray-600" : "text-gray-100"}>
-{priority && !completed && (
+      <span
+        className={completed ? "line-through text-gray-600" : "text-gray-100"}
+      >
+        {priority && !completed && (
           <span className={PRIORITY_COLORS[priority] ?? "text-gray-500"}>
             ({priority})
           </span>

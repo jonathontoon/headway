@@ -1,4 +1,4 @@
-import type { FunctionComponent } from "react";
+import { memo, type FunctionComponent } from "react";
 
 import Hint from "./Hint";
 import Response from "./Response";
@@ -9,14 +9,13 @@ interface DefaultResponseProps {
   hintText?: string;
 }
 
-const DefaultResponse: FunctionComponent<DefaultResponseProps> = ({
-  responseText,
-  hintText,
-}) => (
-  <Response>
-    <Text>{responseText}</Text>
-    {hintText && <Hint>{hintText}</Hint>}
-  </Response>
+const DefaultResponse: FunctionComponent<DefaultResponseProps> = memo(
+  ({ responseText, hintText }) => (
+    <Response>
+      <Text>{responseText}</Text>
+      {hintText && <Hint>{hintText}</Hint>}
+    </Response>
+  )
 );
 
 export default DefaultResponse;

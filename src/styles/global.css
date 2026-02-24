@@ -61,6 +61,10 @@ html {
 }
 
 @keyframes terminal-blink {
-  0%   { opacity: 1; }
-  50%  { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
