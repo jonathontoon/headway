@@ -1,5 +1,11 @@
 import type { TerminalResponse } from '@models/terminalResponse';
 
+export type HistoryItem = TerminalResponse & { id: string };
+
+let _nextId = 0;
+const withIds = (items: TerminalResponse[]): HistoryItem[] =>
+  items.map((item) => ({ ...item, id: String(_nextId++) }));
+
 export type TerminalAction =
   | { type: 'PUSH'; payload: TerminalResponse[] }
   | { type: 'RESET' }
@@ -7,13 +13,13 @@ export type TerminalAction =
   | { type: 'SET_PROCESSING'; payload: boolean };
 
 export type TerminalState = {
-  history: TerminalResponse[];
+  history: HistoryItem[];
   input: string;
   isProcessing: boolean;
 };
 
 export const INITIAL_STATE: TerminalState = {
-  history: [{ type: 'logo' }, { type: 'intro' }],
+  history: withIds([{ type: 'logo' }, { type: 'intro' }]),
   input: '',
   isProcessing: false,
 };
@@ -21,7 +27,7 @@ export const INITIAL_STATE: TerminalState = {
 export const terminalReducer = (state: TerminalState, action: TerminalAction): TerminalState => {
   switch (action.type) {
     case 'PUSH':
-      return { ...state, history: [...state.history, ...action.payload] };
+      return { ...state, history: [...state.history, ...withIds(action.payload)] };
     case 'RESET':
       return { ...state, history: [] };
     case 'SET_INPUT':

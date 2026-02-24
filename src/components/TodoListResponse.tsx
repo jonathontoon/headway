@@ -1,4 +1,4 @@
-import { type FunctionComponent, type JSX } from 'react';
+import { memo, type FunctionComponent, type JSX } from 'react';
 import type { TodoItem } from '@services/todoService';
 
 import Response from '@components/Response';
@@ -37,7 +37,9 @@ interface TodoLineItemProps {
   todo: TodoItem;
 }
 
-const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+const TodoLineItem: FunctionComponent<TodoLineItemProps> = memo(({
   number,
   todo,
 }) => {
@@ -58,7 +60,7 @@ const TodoLineItem: FunctionComponent<TodoLineItemProps> = ({
       </span>
     </p>
   );
-};
+}) as FunctionComponent<TodoLineItemProps>;
 
 /**
  * Get color class based on priority
@@ -84,28 +86,28 @@ const renderTodoText = (
   contexts: string[],
   projects: string[]
 ): JSX.Element => {
-  // Split text into words
   const words = text.split(/(\s+)/);
+  const contextSet = new Set(contexts);
+  const projectSet = new Set(projects);
 
   return (
     <>
       {words.map((word, idx) => {
-        if (contexts.includes(word)) {
+        if (contextSet.has(word)) {
           return (
             <span key={idx} className="text-cyan-400">
               {word}
             </span>
           );
         }
-        if (projects.includes(word)) {
+        if (projectSet.has(word)) {
           return (
             <span key={idx} className="text-blue-400">
               {word}
             </span>
           );
         }
-        // Check if word is a date (YYYY-MM-DD)
-        if (/^\d{4}-\d{2}-\d{2}$/.test(word)) {
+        if (DATE_REGEX.test(word)) {
           return (
             <span key={idx} className="text-gray-500">
               {word}

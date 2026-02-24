@@ -12,7 +12,7 @@ const parseArguments = (prompt: string, command: string): string[] => {
   }
 
   const args: string[] = [];
-  let currentArg: string = '';
+  let currentChars: string[] = [];
   let inQuotes: boolean = false;
 
   for (let i = 0; i < argumentString.length; i++) {
@@ -24,17 +24,17 @@ const parseArguments = (prompt: string, command: string): string[] => {
     }
 
     if (char === ' ' && !inQuotes) {
-      if (currentArg) {
-        args.push(currentArg);
-        currentArg = '';
+      if (currentChars.length > 0) {
+        args.push(currentChars.join(''));
+        currentChars = [];
       }
     } else {
-      currentArg += char;
+      currentChars.push(char);
     }
   }
 
-  if (currentArg) {
-    args.push(currentArg);
+  if (currentChars.length > 0) {
+    args.push(currentChars.join(''));
   }
 
   return args;

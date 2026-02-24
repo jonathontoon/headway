@@ -45,7 +45,7 @@ const Terminal: FunctionComponent<TerminalProps> = ({
 
   return (
     <ScrollView className={className} ref={terminalRef}>
-      {history.map((item, index) => renderResponse(item, index))}
+      {history.map((item) => renderResponse(item))}
       {!hidden && (
         <Prompt
           value={input}

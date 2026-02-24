@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import Terminal from '@components/Terminal';
 
@@ -12,8 +12,17 @@ const App = () => {
   const { input, isProcessing } = useTerminalState();
   const dispatch = useTerminalDispatch();
 
-  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
-  const [historyIdx, setHistoryIdx] = useState(-1);
+  // Keep a ref to the current input value so handleInputKeyDown doesn't need
+  // `input` as a dependency (avoids recreating the callback on every keystroke).
+  const inputRef = useRef(input);
+  inputRef.current = input;
+
+  // Merge command history and navigation index into a single state object so
+  // arrow-key handling always sees consistent values via the functional updater.
+  const [cmdHist, setCmdHist] = useState<{ items: string[]; idx: number }>({
+    items: [],
+    idx: -1,
+  });
 
   const executePrompt = useCallback(
     (prompt: string) => {
@@ -32,26 +41,31 @@ const App = () => {
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
-        pushResponses(dispatch, [{ type: 'prompt', value: input }]);
-        executePrompt(input);
-        if (input.trim()) {
-          setCmdHistory((prev) => [input, ...prev]);
-        }
-        setHistoryIdx(-1);
+        const current = inputRef.current;
+        pushResponses(dispatch, [{ type: 'prompt', value: current }]);
+        executePrompt(current);
+        setCmdHist((prev) => ({
+          items: current.trim() ? [current, ...prev.items] : prev.items,
+          idx: -1,
+        }));
         dispatch({ type: 'SET_INPUT', payload: '' });
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        const newIdx = Math.min(historyIdx + 1, cmdHistory.length - 1);
-        setHistoryIdx(newIdx);
-        dispatch({ type: 'SET_INPUT', payload: cmdHistory[newIdx] ?? '' });
+        setCmdHist((prev) => {
+          const newIdx = Math.min(prev.idx + 1, prev.items.length - 1);
+          dispatch({ type: 'SET_INPUT', payload: prev.items[newIdx] ?? '' });
+          return { ...prev, idx: newIdx };
+        });
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        const newIdx = historyIdx - 1;
-        setHistoryIdx(newIdx);
-        dispatch({ type: 'SET_INPUT', payload: newIdx < 0 ? '' : (cmdHistory[newIdx] ?? '') });
+        setCmdHist((prev) => {
+          const newIdx = prev.idx - 1;
+          dispatch({ type: 'SET_INPUT', payload: newIdx < 0 ? '' : (prev.items[newIdx] ?? '') });
+          return { ...prev, idx: newIdx };
+        });
       }
     },
-    [executePrompt, input, dispatch, cmdHistory, historyIdx]
+    [executePrompt, dispatch]
   );
 
   return (

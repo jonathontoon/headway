@@ -1,4 +1,4 @@
-import { forwardRef, type PropsWithChildren, useState } from 'react';
+import { forwardRef, useCallback, type PropsWithChildren, useState } from 'react';
 import useViewportResize from '@hooks/useViewportResize';
 
 interface ScrollViewProps {
@@ -11,9 +11,10 @@ const ScrollView = forwardRef<HTMLElement, PropsWithChildren<ScrollViewProps>>(
       window.visualViewport?.height || window.innerHeight
     );
 
-    const handleResize = () => {
-      setHeight(window.visualViewport?.height || window.innerHeight);
-    };
+    const handleResize = useCallback(() => {
+      const newHeight = window.visualViewport?.height || window.innerHeight;
+      setHeight((h) => (h === newHeight ? h : newHeight));
+    }, []);
 
     useViewportResize(handleResize);
 

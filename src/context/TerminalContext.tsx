@@ -5,7 +5,7 @@ import useViewportResize from '@hooks/useViewportResize';
 import type { TerminalAction, TerminalState } from '@reducers/terminalReducer';
 import { terminalReducer, INITIAL_STATE } from '@reducers/terminalReducer';
 
-export type { TerminalAction, TerminalState } from '@reducers/terminalReducer';
+export type { TerminalAction, TerminalState, HistoryItem } from '@reducers/terminalReducer';
 
 const TerminalStateContext = createContext<TerminalState | undefined>(undefined);
 const TerminalDispatchContext = createContext<React.Dispatch<TerminalAction> | undefined>(undefined);
@@ -25,15 +25,8 @@ export const TerminalProvider = ({ children }: TerminalProviderProps) => {
   const [state, dispatch] = useReducer(terminalReducer, INITIAL_STATE);
 
   const windowResizeEvent = useCallback(() => {
-    if (terminalRef?.current) {
-      const computedStyle = window.getComputedStyle(terminalRef.current);
-      const paddingTop = parseInt(computedStyle.paddingTop, 10);
-      const paddingBottom = parseInt(computedStyle.paddingBottom, 10);
-
-      terminalRef.current.scrollTo({
-        top: terminalRef.current.scrollHeight + paddingTop + paddingBottom,
-        behavior: 'instant',
-      });
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, []);
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { TerminalResponse } from '@models/terminalResponse';
+import type { HistoryItem } from '@reducers/terminalReducer';
 
 import StatusResponse from '@components/StatusResponse';
 import TodoListResponse from '@components/TodoListResponse';
@@ -10,49 +10,49 @@ import LogoResponse from '@components/LogoResponse';
 import DefaultResponse from '@components/DefaultResponse';
 import Prompt from '@components/Prompt';
 
-type Renderer = (item: TerminalResponse, key: number) => ReactNode;
+type Renderer = (item: HistoryItem) => ReactNode;
 
-const renderers: Partial<Record<TerminalResponse['type'], Renderer>> = {
-  status: (item, key) => {
+const renderers: Partial<Record<HistoryItem['type'], Renderer>> = {
+  status: (item) => {
     if (item.type !== 'status') return null;
     return (
       <StatusResponse
-        key={key}
+        key={item.id}
         statusType={item.statusType}
         statusText={item.statusText}
         hintText={item.hintText}
       />
     );
   },
-  'todo-list': (item, key) => {
+  'todo-list': (item) => {
     if (item.type !== 'todo-list') return null;
-    return <TodoListResponse key={key} todos={item.todos} title={item.title} />;
+    return <TodoListResponse key={item.id} todos={item.todos} title={item.title} />;
   },
-  'tag-list': (item, key) => {
+  'tag-list': (item) => {
     if (item.type !== 'tag-list') return null;
-    return <TagListResponse key={key} tags={item.tags} variant={item.variant} />;
+    return <TagListResponse key={item.id} tags={item.tags} variant={item.variant} />;
   },
-  help: (_item, key) => <HelpResponse key={key} />,
-  intro: (_item, key) => <IntroResponse key={key} />,
-  logo: (_item, key) => <LogoResponse key={key} />,
-  default: (item, key) => {
+  help: (item) => <HelpResponse key={item.id} />,
+  intro: (item) => <IntroResponse key={item.id} />,
+  logo: (item) => <LogoResponse key={item.id} />,
+  default: (item) => {
     if (item.type !== 'default') return null;
     return (
       <DefaultResponse
-        key={key}
+        key={item.id}
         responseText={`Command '${item.commandName}' not recognized.`}
         hintText={item.hintText ?? "Type 'help' for available commands."}
       />
     );
   },
-  prompt: (item, key) => {
+  prompt: (item) => {
     if (item.type !== 'prompt') return null;
-    return <Prompt key={key} value={item.value} disabled />;
+    return <Prompt key={item.id} value={item.value} disabled />;
   },
   clear: () => null,
 };
 
-const renderResponse = (item: TerminalResponse, key: number): ReactNode =>
-  renderers[item.type]?.(item, key) ?? null;
+const renderResponse = (item: HistoryItem): ReactNode =>
+  renderers[item.type]?.(item) ?? null;
 
 export default renderResponse;
