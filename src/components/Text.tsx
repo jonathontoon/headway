@@ -1,7 +1,12 @@
 import { type FunctionComponent, type PropsWithChildren } from "react";
 
-const Text: FunctionComponent<PropsWithChildren> = ({ children }) => (
-  <p>{children}</p>
-);
+interface TextProps {
+  className?: string;
+}
+
+const Text: FunctionComponent<PropsWithChildren<TextProps>> = ({
+  className = "",
+  children,
+}) => <p className={className || undefined}>{children}</p>;
 
 export default Text;

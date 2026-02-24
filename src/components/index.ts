@@ -1,17 +1,22 @@
 // Main component
 export { default as Terminal } from "./Terminal";
 
-// Base components
-export { default as Hint } from "./Hint";
-export { default as Muted } from "./Muted";
-export { default as Prompt } from "./Prompt";
+// Layout
 export { default as Response } from "./Response";
 export { default as ScrollView } from "./ScrollView";
 export { default as Stack } from "./Stack";
-export { default as Status, type StatusType } from "./Status";
+
+// Text
+export { default as Hint } from "./Hint";
+export { default as Label } from "./Label";
+export { default as Muted } from "./Muted";
 export { default as Text } from "./Text";
 
-// Response components
+// Interactive
+export { default as Prompt } from "./Prompt";
+export { default as Status, type StatusType } from "./Status";
+
+// Responses
 export { default as DefaultResponse } from "./DefaultResponse";
 export { default as HelpResponse } from "./HelpResponse";
 export { default as IntroResponse } from "./IntroResponse";
