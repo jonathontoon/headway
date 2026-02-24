@@ -1,6 +1,6 @@
 import { Terminal } from "@components";
 import { useTerminalStore } from "@contexts/TerminalContext";
-import { resolveCommand } from "@lib/commands";
+import { useCommands } from "@hooks/useCommands";
 import { parseCommand, parseArguments } from "@utils/parse";
 
 const App = () => {
@@ -13,12 +13,85 @@ const App = () => {
     navigateHistory,
   } = useTerminalStore();
 
+  const commands = useCommands();
+
   const executePrompt = (prompt: string) => {
     const command = parseCommand(prompt);
     const args = parseArguments(prompt, command);
-    const responses = resolveCommand(command, args);
-    addResponse([{ type: "prompt", value: prompt }, ...responses]);
+
+    // Show prompt in history
+    addResponse([{ type: "prompt", value: prompt }]);
     addCommand(prompt);
+
+    // Execute command
+    switch (command) {
+      case "add":
+      case "a":
+        commands.add(args.join(" "));
+        break;
+      case "list":
+      case "ls":
+        commands.list(args[0]);
+        break;
+      case "edit":
+        if (args.length < 2) {
+          addResponse([
+            {
+              type: "status",
+              statusType: "error",
+              statusText: "Missing arguments.",
+              hintText: "Usage: edit [number] [text]",
+            },
+          ]);
+        } else {
+          commands.edit(parseInt(args[0], 10), args.slice(1).join(" "));
+        }
+        break;
+      case "done":
+        if (!args[0]) {
+          addResponse([
+            {
+              type: "status",
+              statusType: "error",
+              statusText: "Invalid todo number.",
+              hintText: "Usage: done [number]",
+            },
+          ]);
+        } else {
+          commands.done(parseInt(args[0], 10));
+        }
+        break;
+      case "delete":
+      case "rm":
+        if (!args[0]) {
+          addResponse([
+            {
+              type: "status",
+              statusType: "error",
+              statusText: "Invalid todo number.",
+              hintText: "Usage: delete [number]",
+            },
+          ]);
+        } else {
+          commands.delete(parseInt(args[0], 10));
+        }
+        break;
+      case "archive":
+        commands.archive();
+        break;
+      case "help":
+        addResponse([{ type: "help" }]);
+        break;
+      default:
+        addResponse([
+          {
+            type: "default",
+            commandName: command,
+            hintText: "Type 'help' for commands.",
+          },
+        ]);
+    }
+
     setInput("");
   };
 
