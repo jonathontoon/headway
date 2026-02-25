@@ -1,72 +1,38 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  type ChangeEvent,
-  type KeyboardEvent,
-  type FunctionComponent,
-} from "react";
-
-import ScrollView from "./ScrollView";
-import Prompt from "./Prompt";
-import TerminalHistory from "./TerminalHistory";
-import useViewportResize from "@hooks/useViewportResize";
+import { useEffect, useRef } from "react";
 import { useTerminalStore } from "@stores/useTerminalStore";
+import { useTerminal } from "@hooks/useTerminal";
+import { useScrollToBottom } from "@hooks/useScrollToBottom";
+import HistoryEntry from "@components/HistoryEntry";
+import Prompt from "@components/Prompt";
 
-interface TerminalProps {
-  className?: string;
-  onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  onInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
-  disabled?: boolean;
-  hidden?: boolean;
-}
+const Terminal = () => {
+  const history = useTerminalStore((s) => s.history);
+  const { input, onInputChange, onInputKeyDown } = useTerminal();
 
-const Terminal: FunctionComponent<TerminalProps> = ({
-  className = "",
-  onInputChange,
-  onInputKeyDown,
-  disabled = false,
-  hidden = false,
-}) => {
-  const { history, input } = useTerminalStore();
-  const terminalRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const scrollToBottom = useCallback(() => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  }, []);
-
-  useViewportResize(scrollToBottom);
+  useScrollToBottom(scrollRef, [history]);
 
   useEffect(() => {
-    scrollToBottom();
-    focusInput();
-  }, [history, scrollToBottom, focusInput]);
+    inputRef.current?.focus();
+  }, [history]);
 
   return (
-    <ScrollView className={className} ref={terminalRef}>
-      {/*
-        Optimization: TerminalHistory is memoized to prevent re-rendering the
-        entire history on every keystroke in the Prompt below.
-      */}
-      <TerminalHistory history={history} />
-      {!hidden && (
-        <Prompt
-          value={input}
-          onChange={onInputChange}
-          onKeyDown={onInputKeyDown}
-          placeholder="Write a command..."
-          ref={inputRef}
-          disabled={disabled}
-        />
-      )}
-    </ScrollView>
+    <div
+      ref={scrollRef}
+      className="h-full overflow-y-auto p-4 flex flex-col gap-1"
+    >
+      {history.map((entry) => (
+        <HistoryEntry key={entry.id} entry={entry} />
+      ))}
+      <Prompt
+        ref={inputRef}
+        value={input}
+        onChange={onInputChange}
+        onKeyDown={onInputKeyDown}
+      />
+    </div>
   );
 };
 

@@ -1,108 +1,112 @@
 import { create } from "zustand";
-import type { TerminalResponse, HistoryItem } from "@types";
-import { parseCommand, parseArguments } from "@utils/parse";
-import { commands } from "../commands";
+import { devtools } from "zustand/middleware";
+import { ResponseType, type HistoryEntry } from "@types";
+import { processCommand } from "@utils/commands";
 
-const INITIAL_HISTORY: HistoryItem[] = [
-  { type: "logo", id: "0" },
-  { type: "intro", id: "1" },
-];
+const WELCOME: HistoryEntry = {
+  id: crypto.randomUUID(),
+  command: "",
+  responses: [
+    {
+      type: ResponseType.Text,
+      text: "Welcome to Headway. Type 'help' for available commands.",
+    },
+  ],
+};
 
-interface TerminalStore {
-  history: HistoryItem[];
+interface TerminalState {
+  history: HistoryEntry[];
   input: string;
-  isProcessing: boolean;
-  historyIndex: number;
-  commandHistory: string[];
-  addResponse: (responses: TerminalResponse[]) => void;
-  setInput: (value: string) => void;
-  setProcessing: (value: boolean) => void;
-  reset: () => void;
-  navigateHistory: (direction: "up" | "down") => void;
-  executeCommand: (prompt: string) => void;
+  cmdHistory: string[];
+  cmdHistoryIndex: number;
 }
 
-export const useTerminalStore = create<TerminalStore>((set) => {
-  const addResponse = (responses: TerminalResponse[]) => {
-    if (responses.some((r) => r.type === "clear")) {
-      set({ history: [] });
-      return;
-    }
-    set((state) => ({
-      history: [
-        ...state.history,
-        ...responses.map((item, i) => ({
-          ...item,
-          id: String(state.history.length + i),
-        })),
-      ],
-    }));
-  };
+interface TerminalActions {
+  setInput: (value: string) => void;
+  navigateHistory: (dir: "up" | "down") => void;
+  executeCommand: (raw: string) => void;
+}
 
-  const setInput = (value: string) => set({ input: value });
-  const setProcessing = (value: boolean) => set({ isProcessing: value });
-  const reset = () => set({ history: [] });
-
-  const navigateHistory = (direction: "up" | "down") => {
-    set((state) => {
-      const newIdx =
-        direction === "up"
-          ? Math.min(state.historyIndex + 1, state.commandHistory.length - 1)
-          : Math.max(state.historyIndex - 1, -1);
-      return {
-        historyIndex: newIdx,
-        input: state.commandHistory[newIdx] ?? "",
-      };
-    });
-  };
-
-  const executeCommand = (prompt: string) => {
-    const command = parseCommand(prompt);
-    const args = parseArguments(prompt, command);
-
-    set((state) => ({
-      history: [
-        ...state.history,
-        { type: "prompt" as const, value: prompt, id: String(state.history.length) },
-      ],
-      commandHistory: prompt.trim()
-        ? [prompt, ...state.commandHistory]
-        : state.commandHistory,
-      historyIndex: -1,
+export const useTerminalStore = create<TerminalState & TerminalActions>()(
+  devtools(
+    (set, get) => ({
+      history: [WELCOME],
       input: "",
-    }));
+      cmdHistory: [],
+      cmdHistoryIndex: -1,
 
-    const handler = commands[command];
-    const responses: TerminalResponse[] = handler
-      ? handler(args)
-      : [{ type: "default", commandName: command, hintText: "Type 'help' for commands." }];
+      setInput: (value) => set({ input: value }, false, "setInput"),
 
-    if (responses.some((r) => r.type === "clear")) {
-      set({ history: [] });
-    } else {
-      set((state) => ({
-        history: [
-          ...state.history,
-          ...responses.map((item, i) => ({
-            ...item,
-            id: String(state.history.length + i),
-          })),
-        ],
-      }));
-    }
-  };
+      navigateHistory: (dir) => {
+        const { cmdHistory, cmdHistoryIndex } = get();
+        if (dir === "up") {
+          const newIndex = Math.min(cmdHistoryIndex + 1, cmdHistory.length - 1);
+          set(
+            { cmdHistoryIndex: newIndex, input: cmdHistory[newIndex] ?? "" },
+            false,
+            "navigateHistory/up"
+          );
+        } else {
+          const newIndex = cmdHistoryIndex - 1;
+          if (newIndex < 0) {
+            set(
+              { cmdHistoryIndex: -1, input: "" },
+              false,
+              "navigateHistory/down"
+            );
+          } else {
+            set(
+              { cmdHistoryIndex: newIndex, input: cmdHistory[newIndex] ?? "" },
+              false,
+              "navigateHistory/down"
+            );
+          }
+        }
+      },
 
-  return {
-    history: INITIAL_HISTORY,
-    input: "",
-    isProcessing: false,
-    historyIndex: -1,
-    commandHistory: [],
-    addResponse,
-    setInput,
-    setProcessing,
-    reset,
-    navigateHistory,
-    executeCommand,
-  };
-});
+      executeCommand: (raw) => {
+        const trimmed = raw.trim();
+        if (!trimmed) return;
+
+        const [command, ...args] = trimmed.split(/\s+/);
+
+        if (command === "clear") {
+          set(
+            { history: [], input: "", cmdHistoryIndex: -1 },
+            false,
+            "executeCommand/clear"
+          );
+          return;
+        }
+
+        const { history, cmdHistory } = get();
+        let responses: HistoryEntry["responses"];
+        try {
+          responses = processCommand(command, args);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "unknown error";
+          responses = [
+            { type: ResponseType.Error, text: `${command}: ${message}` },
+          ];
+        }
+        const entry: HistoryEntry = {
+          id: crypto.randomUUID(),
+          command: trimmed,
+          responses,
+        };
+
+        set(
+          {
+            history: [...history, entry],
+            cmdHistory: [trimmed, ...cmdHistory],
+            input: "",
+            cmdHistoryIndex: -1,
+          },
+          false,
+          "executeCommand"
+        );
+      },
+    }),
+    { name: "TerminalStore" }
+  )
+);

@@ -1,68 +1,21 @@
-import type { StatusType } from "@components/Status";
-
-// ============================================================================
-// Todo Models
-// ============================================================================
-
-export interface TodoItem {
-  id: string;
-  raw: string;
-  completed: boolean;
-  archived?: boolean;
-  priority?: string;
-  completionDate?: string;
-  creationDate?: string;
-  text: string;
-  contexts: string[];
-  projects: string[];
+export enum ResponseType {
+  Text = "text",
+  Error = "error",
+  Todo = "todo",
 }
 
-// ============================================================================
-// Terminal Responses
-// ============================================================================
+export type TextResponse = { type: ResponseType.Text; text: string };
+export type ErrorResponse = { type: ResponseType.Error; text: string };
+export type TodoResponse = {
+  type: ResponseType.Todo;
+  index: number;
+  raw: string;
+};
 
-export type TerminalResponse =
-  | {
-      type: "status";
-      statusType: StatusType;
-      statusText: string;
-      hintText?: string;
-    }
-  | { type: "todo"; todos: TodoItem[]; title?: string }
-  | { type: "tag"; tags: string[]; variant: "context" | "project" }
-  | { type: "help" }
-  | { type: "intro" }
-  | { type: "logo" }
-  | { type: "default"; commandName: string; hintText?: string }
-  | { type: "clear" }
-  | { type: "prompt"; value: string };
+export type ResponseItem = TextResponse | ErrorResponse | TodoResponse;
 
-// ============================================================================
-// Terminal State
-// ============================================================================
-
-export type HistoryItem = TerminalResponse & { id: string };
-
-// ============================================================================
-// Type Helpers
-// ============================================================================
-
-/**
- * Extract a specific discriminated union variant by type literal.
- * Usage: ExtractByType<HistoryItem, 'status'> instead of Extract<HistoryItem, { type: 'status' }>
- */
-export type ExtractByType<
-  T extends { type: string },
-  K extends T["type"],
-> = Extract<T, { type: K }>;
-
-// Convenience aliases for HistoryItem variants
-export type StatusHistoryItem = ExtractByType<HistoryItem, "status">;
-export type TodoHistoryItem = ExtractByType<HistoryItem, "todo">;
-export type TagHistoryItem = ExtractByType<HistoryItem, "tag">;
-export type HelpHistoryItem = ExtractByType<HistoryItem, "help">;
-export type IntroHistoryItem = ExtractByType<HistoryItem, "intro">;
-export type LogoHistoryItem = ExtractByType<HistoryItem, "logo">;
-export type DefaultHistoryItem = ExtractByType<HistoryItem, "default">;
-export type ClearHistoryItem = ExtractByType<HistoryItem, "clear">;
-export type PromptHistoryItem = ExtractByType<HistoryItem, "prompt">;
+export interface HistoryEntry {
+  id: string;
+  command: string;
+  responses: ResponseItem[];
+}

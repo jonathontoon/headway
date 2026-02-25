@@ -80,13 +80,13 @@ Stateless functions for reading and writing todo data.
 
 A React context backed by `useReducer`. The state shape is:
 
-| Field | Type | Purpose |
-|---|---|---|
-| `history` | `HistoryItem[]` | All rendered terminal output |
-| `input` | `string` | Current prompt value |
-| `isProcessing` | `boolean` | Async guard (reserved) |
-| `commandHistory` | `string[]` | Previously entered commands |
-| `historyIndex` | `number` | Arrow-key navigation cursor |
+| Field            | Type            | Purpose                      |
+| ---------------- | --------------- | ---------------------------- |
+| `history`        | `HistoryItem[]` | All rendered terminal output |
+| `input`          | `string`        | Current prompt value         |
+| `isProcessing`   | `boolean`       | Async guard (reserved)       |
+| `commandHistory` | `string[]`      | Previously entered commands  |
+| `historyIndex`   | `number`        | Arrow-key navigation cursor  |
 
 Actions: `PUSH_RESPONSE`, `SET_INPUT`, `SET_PROCESSING`, `RESET`, `ADD_COMMAND`, `SET_HISTORY_INDEX`.
 
@@ -157,17 +157,17 @@ Current command modules: `add`, `list`, `edit`, `done`, `remove`, `help`.
 
 `TerminalResponse` is a discriminated union defined in `src/types.ts`. Each variant maps to a component:
 
-| `type` | Component | Description |
-|---|---|---|
-| `"status"` | `StatusResponse` | Success / error / info message with optional hint |
-| `"todo"` | `TodoListResponse` | Rendered list of `TodoItem` objects |
-| `"tag"` | `TagListResponse` | List of `@context` or `+project` tags |
-| `"help"` | `HelpResponse` | Command reference table |
-| `"intro"` | `IntroResponse` | Welcome message shown on load |
-| `"logo"` | `LogoResponse` | ASCII logo shown on load |
-| `"default"` | `DefaultResponse` | Unknown command fallback |
-| `"clear"` | _(handled by reducer)_ | Resets `history` to `[]` |
-| `"prompt"` | `Prompt` (read-only) | Echo of submitted input |
+| `type`      | Component              | Description                                       |
+| ----------- | ---------------------- | ------------------------------------------------- |
+| `"status"`  | `StatusResponse`       | Success / error / info message with optional hint |
+| `"todo"`    | `TodoListResponse`     | Rendered list of `TodoItem` objects               |
+| `"tag"`     | `TagListResponse`      | List of `@context` or `+project` tags             |
+| `"help"`    | `HelpResponse`         | Command reference table                           |
+| `"intro"`   | `IntroResponse`        | Welcome message shown on load                     |
+| `"logo"`    | `LogoResponse`         | ASCII logo shown on load                          |
+| `"default"` | `DefaultResponse`      | Unknown command fallback                          |
+| `"clear"`   | _(handled by reducer)_ | Resets `history` to `[]`                          |
+| `"prompt"`  | `Prompt` (read-only)   | Echo of submitted input                           |
 
 `HistoryItem` = `TerminalResponse & { id: string }` — the `id` is assigned by the reducer when responses are pushed.
 
