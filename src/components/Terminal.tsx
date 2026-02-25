@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useTerminalStore } from "@stores/useTerminalStore";
 import { useTerminal } from "@hooks/useTerminal";
 import { useScrollToBottom } from "@hooks/useScrollToBottom";
-import HistoryEntry from "@components/HistoryEntry";
+import TerminalHistory from "@components/TerminalHistory";
 import Prompt from "@components/Prompt";
 
 const Terminal = () => {
@@ -23,9 +23,12 @@ const Terminal = () => {
       ref={scrollRef}
       className="h-full overflow-y-auto p-4 flex flex-col gap-1"
     >
-      {history.map((entry) => (
-        <HistoryEntry key={entry.id} entry={entry} />
-      ))}
+      {/*
+        Optimization: TerminalHistory is memoized and only depends on 'history'.
+        This prevents the entire history list from being re-mapped/re-processed
+        on every keystroke (when 'input' changes).
+      */}
+      <TerminalHistory history={history} />
       <Prompt
         ref={inputRef}
         value={input}
