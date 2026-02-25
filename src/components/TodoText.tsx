@@ -25,9 +25,9 @@ const TodoText = ({ raw }: Props) => {
   const tokens = tokenize(done ? raw.slice(2) : raw);
 
   return (
-    <span className={done ? "line-through" : ""}>
+    <span className={done ? "text-zinc-700 line-through" : ""}>
       {tokens.flatMap((token, i) => [
-        <TodoToken key={i} word={token.word} className={token.className} />,
+        <TodoToken key={i} word={token.word} className={done ? "" : token.className} />,
         i < tokens.length - 1 ? " " : null,
       ])}
     </span>
