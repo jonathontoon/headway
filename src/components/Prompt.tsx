@@ -62,7 +62,7 @@ const Prompt = memo(
         <Response className="flex items-center">
           <span className="text-sky-400">~</span>
           <span className="text-zinc-50">$</span>
-          <div className="relative ml-2 flex-1 overflow-hidden">
+          <div className="relative ml-2 flex-1 min-w-0 overflow-hidden">
             {/* Invisible input — captures all keyboard events and defines container height */}
             <input
               className="w-full border-none bg-transparent text-transparent caret-transparent outline-none"

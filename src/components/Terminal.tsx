@@ -11,7 +11,7 @@ import ScrollView from "./ScrollView";
 import Prompt from "./Prompt";
 import TerminalHistory from "./TerminalHistory";
 import useViewportResize from "@hooks/useViewportResize";
-import { useTerminalStore } from "@contexts/TerminalContext";
+import { useTerminalStore } from "@stores/useTerminalStore";
 
 interface TerminalProps {
   className?: string;

@@ -26,7 +26,7 @@ const ScrollView = forwardRef<HTMLElement, PropsWithChildren<ScrollViewProps>>(
     return (
       <section
         ref={ref}
-        className={`p-4 overflow-y-auto ${className || ""}`}
+        className={`p-4 overflow-y-auto overflow-x-hidden ${className || ""}`}
         style={{ maxHeight: `${height}px` }}
       >
         {children}

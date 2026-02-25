@@ -14,6 +14,7 @@ export default defineConfig({
       "@hooks": resolve(__dirname, "src/hooks"),
       "@lib": resolve(__dirname, "src/lib"),
       "@types": resolve(__dirname, "src/types.ts"),
+      "@stores": resolve(__dirname, "src/stores"),
       "@utils": resolve(__dirname, "src/utils"),
     },
   },

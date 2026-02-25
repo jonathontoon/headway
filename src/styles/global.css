@@ -32,7 +32,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  touch-action: pan-x pan-y;
+  touch-action: pan-y;
 }
 
 /* Ensure Departure Mono is applied to all text elements and form inputs */
@@ -58,6 +58,12 @@ select {
 
 html {
   height: -webkit-fill-available;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 @keyframes terminal-blink {

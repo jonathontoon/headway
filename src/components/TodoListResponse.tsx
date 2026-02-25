@@ -24,7 +24,7 @@ const TodoListResponse: FunctionComponent<TodoListResponseProps> = memo(
     return (
       <Response>
         <Stack>
-          {title && <Label className="mb-2">{title}</Label>}
+          {title && <Label className="text-white mb-2">{title}</Label>}
           {todos.map((todo, i) => (
             <Line key={todo.id} num={i + 1} item={todo} />
           ))}
