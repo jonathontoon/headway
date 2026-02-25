@@ -21,7 +21,8 @@ const Terminal = () => {
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-y-auto p-4 flex flex-col gap-1"
+      className="h-full overflow-y-auto p-4 flex flex-col gap-1 cursor-text"
+      onClick={() => inputRef.current?.focus()}
     >
       {/*
         Optimization: TerminalHistory is memoized and only depends on 'history'.
