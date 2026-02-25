@@ -21,7 +21,12 @@ const Terminal = () => {
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-y-auto p-4 flex flex-col gap-1"
+      className="h-full overflow-y-auto p-4 flex flex-col gap-4
+        [&::-webkit-scrollbar]:w-1
+        [&::-webkit-scrollbar-track]:bg-transparent
+        [&::-webkit-scrollbar-thumb]:bg-zinc-800
+        [&::-webkit-scrollbar-thumb]:rounded-sm
+        [&::-webkit-scrollbar-thumb:hover]:bg-zinc-700"
     >
       {/*
         Optimization: TerminalHistory is memoized and only depends on 'history'.

@@ -3,7 +3,7 @@ interface Props {
 }
 
 const TodoIndex = ({ index }: Props) => (
-  <span className="text-zinc-500 select-none w-6 text-right shrink-0">
+  <span className="text-zinc-500 select-none w-8 text-right shrink-0">
     {index}.
   </span>
 );

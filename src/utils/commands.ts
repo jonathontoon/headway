@@ -11,6 +11,14 @@ const error = (t: string): ResponseItem => ({
   type: ResponseType.Error,
   text: t,
 });
+const success = (t: string): ResponseItem => ({
+  type: ResponseType.Success,
+  text: t,
+});
+const warning = (t: string): ResponseItem => ({
+  type: ResponseType.Warning,
+  text: t,
+});
 
 const handlers: Record<string, CommandHandler> = {
   help: () => [

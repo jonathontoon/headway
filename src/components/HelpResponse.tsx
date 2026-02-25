@@ -7,7 +7,7 @@ interface Props {
 }
 
 const HelpResponse = ({ response }: Props) => (
-  <Response className="flex flex-col gap-0.5">
+  <Response className="flex flex-col gap-1.5">
     {response.commands.map((command) => (
       <HelpCommandRow key={command.name} {...command} />
     ))}
