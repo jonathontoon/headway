@@ -24,7 +24,9 @@ const handlers: Record<string, CommandHandler> = {
   list: () => {
     const todos = getTodos();
     if (!todos.length) return [text("No todos.")];
-    return todos.map((raw, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, raw }));
+    return todos.map(
+      (raw, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, raw })
+    );
   },
   echo: (args) =>
     args.length ? [text(args.join(" "))] : [error("usage: echo <text>")],
