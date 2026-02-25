@@ -1,21 +1,17 @@
-import { memo } from "react";
+import { Fragment, memo } from "react";
 import type { HistoryEntry as HistoryEntryType } from "@types";
-import HistoryEntry from "@components/HistoryEntry";
+import TerminalEntry from "@components/TerminalEntry";
 
 interface Props {
   history: HistoryEntryType[];
 }
 
-/**
- * Isolates the history list rendering to prevent unnecessary re-renders
- * during input keystrokes in the parent Terminal component.
- */
 const TerminalHistory = memo(({ history }: Props) => (
-  <>
+  <Fragment>
     {history.map((entry) => (
-      <HistoryEntry key={entry.id} entry={entry} />
+      <TerminalEntry key={entry.id} entry={entry} />
     ))}
-  </>
+  </Fragment>
 ));
 
 TerminalHistory.displayName = "TerminalHistory";

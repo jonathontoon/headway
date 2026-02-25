@@ -14,17 +14,21 @@ const error = (t: string): ResponseItem => ({
 
 const handlers: Record<string, CommandHandler> = {
   help: () => [
-    text("Available commands:"),
-    text("  help           show this help message"),
-    text("  list           list all todos"),
-    text("  echo [text]    print text to the terminal"),
-    text("  date           show current date and time"),
-    text("  clear          clear the terminal history"),
+    {
+      type: ResponseType.Help,
+      commands: [
+        { name: "help", description: "show this help message" },
+        { name: "list", description: "list all todos" },
+        { name: "echo [text]", description: "print text to the terminal" },
+        { name: "date", description: "show current date and time" },
+        { name: "clear", description: "clear the terminal history" },
+      ],
+    },
   ],
   list: () => {
     const todos = getTodos();
     if (!todos.length) return [text("No todos.")];
-    return todos.map((raw, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, raw }));
+    return todos.map((text, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text }));
   },
   echo: (args) =>
     args.length ? [text(args.join(" "))] : [error("usage: echo <text>")],

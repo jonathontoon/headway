@@ -4,9 +4,11 @@ import {
   type HistoryEntry as HistoryEntryType,
   type ResponseItem,
 } from "@types";
+
 import TextResponse from "@components/TextResponse";
 import ErrorResponse from "@components/ErrorResponse";
 import TodoResponse from "@components/TodoResponse";
+import HelpResponse from "@components/HelpResponse";
 
 interface Props {
   entry: HistoryEntryType;
@@ -20,10 +22,12 @@ const renderResponse = (response: ResponseItem, i: number) => {
       return <ErrorResponse key={i} response={response} />;
     case ResponseType.Todo:
       return <TodoResponse key={i} response={response} />;
+    case ResponseType.Help:
+      return <HelpResponse key={i} response={response} />;
   }
 };
 
-const HistoryEntry = memo(({ entry }: Props) => (
+const TerminalEntry = memo(({ entry }: Props) => (
   <div>
     {entry.command && (
       <div className="flex items-center gap-2 pb-1">
@@ -37,6 +41,6 @@ const HistoryEntry = memo(({ entry }: Props) => (
   </div>
 ));
 
-HistoryEntry.displayName = "HistoryEntry";
+TerminalEntry.displayName = "TerminalEntry";
 
-export default HistoryEntry;
+export default TerminalEntry;
