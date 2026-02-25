@@ -1,11 +1,12 @@
 import type { ErrorResponse as ErrorResponseType } from "@types";
+import Response from "./Response";
 
 interface Props {
   response: ErrorResponseType;
 }
 
 const ErrorResponse = ({ response }: Props) => (
-  <div className="text-red-400">{response.text}</div>
+  <Response className="text-red-400">{response.text}</Response>
 );
 
 export default ErrorResponse;
