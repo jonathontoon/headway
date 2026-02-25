@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { TerminalResponse, HistoryItem } from "@types";
 import { parseCommand, parseArguments } from "@utils/parse";
-import { commandRegistry } from "../commands";
+import { commands } from "../commands";
 
 const INITIAL_HISTORY: HistoryItem[] = [
   { type: "logo", id: "0" },
@@ -72,7 +72,7 @@ export const useTerminalStore = create<TerminalStore>((set) => {
       input: "",
     }));
 
-    const handler = commandRegistry[command];
+    const handler = commands[command];
     const responses: TerminalResponse[] = handler
       ? handler(args)
       : [{ type: "default", commandName: command, hintText: "Type 'help' for commands." }];
