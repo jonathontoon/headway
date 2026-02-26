@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getDefaultStore } from "jotai";
 import {
   historyAtom,
   inputAtom,
   cmdHistoryAtom,
   cmdHistoryIndexAtom,
-  executeCommandAtom,
-  navigateHistoryAtom,
+  executeCommand,
+  navigateHistory,
 } from "@atoms/terminalAtoms";
 import { todosAtom } from "@atoms/todoAtoms";
 import { ResponseType, type HistoryEntry } from "@types";
@@ -33,113 +32,111 @@ const makeWelcomeEntry = (): HistoryEntry => ({
   ],
 });
 
-const store = getDefaultStore();
-
 beforeEach(() => {
-  store.set(todosAtom, [...TEST_TODOS]);
-  store.set(historyAtom, [makeWelcomeEntry()]);
-  store.set(inputAtom, "");
-  store.set(cmdHistoryAtom, []);
-  store.set(cmdHistoryIndexAtom, -1);
+  todosAtom.set([...TEST_TODOS]);
+  historyAtom.set([makeWelcomeEntry()]);
+  inputAtom.set("");
+  cmdHistoryAtom.set([]);
+  cmdHistoryIndexAtom.set(-1);
 });
 
 describe("initial state", () => {
   it("history has 1 welcome entry", () => {
-    expect(store.get(historyAtom)).toHaveLength(1);
-    expect(store.get(historyAtom)[0].command).toBe("");
+    expect(historyAtom.get()).toHaveLength(1);
+    expect(historyAtom.get()[0].command).toBe("");
   });
 
   it("input is empty string", () => {
-    expect(store.get(inputAtom)).toBe("");
+    expect(inputAtom.get()).toBe("");
   });
 });
 
 describe("inputAtom", () => {
   it("updates input to given value", () => {
-    store.set(inputAtom, "foo");
-    expect(store.get(inputAtom)).toBe("foo");
+    inputAtom.set("foo");
+    expect(inputAtom.get()).toBe("foo");
   });
 });
 
-describe("executeCommandAtom", () => {
+describe("executeCommand", () => {
   it("is a no-op for empty string", () => {
-    store.set(executeCommandAtom, "");
-    expect(store.get(historyAtom)).toHaveLength(1);
+    executeCommand("");
+    expect(historyAtom.get()).toHaveLength(1);
   });
 
   it("is a no-op for whitespace-only input", () => {
-    store.set(executeCommandAtom, "   ");
-    expect(store.get(historyAtom)).toHaveLength(1);
+    executeCommand("   ");
+    expect(historyAtom.get()).toHaveLength(1);
   });
 
   it("appends entry to history with the command", () => {
-    store.set(executeCommandAtom, "list");
-    const history = store.get(historyAtom);
+    executeCommand("list");
+    const history = historyAtom.get();
     expect(history).toHaveLength(2);
     expect(history[1].command).toBe("list");
   });
 
   it("resets input to empty string after execution", () => {
-    store.set(inputAtom, "list");
-    store.set(executeCommandAtom, "list");
-    expect(store.get(inputAtom)).toBe("");
+    inputAtom.set("list");
+    executeCommand("list");
+    expect(inputAtom.get()).toBe("");
   });
 
   it("prepends executed commands to cmdHistory (newest first)", () => {
-    store.set(executeCommandAtom, "list");
-    store.set(executeCommandAtom, "help");
-    const cmdHistory = store.get(cmdHistoryAtom);
+    executeCommand("list");
+    executeCommand("help");
+    const cmdHistory = cmdHistoryAtom.get();
     expect(cmdHistory[0]).toBe("help");
     expect(cmdHistory[1]).toBe("list");
   });
 
   it("clear empties history and resets input and cmdHistoryIndex", () => {
-    store.set(executeCommandAtom, "list");
-    store.set(executeCommandAtom, "clear");
-    expect(store.get(historyAtom)).toHaveLength(0);
-    expect(store.get(inputAtom)).toBe("");
-    expect(store.get(cmdHistoryIndexAtom)).toBe(-1);
+    executeCommand("list");
+    executeCommand("clear");
+    expect(historyAtom.get()).toHaveLength(0);
+    expect(inputAtom.get()).toBe("");
+    expect(cmdHistoryIndexAtom.get()).toBe(-1);
   });
 
   it("unknown command appends entry with error response", () => {
-    store.set(executeCommandAtom, "foobar");
-    const history = store.get(historyAtom);
+    executeCommand("foobar");
+    const history = historyAtom.get();
     const last = history.at(-1)!;
     expect(last.command).toBe("foobar");
     expect(last.responses[0].type).toBe(ResponseType.Error);
   });
 });
 
-describe("navigateHistoryAtom", () => {
+describe("navigateHistory", () => {
   beforeEach(() => {
     // Build cmdHistory: ["help", "list"] (newest first)
-    store.set(executeCommandAtom, "list");
-    store.set(executeCommandAtom, "help");
+    executeCommand("list");
+    executeCommand("help");
   });
 
   it("up sets input to most recent command", () => {
-    store.set(navigateHistoryAtom, "up");
-    expect(store.get(inputAtom)).toBe("help");
+    navigateHistory("up");
+    expect(inputAtom.get()).toBe("help");
   });
 
   it("up repeated clamps at oldest command", () => {
-    store.set(navigateHistoryAtom, "up"); // index 0 → "help"
-    store.set(navigateHistoryAtom, "up"); // index 1 → "list"
-    store.set(navigateHistoryAtom, "up"); // clamps at 1
-    expect(store.get(inputAtom)).toBe("list");
-    expect(store.get(cmdHistoryIndexAtom)).toBe(1);
+    navigateHistory("up"); // index 0 → "help"
+    navigateHistory("up"); // index 1 → "list"
+    navigateHistory("up"); // clamps at 1
+    expect(inputAtom.get()).toBe("list");
+    expect(cmdHistoryIndexAtom.get()).toBe(1);
   });
 
   it("down after up returns to more recent command", () => {
-    store.set(navigateHistoryAtom, "up"); // index 0 → "help"
-    store.set(navigateHistoryAtom, "up"); // index 1 → "list"
-    store.set(navigateHistoryAtom, "down"); // index 0 → "help"
-    expect(store.get(inputAtom)).toBe("help");
+    navigateHistory("up"); // index 0 → "help"
+    navigateHistory("up"); // index 1 → "list"
+    navigateHistory("down"); // index 0 → "help"
+    expect(inputAtom.get()).toBe("help");
   });
 
   it("down at index -1 stays at -1 with empty input", () => {
-    store.set(navigateHistoryAtom, "down");
-    expect(store.get(cmdHistoryIndexAtom)).toBe(-1);
-    expect(store.get(inputAtom)).toBe("");
+    navigateHistory("down");
+    expect(cmdHistoryIndexAtom.get()).toBe(-1);
+    expect(inputAtom.get()).toBe("");
   });
 });

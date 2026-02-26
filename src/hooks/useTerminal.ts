@@ -1,9 +1,9 @@
 import { useCallback, type ChangeEvent, type KeyboardEvent } from "react";
-import { useAtom, useSetAtom } from "jotai";
+import { useStore } from "@nanostores/react";
 import {
   inputAtom,
-  executeCommandAtom,
-  navigateHistoryAtom,
+  executeCommand,
+  navigateHistory,
 } from "@atoms/terminalAtoms";
 
 export interface UseTerminalReturn {
@@ -13,16 +13,11 @@ export interface UseTerminalReturn {
 }
 
 export const useTerminal = (): UseTerminalReturn => {
-  const [input, setInput] = useAtom(inputAtom);
-  const executeCommand = useSetAtom(executeCommandAtom);
-  const navigateHistory = useSetAtom(navigateHistoryAtom);
+  const input = useStore(inputAtom);
 
-  const onInputChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setInput(e.target.value);
-    },
-    [setInput]
-  );
+  const onInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    inputAtom.set(e.target.value);
+  }, []);
 
   const onInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
@@ -35,7 +30,7 @@ export const useTerminal = (): UseTerminalReturn => {
         navigateHistory("down");
       }
     },
-    [input, executeCommand, navigateHistory]
+    [input]
   );
 
   return { input, onInputChange, onInputKeyDown };

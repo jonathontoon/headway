@@ -1,10 +1,10 @@
-import { atom, getDefaultStore } from "jotai";
+import { atom } from "nanostores";
 import { ResponseType, type HistoryEntry } from "@types";
 import { processCommand } from "@utils/commands";
 import { todosAtom } from "@atoms/todoAtoms";
 
 const buildWelcome = (): HistoryEntry => {
-  const todos = getDefaultStore().get(todosAtom);
+  const todos = todosAtom.get();
   return {
     id: crypto.randomUUID(),
     command: "",
@@ -27,43 +27,40 @@ export const inputAtom = atom("");
 export const cmdHistoryAtom = atom<string[]>([]);
 export const cmdHistoryIndexAtom = atom(-1);
 
-export const navigateHistoryAtom = atom(
-  null,
-  (get, set, dir: "up" | "down") => {
-    const cmdHistory = get(cmdHistoryAtom);
-    const cmdHistoryIndex = get(cmdHistoryIndexAtom);
-    if (dir === "up") {
-      const newIndex = Math.min(cmdHistoryIndex + 1, cmdHistory.length - 1);
-      set(cmdHistoryIndexAtom, newIndex);
-      set(inputAtom, cmdHistory[newIndex] ?? "");
+export const navigateHistory = (dir: "up" | "down") => {
+  const cmdHistory = cmdHistoryAtom.get();
+  const cmdHistoryIndex = cmdHistoryIndexAtom.get();
+  if (dir === "up") {
+    const newIndex = Math.min(cmdHistoryIndex + 1, cmdHistory.length - 1);
+    cmdHistoryIndexAtom.set(newIndex);
+    inputAtom.set(cmdHistory[newIndex] ?? "");
+  } else {
+    const newIndex = cmdHistoryIndex - 1;
+    if (newIndex < 0) {
+      cmdHistoryIndexAtom.set(-1);
+      inputAtom.set("");
     } else {
-      const newIndex = cmdHistoryIndex - 1;
-      if (newIndex < 0) {
-        set(cmdHistoryIndexAtom, -1);
-        set(inputAtom, "");
-      } else {
-        set(cmdHistoryIndexAtom, newIndex);
-        set(inputAtom, cmdHistory[newIndex] ?? "");
-      }
+      cmdHistoryIndexAtom.set(newIndex);
+      inputAtom.set(cmdHistory[newIndex] ?? "");
     }
   }
-);
+};
 
-export const executeCommandAtom = atom(null, (get, set, raw: string) => {
+export const executeCommand = (raw: string) => {
   const trimmed = raw.trim();
   if (!trimmed) return;
 
   const [command, ...args] = trimmed.split(/\s+/);
 
   if (command === "clear") {
-    set(historyAtom, []);
-    set(inputAtom, "");
-    set(cmdHistoryIndexAtom, -1);
+    historyAtom.set([]);
+    inputAtom.set("");
+    cmdHistoryIndexAtom.set(-1);
     return;
   }
 
-  const history = get(historyAtom);
-  const cmdHistory = get(cmdHistoryAtom);
+  const history = historyAtom.get();
+  const cmdHistory = cmdHistoryAtom.get();
   let responses: HistoryEntry["responses"];
   try {
     responses = processCommand(command, args);
@@ -77,8 +74,8 @@ export const executeCommandAtom = atom(null, (get, set, raw: string) => {
     responses,
   };
 
-  set(historyAtom, [...history, entry]);
-  set(cmdHistoryAtom, [trimmed, ...cmdHistory]);
-  set(inputAtom, "");
-  set(cmdHistoryIndexAtom, -1);
-});
+  historyAtom.set([...history, entry]);
+  cmdHistoryAtom.set([trimmed, ...cmdHistory]);
+  inputAtom.set("");
+  cmdHistoryIndexAtom.set(-1);
+};

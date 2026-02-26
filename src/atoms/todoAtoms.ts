@@ -1,5 +1,4 @@
-import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
+import { persistentAtom } from "@nanostores/persistent";
 
 const DEFAULTS = [
   "(A) Call mom @phone +personal",
@@ -9,35 +8,28 @@ const DEFAULTS = [
   "(C) Fix leaky faucet @home",
 ];
 
-export const todosAtom = atomWithStorage<string[]>("headway:todos", [
-  ...DEFAULTS,
-]);
-
-export const addTodoAtom = atom(null, (get, set, raw: string) => {
-  set(todosAtom, [...get(todosAtom), raw]);
+export const todosAtom = persistentAtom<string[]>("headway:todos", [...DEFAULTS], {
+  encode: JSON.stringify,
+  decode: JSON.parse,
 });
 
-export const removeTodoAtom = atom(null, (get, set, index: number) => {
-  set(
-    todosAtom,
-    get(todosAtom).filter((_, i) => i !== index - 1)
+export const addTodo = (raw: string) => {
+  todosAtom.set([...todosAtom.get(), raw]);
+};
+
+export const removeTodo = (index: number) => {
+  todosAtom.set(todosAtom.get().filter((_, i) => i !== index - 1));
+};
+
+export const updateTodo = (args: { index: number; text: string }) => {
+  todosAtom.set(
+    todosAtom.get().map((t, i) => (i === args.index - 1 ? args.text : t))
   );
-});
+};
 
-export const updateTodoAtom = atom(
-  null,
-  (get, set, args: { index: number; text: string }) => {
-    set(
-      todosAtom,
-      get(todosAtom).map((t, i) => (i === args.index - 1 ? args.text : t))
-    );
-  }
-);
-
-export const completeTodoAtom = atom(null, (get, set, index: number) => {
-  set(
-    todosAtom,
-    get(todosAtom).map((t, i) => {
+export const completeTodo = (index: number) => {
+  todosAtom.set(
+    todosAtom.get().map((t, i) => {
       if (i !== index - 1) return t;
       if (t.startsWith("x ")) return t;
       const withoutPriority = t.replace(/^\([A-Z]\) /, "");
@@ -45,4 +37,4 @@ export const completeTodoAtom = atom(null, (get, set, index: number) => {
       return `x ${date} ${withoutPriority}`;
     })
   );
-});
+};
