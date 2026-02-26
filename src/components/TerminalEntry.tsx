@@ -16,7 +16,7 @@ interface Props {
   entry: HistoryEntryType;
 }
 
-const renderResponse = (response: ResponseItem, i: number) => {
+const renderResponse = (response: ResponseItem, i: number, spaceBefore = false) => {
   switch (response.type) {
     case ResponseType.Text:
       return <TextResponse key={i} response={response} />;
@@ -27,7 +27,7 @@ const renderResponse = (response: ResponseItem, i: number) => {
     case ResponseType.Warning:
       return <WarningResponse key={i} response={response} />;
     case ResponseType.Todo:
-      return <TodoResponse key={i} response={response} />;
+      return <TodoResponse key={i} response={response} spaceBefore={spaceBefore} />;
     case ResponseType.Help:
       return <HelpResponse key={i} response={response} />;
   }
@@ -43,7 +43,11 @@ const TerminalEntry = memo(({ entry }: Props) => (
         <span className="text-white">{entry.command}</span>
       </div>
     )}
-    {entry.responses.map(renderResponse)}
+    {entry.responses.map((response, i) => {
+      const prev = entry.responses[i - 1];
+      const spaceBefore = response.type === ResponseType.Todo && prev?.type !== ResponseType.Todo;
+      return renderResponse(response, i, spaceBefore);
+    })}
   </div>
 ));
 

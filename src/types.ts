@@ -17,9 +17,10 @@ export type TodoResponse = {
   text: string;
 };
 export type HelpCommand = { name: string; description: string };
+export type HelpSection = { title: string; commands: HelpCommand[] };
 export type HelpResponse = {
   type: ResponseType.Help;
-  commands: HelpCommand[];
+  sections: HelpSection[];
 };
 
 export type ResponseItem =

@@ -2,16 +2,25 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { ResponseType, type HistoryEntry } from "@types";
 import { processCommand } from "@utils/commands";
+import { useTodoStore } from "@stores/useTodoStore";
 
-const WELCOME: HistoryEntry = {
-  id: crypto.randomUUID(),
-  command: "",
-  responses: [
-    {
-      type: ResponseType.Text,
-      text: "Welcome to Headway. Type 'help' for available commands.",
-    },
-  ],
+const buildWelcome = (): HistoryEntry => {
+  const { todos } = useTodoStore.getState();
+  return {
+    id: crypto.randomUUID(),
+    command: "",
+    responses: [
+      {
+        type: ResponseType.Text,
+        text: "Welcome to Headway. Type 'help' for available commands.",
+      },
+      ...todos.map((text, i) => ({
+        type: ResponseType.Todo as const,
+        index: i + 1,
+        text,
+      })),
+    ],
+  };
 };
 
 interface TerminalState {
@@ -30,7 +39,7 @@ interface TerminalActions {
 export const useTerminalStore = create<TerminalState & TerminalActions>()(
   devtools(
     (set, get) => ({
-      history: [WELCOME],
+      history: [buildWelcome()],
       input: "",
       cmdHistory: [],
       cmdHistoryIndex: -1,

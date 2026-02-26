@@ -1,7 +1,12 @@
 import { ResponseType, type ResponseItem } from "@types";
-import { getTodos } from "@stores/todoStore";
+import { useTodoStore } from "@stores/useTodoStore";
 
 type CommandHandler = (args: string[]) => ResponseItem[];
+
+const parseIndex = (arg: string | undefined): number | null => {
+  const n = parseInt(arg ?? "", 10);
+  return isNaN(n) ? null : n;
+};
 
 const text = (t: string): ResponseItem => ({
   type: ResponseType.Text,
@@ -20,28 +25,77 @@ const warning = (t: string): ResponseItem => ({
   text: t,
 });
 
+const listTodos = (): ResponseItem[] => {
+  const { todos } = useTodoStore.getState();
+  if (!todos.length) return [text("No todos.")];
+  return todos.map((t, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text: t }));
+};
+
 const handlers: Record<string, CommandHandler> = {
   help: () => [
     {
       type: ResponseType.Help,
-      commands: [
-        { name: "help", description: "show this help message" },
-        { name: "list", description: "list all todos" },
-        { name: "echo [text]", description: "print text to the terminal" },
-        { name: "date", description: "show current date and time" },
-        { name: "clear", description: "clear the terminal history" },
+      sections: [
+        {
+          title: "Todos",
+          commands: [
+            { name: "list", description: "list all todos" },
+            { name: "add <text>", description: "add a new todo" },
+            { name: "done <number>", description: "mark a todo as complete" },
+            { name: "delete <number>", description: "remove a todo (alias: rm)" },
+            { name: "update <number> <text>", description: "replace a todo's text" },
+          ],
+        },
+        {
+          title: "Terminal",
+          commands: [
+            { name: "echo [text]", description: "print text to the terminal" },
+            { name: "date", description: "show current date and time" },
+            { name: "clear", description: "clear the terminal history" },
+            { name: "help", description: "show this help message" },
+          ],
+        },
       ],
     },
   ],
-  list: () => {
-    const todos = getTodos();
-    if (!todos.length) return [text("No todos.")];
-    return todos.map((text, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text }));
+  list: () => listTodos(),
+  add: (args) => {
+    if (!args.length) return [error("usage: add <text>")];
+    useTodoStore.getState().addTodo(args.join(" "));
+    return [success(`Added: ${args.join(" ")}`), ...listTodos()];
+  },
+  done: (args) => {
+    const n = parseIndex(args[0]);
+    const { todos, completeTodo } = useTodoStore.getState();
+    if (n === null) return [error("usage: done <number>")];
+    if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
+    if (todos[n - 1].startsWith("x ")) return [warning(`Todo #${n} is already complete`)];
+    completeTodo(n);
+    return [success(`Marked #${n} as done`), ...listTodos()];
+  },
+  delete: (args) => {
+    const n = parseIndex(args[0]);
+    const { todos, removeTodo } = useTodoStore.getState();
+    if (n === null) return [error("usage: delete <number>")];
+    if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
+    removeTodo(n);
+    return [success(`Deleted #${n}`), ...listTodos()];
+  },
+  update: (args) => {
+    const n = parseIndex(args[0]);
+    const newText = args.slice(1).join(" ");
+    const { todos, updateTodo } = useTodoStore.getState();
+    if (n === null || !newText) return [error("usage: update <number> <text>")];
+    if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
+    updateTodo(n, newText);
+    return [success(`Updated #${n}`), ...listTodos()];
   },
   echo: (args) =>
     args.length ? [text(args.join(" "))] : [error("usage: echo <text>")],
   date: () => [text(new Date().toLocaleString())],
 };
+
+handlers.rm = handlers.delete;
 
 export const processCommand = (
   command: string,
