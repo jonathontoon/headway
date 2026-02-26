@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { useTodoStore } from "@stores/useTodoStore";
+import { getDefaultStore } from "jotai";
+import {
+  todosAtom,
+  addTodoAtom,
+  removeTodoAtom,
+  updateTodoAtom,
+  completeTodoAtom,
+} from "@atoms/todoAtoms";
 
 const DEFAULTS = [
   "(A) Call mom @phone +personal",
@@ -9,66 +16,70 @@ const DEFAULTS = [
   "(C) Fix leaky faucet @home",
 ];
 
+const store = getDefaultStore();
+
 beforeEach(() => {
-  useTodoStore.setState({ todos: [...DEFAULTS] });
+  store.set(todosAtom, [...DEFAULTS]);
 });
 
 describe("initial state", () => {
   it("contains 5 default todos", () => {
-    expect(useTodoStore.getState().todos).toHaveLength(5);
+    expect(store.get(todosAtom)).toHaveLength(5);
   });
 });
 
-describe("addTodo", () => {
+describe("addTodoAtom", () => {
   it("appends to end of list", () => {
-    useTodoStore.getState().addTodo("Buy milk");
-    const { todos } = useTodoStore.getState();
+    store.set(addTodoAtom, "Buy milk");
+    const todos = store.get(todosAtom);
     expect(todos).toHaveLength(6);
     expect(todos[5]).toBe("Buy milk");
   });
 });
 
-describe("removeTodo", () => {
+describe("removeTodoAtom", () => {
   it("removes todo at 1-based index 1", () => {
-    useTodoStore.getState().removeTodo(1);
-    const { todos } = useTodoStore.getState();
+    store.set(removeTodoAtom, 1);
+    const todos = store.get(todosAtom);
     expect(todos).toHaveLength(4);
     expect(todos[0]).toBe(DEFAULTS[1]);
   });
 
   it("removes todo at 1-based index 3", () => {
-    useTodoStore.getState().removeTodo(3);
-    const { todos } = useTodoStore.getState();
+    store.set(removeTodoAtom, 3);
+    const todos = store.get(todosAtom);
     expect(todos).toHaveLength(4);
     expect(todos[2]).toBe(DEFAULTS[3]);
   });
 
   it("removes last todo", () => {
-    useTodoStore.getState().removeTodo(5);
-    const { todos } = useTodoStore.getState();
+    store.set(removeTodoAtom, 5);
+    const todos = store.get(todosAtom);
     expect(todos).toHaveLength(4);
     expect(todos[3]).toBe(DEFAULTS[3]);
   });
 
   it("does not throw for out-of-range index", () => {
-    expect(() => useTodoStore.getState().removeTodo(99)).not.toThrow();
-    expect(useTodoStore.getState().todos).toHaveLength(5);
+    expect(() => store.set(removeTodoAtom, 99)).not.toThrow();
+    expect(store.get(todosAtom)).toHaveLength(5);
   });
 });
 
-describe("updateTodo", () => {
+describe("updateTodoAtom", () => {
   it("replaces todo at 1-based index", () => {
-    useTodoStore.getState().updateTodo(2, "Updated text");
-    expect(useTodoStore.getState().todos[1]).toBe("Updated text");
+    store.set(updateTodoAtom, { index: 2, text: "Updated text" });
+    expect(store.get(todosAtom)[1]).toBe("Updated text");
   });
 
   it("does not throw for out-of-range index", () => {
-    expect(() => useTodoStore.getState().updateTodo(99, "text")).not.toThrow();
-    expect(useTodoStore.getState().todos).toHaveLength(5);
+    expect(() =>
+      store.set(updateTodoAtom, { index: 99, text: "text" })
+    ).not.toThrow();
+    expect(store.get(todosAtom)).toHaveLength(5);
   });
 });
 
-describe("completeTodo", () => {
+describe("completeTodoAtom", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -76,8 +87,8 @@ describe("completeTodo", () => {
   it("prefixes with x YYYY-MM-DD", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-02-26"));
-    useTodoStore.getState().completeTodo(4); // "Submit quarterly report +work @computer"
-    expect(useTodoStore.getState().todos[3]).toBe(
+    store.set(completeTodoAtom, 4); // "Submit quarterly report +work @computer"
+    expect(store.get(todosAtom)[3]).toBe(
       "x 2026-02-26 Submit quarterly report +work @computer"
     );
   });
@@ -85,15 +96,15 @@ describe("completeTodo", () => {
   it("strips (A) priority before completing", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-02-26"));
-    useTodoStore.getState().completeTodo(1); // "(A) Call mom @phone +personal"
-    expect(useTodoStore.getState().todos[0]).toBe(
+    store.set(completeTodoAtom, 1); // "(A) Call mom @phone +personal"
+    expect(store.get(todosAtom)[0]).toBe(
       "x 2026-02-26 Call mom @phone +personal"
     );
   });
 
   it("does not double-complete an already-completed todo", () => {
     const original = DEFAULTS[2]; // "x 2026-02-24 Read chapter 3 +book"
-    useTodoStore.getState().completeTodo(3);
-    expect(useTodoStore.getState().todos[2]).toBe(original);
+    store.set(completeTodoAtom, 3);
+    expect(store.get(todosAtom)[2]).toBe(original);
   });
 });

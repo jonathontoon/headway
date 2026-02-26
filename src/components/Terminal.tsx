@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
-import { useTerminalStore } from "@stores/useTerminalStore";
+import { useAtomValue } from "jotai";
+import { historyAtom } from "@atoms/terminalAtoms";
 import { useTerminal } from "@hooks/useTerminal";
 import { useScrollToBottom } from "@hooks/useScrollToBottom";
 import TerminalHistory from "@components/TerminalHistory";
 import Prompt from "@components/Prompt";
 
 const Terminal = () => {
-  const history = useTerminalStore((s) => s.history);
+  const history = useAtomValue(historyAtom);
   const { input, onInputChange, onInputKeyDown } = useTerminal();
 
   const scrollRef = useRef<HTMLDivElement>(null);

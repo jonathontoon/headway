@@ -1,5 +1,14 @@
+import { getDefaultStore } from "jotai";
 import { ResponseType, type ResponseItem } from "@types";
-import { useTodoStore } from "@stores/useTodoStore";
+import {
+  todosAtom,
+  addTodoAtom,
+  removeTodoAtom,
+  updateTodoAtom,
+  completeTodoAtom,
+} from "@atoms/todoAtoms";
+
+const store = getDefaultStore();
 
 type CommandHandler = (args: string[]) => ResponseItem[];
 
@@ -26,7 +35,7 @@ const warning = (t: string): ResponseItem => ({
 });
 
 const listTodos = (): ResponseItem[] => {
-  const { todos } = useTodoStore.getState();
+  const todos = store.get(todosAtom);
   if (!todos.length) return [text("No todos.")];
   return todos.map(
     (t, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text: t })
@@ -69,34 +78,34 @@ const handlers: Record<string, CommandHandler> = {
   list: () => listTodos(),
   add: (args) => {
     if (!args.length) return [error("usage: add <text>")];
-    useTodoStore.getState().addTodo(args.join(" "));
+    store.set(addTodoAtom, args.join(" "));
     return [success(`Added: ${args.join(" ")}`), ...listTodos()];
   },
   done: (args) => {
     const n = parseIndex(args[0]);
-    const { todos, completeTodo } = useTodoStore.getState();
+    const todos = store.get(todosAtom);
     if (n === null) return [error("usage: done <number>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
     if (todos[n - 1].startsWith("x "))
       return [warning(`Todo #${n} is already complete`)];
-    completeTodo(n);
+    store.set(completeTodoAtom, n);
     return [success(`Marked #${n} as done`), ...listTodos()];
   },
   delete: (args) => {
     const n = parseIndex(args[0]);
-    const { todos, removeTodo } = useTodoStore.getState();
+    const todos = store.get(todosAtom);
     if (n === null) return [error("usage: delete <number>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
-    removeTodo(n);
+    store.set(removeTodoAtom, n);
     return [success(`Deleted #${n}`), ...listTodos()];
   },
   update: (args) => {
     const n = parseIndex(args[0]);
     const newText = args.slice(1).join(" ");
-    const { todos, updateTodo } = useTodoStore.getState();
+    const todos = store.get(todosAtom);
     if (n === null || !newText) return [error("usage: update <number> <text>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
-    updateTodo(n, newText);
+    store.set(updateTodoAtom, { index: n, text: newText });
     return [success(`Updated #${n}`), ...listTodos()];
   },
   echo: (args) =>

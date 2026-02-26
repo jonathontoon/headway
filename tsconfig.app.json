@@ -33,7 +33,7 @@
       "@hooks/*": ["src/hooks/*"],
       "@types": ["src/types.ts"],
       "@providers/*": ["src/providers/*"],
-      "@stores/*": ["src/stores/*"],
+      "@atoms/*": ["src/atoms/*"],
       "@utils/*": ["src/utils/*"]
     }
   },

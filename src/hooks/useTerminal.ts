@@ -1,6 +1,10 @@
 import { useCallback, type ChangeEvent, type KeyboardEvent } from "react";
-import { useShallow } from "zustand/shallow";
-import { useTerminalStore } from "@stores/useTerminalStore";
+import { useAtom, useSetAtom } from "jotai";
+import {
+  inputAtom,
+  executeCommandAtom,
+  navigateHistoryAtom,
+} from "@atoms/terminalAtoms";
 
 export interface UseTerminalReturn {
   input: string;
@@ -9,14 +13,9 @@ export interface UseTerminalReturn {
 }
 
 export const useTerminal = (): UseTerminalReturn => {
-  const { input, setInput, navigateHistory, executeCommand } = useTerminalStore(
-    useShallow((s) => ({
-      input: s.input,
-      setInput: s.setInput,
-      navigateHistory: s.navigateHistory,
-      executeCommand: s.executeCommand,
-    }))
-  );
+  const [input, setInput] = useAtom(inputAtom);
+  const executeCommand = useSetAtom(executeCommandAtom);
+  const navigateHistory = useSetAtom(navigateHistoryAtom);
 
   const onInputChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
