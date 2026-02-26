@@ -28,7 +28,9 @@ const warning = (t: string): ResponseItem => ({
 const listTodos = (): ResponseItem[] => {
   const { todos } = useTodoStore.getState();
   if (!todos.length) return [text("No todos.")];
-  return todos.map((t, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text: t }));
+  return todos.map(
+    (t, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text: t })
+  );
 };
 
 const handlers: Record<string, CommandHandler> = {
@@ -42,8 +44,14 @@ const handlers: Record<string, CommandHandler> = {
             { name: "list", description: "list all todos" },
             { name: "add <text>", description: "add a new todo" },
             { name: "done <number>", description: "mark a todo as complete" },
-            { name: "delete <number>", description: "remove a todo (alias: rm)" },
-            { name: "update <number> <text>", description: "replace a todo's text" },
+            {
+              name: "delete <number>",
+              description: "remove a todo (alias: rm)",
+            },
+            {
+              name: "update <number> <text>",
+              description: "replace a todo's text",
+            },
           ],
         },
         {
@@ -69,7 +77,8 @@ const handlers: Record<string, CommandHandler> = {
     const { todos, completeTodo } = useTodoStore.getState();
     if (n === null) return [error("usage: done <number>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
-    if (todos[n - 1].startsWith("x ")) return [warning(`Todo #${n} is already complete`)];
+    if (todos[n - 1].startsWith("x "))
+      return [warning(`Todo #${n} is already complete`)];
     completeTodo(n);
     return [success(`Marked #${n} as done`), ...listTodos()];
   },
