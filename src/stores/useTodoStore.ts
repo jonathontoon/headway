@@ -1,4 +1,4 @@
-import { create, type StateCreator } from "zustand";
+import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 const DEFAULTS = [
@@ -20,69 +20,41 @@ interface TodoActions {
   completeTodo: (index: number) => void;
 }
 
-type SetTodo = Parameters<
-  StateCreator<
-    TodoState & TodoActions,
-    [["zustand/devtools", never], ["zustand/persist", unknown]],
-    []
-  >
->[0];
-
-const defaultState: TodoState = {
-  todos: [...DEFAULTS],
-};
-
-const addTodo =
-  (set: SetTodo) =>
-  (raw: string): void =>
-    set((state) => ({ todos: [...state.todos, raw] }), false, "addTodo");
-
-const removeTodo =
-  (set: SetTodo) =>
-  (index: number): void =>
-    set(
-      (state) => ({ todos: state.todos.filter((_, i) => i !== index - 1) }),
-      false,
-      "removeTodo"
-    );
-
-const updateTodo =
-  (set: SetTodo) =>
-  (index: number, text: string): void =>
-    set(
-      (state) => ({
-        todos: state.todos.map((t, i) => (i === index - 1 ? text : t)),
-      }),
-      false,
-      "updateTodo"
-    );
-
-const completeTodo =
-  (set: SetTodo) =>
-  (index: number): void =>
-    set(
-      (state) => ({
-        todos: state.todos.map((t, i) => {
-          if (i !== index - 1) return t;
-          if (t.startsWith("x ")) return t;
-          const withoutPriority = t.replace(/^\([A-Z]\) /, "");
-          const date = new Date().toISOString().slice(0, 10);
-          return `x ${date} ${withoutPriority}`;
-        }),
-      }),
-      false,
-      "completeTodo"
-    );
-
 export const useTodoStore = create<TodoState & TodoActions>()(
   devtools(
     persist(
       (set) => ({
-        ...defaultState,
-        addTodo: addTodo(set),
-        removeTodo: removeTodo(set),
-        updateTodo: updateTodo(set),
-        completeTodo: completeTodo(set),
+        todos: [...DEFAULTS],
+        addTodo: (raw) =>
+          set((state) => ({ todos: [...state.todos, raw] }), false, "addTodo"),
+        removeTodo: (index) =>
+          set(
+            (state) => ({ todos: state.todos.filter((_, i) => i !== index - 1) }),
+            false,
+            "removeTodo"
+          ),
+        updateTodo: (index, text) =>
+          set(
+            (state) => ({
+              todos: state.todos.map((t, i) => (i === index - 1 ? text : t)),
+            }),
+            false,
+            "updateTodo"
+          ),
+        completeTodo: (index) =>
+          set(
+            (state) => ({
+              todos: state.todos.map((t, i) => {
+                if (i !== index - 1) return t;
+                if (t.startsWith("x ")) return t;
+                const withoutPriority = t.replace(/^\([A-Z]\) /, "");
+                const date = new Date().toISOString().slice(0, 10);
+                return `x ${date} ${withoutPriority}`;
+              }),
+            }),
+            false,
+            "completeTodo"
+          ),
       }),
       {
         name: "headway:todos",
