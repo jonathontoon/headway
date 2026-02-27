@@ -17,11 +17,13 @@ This document defines the complete design system, component patterns, styling co
 ## Component Organization
 
 ### IMPORTANT: Component Location
+
 - All UI components MUST be placed in `src/components/`
 - Export all components from `src/components/index.ts`
 - Use PascalCase for component filenames (e.g., `Response.tsx`, `DefaultResponse.tsx`)
 
 ### Component Structure
+
 ```typescript
 import { FunctionComponent, PropsWithChildren } from "react";
 
@@ -41,6 +43,7 @@ export default ComponentName;
 ```
 
 ### Key Rules
+
 - All components MUST accept optional `className` prop for flexible composition
 - Use `FunctionComponent` from React with proper TypeScript types
 - Destructure with default empty string for className: `className = ""`
@@ -52,6 +55,7 @@ export default ComponentName;
 ## Color System Philosophy
 
 **Less is More**: The color palette is intentionally restrained. Most content is white or grayscale. Colors are reserved for:
+
 - **Status indicators** (success, error, warning)
 - **Task priority levels** (urgency)
 - **Interactive elements** (tags, mentions, contexts)
@@ -65,27 +69,28 @@ This approach maintains readability, reduces cognitive load, and keeps the focus
 
 ### Neutral Colors (Grayscale)
 
-| Color | Tailwind Class | Usage | Context |
-|-------|---|---|---|
-| White | `text-white` | Primary content, main text | Response body, task text, labels |
-| Light Gray | `text-gray-100` | Active/important items | Uncompleted todo items |
-| Gray 400 | `text-gray-400` | Section headers, command syntax | Help responses, label text |
-| Gray 500 | `text-gray-500` | Secondary information | Hints, muted context, tags, dates |
-| Gray 600 | `text-gray-600` | De-emphasized content | Completed tasks, archived items |
+| Color      | Tailwind Class  | Usage                           | Context                           |
+| ---------- | --------------- | ------------------------------- | --------------------------------- |
+| White      | `text-white`    | Primary content, main text      | Response body, task text, labels  |
+| Light Gray | `text-gray-100` | Active/important items          | Uncompleted todo items            |
+| Gray 400   | `text-gray-400` | Section headers, command syntax | Help responses, label text        |
+| Gray 500   | `text-gray-500` | Secondary information           | Hints, muted context, tags, dates |
+| Gray 600   | `text-gray-600` | De-emphasized content           | Completed tasks, archived items   |
 
 ### Semantic Colors
 
-| Color | Tailwind Class | Meaning | Usage |
-|-------|---|---|---|
-| Green | `text-green-500` | Success, completion | Status success, low priority (C) |
-| Red | `text-red-500` | Error, failure, urgent | Status error, critical priority (A) |
-| Amber | `text-amber-500` | Warning, in-progress | Status loading/waiting, medium priority (B) |
-| Cyan | `text-cyan-400` | @ mentions (context) | Task contexts (@home, @work) |
-| Blue | `text-blue-400` | + projects (scope) | Task projects (+groceries, +garden) |
+| Color | Tailwind Class   | Meaning                | Usage                                       |
+| ----- | ---------------- | ---------------------- | ------------------------------------------- |
+| Green | `text-green-500` | Success, completion    | Status success, low priority (C)            |
+| Red   | `text-red-500`   | Error, failure, urgent | Status error, critical priority (A)         |
+| Amber | `text-amber-500` | Warning, in-progress   | Status loading/waiting, medium priority (B) |
+| Cyan  | `text-cyan-400`  | @ mentions (context)   | Task contexts (@home, @work)                |
+| Blue  | `text-blue-400`  | + projects (scope)     | Task projects (+groceries, +garden)         |
 
 ### Contrast & Accessibility
 
 All colors meet WCAG AA standards:
+
 - White (#FFFFFF) on dark: 20:1+ (AAA)
 - Gray-100 (#F3F4F6) on dark: 18:1+ (AAA)
 - Gray-400 (#9CA3AF) on dark: 9:1+ (AA)
@@ -110,6 +115,7 @@ All colors meet WCAG AA standards:
 ### Common Tailwind Classes for Responses
 
 **Text Styling:**
+
 ```
 text-[15px]        - Base response text size
 leading-normal     - Standard line height
@@ -121,6 +127,7 @@ text-gray-600      - Completed/archived items
 ```
 
 **Spacing:**
+
 ```
 py-2               - Vertical padding (response container)
 gap-1              - Tight spacing between elements (4px)
@@ -130,6 +137,7 @@ gap-4              - Large gaps between sections (16px)
 ```
 
 **Layout:**
+
 ```
 grid grid-cols-1 md:grid-cols-[200px_1fr]  - Responsive grid (help layout)
 flex flex-col                               - Vertical flex container
@@ -137,6 +145,7 @@ line-through                                - Text decoration (completed items)
 ```
 
 ### Responsive Design
+
 - Use Tailwind's responsive prefixes: `md:`, `lg:`, `sm:`
 - Example: `grid-cols-1 md:grid-cols-[200px_1fr]` (stacked on mobile, side-by-side on medium+)
 
@@ -145,12 +154,14 @@ line-through                                - Text decoration (completed items)
 ## Response Component Hierarchy
 
 ### Response Container (`Response.tsx`)
+
 ```tsx
 <Response className="optional-extra-classes">
   <Text>{content}</Text>
   <Hint>{hint}</Hint>
 </Response>
 ```
+
 - Base response wrapper with `text-[15px] leading-normal tracking-tight text-white py-2`
 - Accepts className for extensions
 - Must wrap all response content
@@ -158,21 +169,25 @@ line-through                                - Text decoration (completed items)
 ### Typography Components
 
 **Text** (`Text.tsx`)
+
 - Simple paragraph wrapper, `text-white` by default
 - Accepts className for custom styling
 - Usage: `<Text className="text-gray-400">{content}</Text>`
 
 **Label** (`Label.tsx`)
+
 - Styled label text, `text-gray-400` by default
 - Used for headings in help/status responses
 - Section indicators and command syntax
 
 **Hint** (`Hint.tsx`)
+
 - Secondary information, `text-gray-500` by default
 - Used for helpful suggestions or next steps
 - De-emphasized guidance text
 
 **Muted** (`Muted.tsx`)
+
 - Dimmed text, `text-gray-500` by default
 - Used for descriptions, dates, and tertiary info
 - Line numbers and counts
@@ -180,11 +195,13 @@ line-through                                - Text decoration (completed items)
 ### Layout Components
 
 **Stack** (`Stack.tsx`)
+
 - Vertical flex container with gap control
 - Props: `gap` (number, maps to Tailwind scale)
 - Usage: `<Stack gap={2}><Item /><Item /></Stack>`
 
 **ScrollView** (`ScrollView.tsx`)
+
 - Scrollable container for lists/histories
 - Maintains overflow behavior
 - Used for terminal history and long lists
@@ -194,13 +211,16 @@ line-through                                - Text decoration (completed items)
 ## Response Type Patterns & Color Usage
 
 ### DefaultResponse
+
 For simple text responses with optional hint:
+
 ```tsx
-<DefaultResponse 
+<DefaultResponse
   responseText="3 tasks added."
   hintText="Type 'list' to view your tasks."
 />
 ```
+
 - **Body**: `text-white` - Direct command output
 - **Hint**: `text-gray-500` - Helpful suggestion or next step
 
@@ -210,14 +230,19 @@ For simple text responses with optional hint:
 ---
 
 ### HelpResponse
+
 For command help/documentation:
+
 ```tsx
 <Response>
   <Stack gap={2}>
     <Label>[command] [...arguments]</Label>
     <Stack>
-      {items.map(item => (
-        <p key={item.id} className="grid grid-cols-1 md:grid-cols-[200px_1fr] md:gap-4">
+      {items.map((item) => (
+        <p
+          key={item.id}
+          className="grid grid-cols-1 md:grid-cols-[200px_1fr] md:gap-4"
+        >
           <span>{item.usage}</span>
           <Muted>{item.description}</Muted>
         </p>
@@ -226,7 +251,9 @@ For command help/documentation:
   </Stack>
 </Response>
 ```
+
 **Colors:**
+
 - **Header**: `text-gray-400` - Section label
 - **Command names**: `text-white` - Primary reference
 - **Descriptions**: `text-gray-500` - Secondary explanation
@@ -236,7 +263,9 @@ For command help/documentation:
 ---
 
 ### StatusResponse
+
 For status/progress displays:
+
 ```tsx
 <StatusResponse
   statusType="success"
@@ -246,18 +275,21 @@ For status/progress displays:
 ```
 
 #### Success Status
+
 - **Symbol**: `[√]` in `text-green-500`
 - **Message**: `text-white`
 - **Hint**: `text-gray-500`
 - **Rationale**: Green signals "goal achieved" - familiar from traffic lights
 
 #### Error Status
+
 - **Symbol**: `[×]` in `text-red-500`
 - **Message**: `text-white`
 - **Hint**: `text-gray-500`
 - **Rationale**: Red signals "problem/danger" - universal stop symbol
 
 #### Loading/Waiting Status
+
 - **Symbol**: `[~]` in `text-amber-500`
 - **Message**: `text-white`
 - **Hint**: `text-gray-500`
@@ -268,16 +300,21 @@ For status/progress displays:
 ---
 
 ### TodoListResponse
+
 For task lists:
+
 ```tsx
 <Response>
   <Stack gap={2}>
-    {items.map((item, i) => <TodoLine key={item.id} num={i + 1} item={item} />)}
+    {items.map((item, i) => (
+      <TodoLine key={item.id} num={i + 1} item={item} />
+    ))}
   </Stack>
 </Response>
 ```
 
 #### Uncompleted Task Colors
+
 ```
 1. (A) Buy groceries @home
 └─ Line#: text-gray-500
@@ -288,16 +325,19 @@ For task lists:
 ```
 
 **Priority colors** (traffic light semantics):
+
 - `(A)` Critical: `text-red-500` - Stop, immediate attention
 - `(B)` High: `text-yellow-500` - Caution, soon but not now
 - `(C)` Normal: `text-green-500` - Go, standard priority
 - None: `text-gray-500` - Background/informational
 
 **Tag colors**:
+
 - `@contexts`: `text-cyan-400` - Easy to distinguish from projects
 - `+projects`: `text-blue-400` - Easy to distinguish from contexts
 
 #### Completed Task Colors
+
 ```
 2. Buy milk @store                [text-gray-600 line-through]
 └─ All text gray with strikethrough
@@ -309,12 +349,14 @@ For task lists:
 ---
 
 ### TagListResponse
+
 For tag/context display:
+
 ```tsx
 <Response>
   <Stack gap={2}>
     <Label>Contexts:</Label>
-    {tags.map(tag => (
+    {tags.map((tag) => (
       <p key={tag.name}>
         <span>{tag.name}</span>
         <Muted>({tag.count} tasks)</Muted>
@@ -323,6 +365,7 @@ For tag/context display:
   </Stack>
 </Response>
 ```
+
 - **Title**: `text-white` - Section label
 - **Tag name**: `text-white` - Primary reference
 - **Count**: `text-gray-500` - Supporting metric
@@ -330,7 +373,9 @@ For tag/context display:
 ---
 
 ### TerminalHistory
+
 For scrollable command log:
+
 ```tsx
 <ScrollView className="flex flex-col gap-2">
   {history.map((entry) => (
@@ -338,6 +383,7 @@ For scrollable command log:
   ))}
 </ScrollView>
 ```
+
 - **Prompt (>)**: `text-gray-400` - System UI indicator
 - **Responses**: Follow their specific response type colors
 - **Stacked vertically**: Consistent spacing
@@ -388,11 +434,8 @@ The project uses Tailwind CSS v4 with minimal custom configuration:
 ```typescript
 // tailwind.config.ts
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{tsx,ts,jsx,js}",
-  ],
-}
+  content: ["./index.html", "./src/**/*.{tsx,ts,jsx,js}"],
+};
 ```
 
 - Content paths automatically purge unused styles
@@ -405,6 +448,7 @@ export default {
 ## Common Patterns & Examples
 
 ### Vertical Stack with Gap
+
 ```tsx
 <Stack gap={2}>
   <Text>Item 1</Text>
@@ -414,6 +458,7 @@ export default {
 ```
 
 ### Responsive Grid (Help Layout)
+
 ```tsx
 <p className="grid grid-cols-1 md:grid-cols-[200px_1fr] md:gap-4">
   <span>{command}</span>
@@ -422,12 +467,14 @@ export default {
 ```
 
 ### Semantic Status with Colors
+
 ```tsx
 <Status current="success">Task completed.</Status>
 <!-- Renders: [√] in text-green-500 + message in text-white -->
 ```
 
 ### Priority-colored Todo Item
+
 ```tsx
 <span className={PRIORITY_COLORS[priority] ?? "text-gray-500"}>
   ({priority})
@@ -436,12 +483,14 @@ export default {
 ```
 
 ### Context/Project Tags
+
 ```tsx
 <span className="text-cyan-400">@home</span>  {/* Context */}
 <span className="text-blue-400">+groceries</span>  {/* Project */}
 ```
 
 ### Muted Text
+
 ```tsx
 <Stack gap={1}>
   <Text>Primary content</Text>
@@ -450,6 +499,7 @@ export default {
 ```
 
 ### Conditional Hint
+
 ```tsx
 <Response>
   <Text>{responseText}</Text>
@@ -458,9 +508,10 @@ export default {
 ```
 
 ### Scrollable List
+
 ```tsx
 <ScrollView className="flex flex-col gap-2">
-  {items.map(item => (
+  {items.map((item) => (
     <Response key={item.id}>
       <Text>{item.content}</Text>
     </Response>
@@ -473,6 +524,7 @@ export default {
 ## Color Usage Guidelines
 
 ### Always use `text-white` for:
+
 - Main command output
 - Task text content
 - Primary information
@@ -481,12 +533,14 @@ export default {
 - Success/status messages
 
 ### Always use `text-gray-400` for:
+
 - Section headers
 - Command syntax in help
 - Prompt indicators (>)
 - System labels
 
 ### Always use `text-gray-500` for:
+
 - Hints and suggestions
 - Line numbers in lists
 - Dates in task text
@@ -494,11 +548,13 @@ export default {
 - De-emphasized context
 
 ### Always use `text-gray-600` for:
+
 - Completed/archived tasks
 - Historical/past information
 - Deeply de-emphasized content
 
 ### Always use semantic status colors for:
+
 - `text-green-500` → Success states, low priority (C)
 - `text-red-500` → Error states, critical priority (A)
 - `text-amber-500` → Loading/waiting states, medium priority (B)
@@ -506,6 +562,7 @@ export default {
 - `text-blue-400` → + projects in tasks
 
 ### Color combinations to avoid:
+
 - ✗ Red text on red background (no contrast)
 - ✗ Multiple status colors in one response (conflicting signals)
 - ✗ Rainbow gradient of colors (carnival effect)
@@ -516,6 +573,7 @@ export default {
 ## DO's and DON'Ts
 
 ### DO
+
 - ✓ Use Tailwind utility classes for all styling
 - ✓ Accept and use the `className` prop in components
 - ✓ Use semantic HTML elements (`<p>`, `<label>`, `<div>` appropriately)
@@ -530,6 +588,7 @@ export default {
 - ✓ Verify contrast meets WCAG AA minimum
 
 ### DON'T
+
 - ✗ Don't hardcode colors (use Tailwind color names)
 - ✗ Don't use inline `style` attributes
 - ✗ Don't create CSS modules or separate stylesheets

@@ -1,122 +1,121 @@
 import {
-  type KeyboardEvent,
-  type ChangeEvent,
   forwardRef,
-  useRef,
-  useState,
   useCallback,
   useEffect,
-  useImperativeHandle,
-  memo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
 } from "react";
 
-import { Response } from "./index";
+type InteractiveProps = {
+  readOnly?: false;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
 
-interface PromptProps {
-  value?: string;
-  disabled?: boolean;
-  placeholder?: string;
-  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
-}
+type ReadOnlyProps = {
+  readOnly: true;
+  value: string;
+};
 
-const Prompt = memo(
-  forwardRef<HTMLInputElement, PromptProps>(
-    (
-      { value = "", disabled = false, placeholder, onChange, onKeyDown },
-      ref
-    ) => {
-      const inputRef = useRef<HTMLInputElement>(null);
-      const [cursorPos, setCursorPos] = useState(0);
-      const [isFocused, setIsFocused] = useState(false);
-      const [textTranslateX, setTextTranslateX] = useState(0);
+type Props = InteractiveProps | ReadOnlyProps;
 
-      useImperativeHandle(ref, () => inputRef.current!);
-
-      const updateCursor = useCallback(() => {
-        requestAnimationFrame(() => {
-          const input = inputRef.current;
-          if (!input) return;
-          setCursorPos(input.selectionStart ?? 0);
-          setTextTranslateX(-(input.scrollLeft ?? 0));
-        });
-      }, []);
-
-      useEffect(() => {
-        updateCursor();
-      }, [value, updateCursor]);
-
-      const handleKeyDown = useCallback(
-        (event: KeyboardEvent<HTMLInputElement>) => {
-          onKeyDown?.(event);
-          updateCursor();
-        },
-        [onKeyDown, updateCursor]
-      );
-
-      const beforeCursor = value.slice(0, cursorPos);
-      const cursorChar = value[cursorPos] ?? " ";
-      const afterCursor = value.slice(cursorPos + 1);
-
-      return (
-        <Response className="flex items-center">
-          <span className="text-sky-400">~</span>
-          <span className="text-zinc-50">$</span>
-          <div className="relative ml-2 flex-1 min-w-0 overflow-hidden">
-            {/* Invisible input — captures all keyboard events and defines container height */}
-            <input
-              className="w-full border-none bg-transparent text-transparent caret-transparent outline-none"
-              ref={inputRef}
-              value={value}
-              disabled={disabled}
-              onChange={onChange}
-              onKeyDown={handleKeyDown}
-              onKeyUp={updateCursor}
-              onSelect={updateCursor}
-              onClick={updateCursor}
-              onInput={updateCursor}
-              onFocus={() => {
-                setIsFocused(true);
-                updateCursor();
-              }}
-              onBlur={() => setIsFocused(false)}
-              autoComplete="off"
-              autoCapitalize="none"
-              data-1p-ignore="true"
-              data-lpignore="true"
-              data-protonpass-ignore="true"
-              data-bwignore="true"
-            />
-            {/* Visual text overlay */}
-            <div
-              className="pointer-events-none absolute inset-0 flex items-center whitespace-pre text-zinc-50"
-              style={{ transform: `translateX(${textTranslateX}px)` }}
-            >
-              <span>{beforeCursor}</span>
-              <span
-                className={
-                  isFocused
-                    ? "bg-zinc-50 text-zinc-900 animate-[terminal-blink_1s_step-end_infinite]"
-                    : ""
-                }
-              >
-                {cursorChar}
-              </span>
-              <span>{afterCursor}</span>
-            </div>
-            {/* Placeholder */}
-            {value === "" && placeholder && !isFocused && (
-              <span className="pointer-events-none absolute inset-0 flex items-center text-zinc-600">
-                {placeholder}
-              </span>
-            )}
-          </div>
-        </Response>
-      );
-    }
-  )
+const PromptPrefix = () => (
+  <span className="select-none text-terminal-prompt">
+    <span className="text-terminal-text">~</span>$
+  </span>
 );
+
+const Prompt = forwardRef<HTMLInputElement, Props>((props, forwardedRef) => {
+  const { value, readOnly } = props;
+
+  if (readOnly) {
+    return (
+      <div className="flex items-center gap-2">
+        <PromptPrefix />
+        <span className="text-terminal-text">{value}</span>
+      </div>
+    );
+  }
+
+  return <InteractivePrompt {...props} forwardedRef={forwardedRef} />;
+});
 
 Prompt.displayName = "Prompt";
 
 export default Prompt;
+
+// Extracted so hooks are only called in the interactive path
+const InteractivePrompt = ({
+  value,
+  onChange,
+  onKeyDown,
+  forwardedRef,
+}: Omit<InteractiveProps, "readOnly"> & {
+  forwardedRef: React.ForwardedRef<HTMLInputElement>;
+}) => {
+  const [cursorPos, setCursorPos] = useState(value.length);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const mergedRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      (inputRef as React.RefObject<HTMLInputElement | null>).current = node;
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        (forwardedRef as React.RefObject<HTMLInputElement | null>).current =
+          node;
+      }
+    },
+    [forwardedRef]
+  );
+
+  useEffect(() => {
+    setCursorPos(value.length);
+  }, [value]);
+
+  const syncCursor = () => {
+    if (inputRef.current) {
+      setCursorPos(inputRef.current.selectionStart ?? value.length);
+    }
+  };
+
+  const textBefore = value.slice(0, cursorPos);
+  const cursorChar = value[cursorPos] ?? " ";
+  const textAfter = value.slice(cursorPos + 1);
+
+  return (
+    <div className="flex items-center gap-2">
+      <PromptPrefix />
+      <div className="relative flex-1">
+        {/* Visible overlay — sets height, renders block cursor */}
+        <div
+          aria-hidden
+          className="pointer-events-none select-none whitespace-pre"
+        >
+          {textBefore}
+          <span className="animate-terminal-blink bg-terminal-text text-black">
+            {cursorChar}
+          </span>
+          {textAfter}
+        </div>
+        {/* Real input — invisible but captures all events */}
+        <input
+          ref={mergedRef}
+          value={value}
+          onChange={onChange}
+          onKeyUp={syncCursor}
+          onSelect={syncCursor}
+          onFocus={syncCursor}
+          onKeyDown={onKeyDown}
+          className="absolute inset-0 w-full bg-transparent text-transparent caret-transparent outline-none"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+      </div>
+    </div>
+  );
+};

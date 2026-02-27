@@ -1,18 +1,12 @@
-import type { FunctionComponent, PropsWithChildren } from "react";
+import type { ReactNode } from "react";
 
-interface ResponseProps {
-  className?: string;
+interface Props {
+  children: ReactNode;
+  className: string;
 }
 
-const Response: FunctionComponent<PropsWithChildren<ResponseProps>> = ({
-  className = "",
-  children,
-}) => (
-  <div
-    className={`text-[15px] leading-normal tracking-tight text-white py-2 ${className}`.trim()}
-  >
-    {children}
-  </div>
+const Response = ({ children, className }: Props) => (
+  <div className={className}>{children}</div>
 );
 
 export default Response;

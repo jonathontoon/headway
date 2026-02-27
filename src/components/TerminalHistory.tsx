@@ -1,57 +1,18 @@
-import { memo, type FunctionComponent } from "react";
-import StatusResponse from "./StatusResponse";
-import TodoListResponse from "./TodoListResponse";
-import TagListResponse from "./TagListResponse";
-import HelpResponse from "./HelpResponse";
-import IntroResponse from "./IntroResponse";
-import LogoResponse from "./LogoResponse";
-import Prompt from "./Prompt";
-import type { HistoryItem } from "@types";
+import { memo } from "react";
+import type { HistoryEntry as HistoryEntryType } from "@types";
+import TerminalEntry from "@components/TerminalEntry";
 
-interface TerminalHistoryProps {
-  history: HistoryItem[];
+interface Props {
+  history: HistoryEntryType[];
 }
 
-const TerminalHistory: FunctionComponent<TerminalHistoryProps> = memo(
-  ({ history }) => (
-    <>
-      {history.map((item) => {
-        switch (item.type) {
-          case "status":
-            return <StatusResponse key={item.id} {...item} />;
-          case "todo":
-            return <TodoListResponse key={item.id} {...item} />;
-          case "tag":
-            return <TagListResponse key={item.id} {...item} />;
-          case "help":
-            return <HelpResponse key={item.id} />;
-          case "intro":
-            return <IntroResponse key={item.id} />;
-          case "logo":
-            return <LogoResponse key={item.id} />;
-          case "default":
-            return (
-              <StatusResponse
-                key={item.id}
-                statusType="error"
-                statusText={`Command '${item.commandName}' not recognized.`}
-                hintText={
-                  item.hintText ?? "Type 'help' for available commands."
-                }
-              />
-            );
-          case "prompt":
-            // History prompts are always disabled/static
-            return <Prompt key={item.id} value={item.value} disabled />;
-          case "clear":
-            return null;
-          default:
-            return null;
-        }
-      })}
-    </>
-  )
-);
+const TerminalHistory = memo(({ history }: Props) => (
+  <div className="flex flex-col gap-4">
+    {history.map((entry) => (
+      <TerminalEntry key={entry.id} entry={entry} />
+    ))}
+  </div>
+));
 
 TerminalHistory.displayName = "TerminalHistory";
 

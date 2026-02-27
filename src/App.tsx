@@ -1,31 +1,13 @@
-import { Terminal } from "@components";
-import { useTerminalStore } from "@stores/useTerminalStore";
+import Terminal from "@components/Terminal";
+import { Agentation } from "agentation";
 
-const App = () => {
-  const { input, isProcessing, setInput, navigateHistory, executeCommand } =
-    useTerminalStore();
-
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      executeCommand(input);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      navigateHistory("up");
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      navigateHistory("down");
-    }
-  };
-
-  return (
-    <div className="w-full h-dvh bg-black">
-      <Terminal
-        onInputChange={(e) => setInput(e.target.value)}
-        onInputKeyDown={handleInputKeyDown}
-        hidden={isProcessing}
-      />
+const App = () => (
+  <>
+    <div className="w-full h-dvh bg-[radial-gradient(ellipse_at_50%_35%,#0f0f13_0%,#09090b_70%)]">
+      <Terminal />
     </div>
-  );
-};
+    {import.meta.env.DEV && <Agentation endpoint="/agentation" />}
+  </>
+);
 
 export default App;

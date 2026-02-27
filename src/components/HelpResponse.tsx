@@ -1,27 +1,21 @@
-import { memo } from "react";
+import type { HelpResponse as HelpResponseType } from "@types";
 import Response from "./Response";
-import Stack from "./Stack";
-import Label from "./Label";
-import Muted from "./Muted";
-import { commandDefs } from "@constants";
+import HelpCommandRow from "@components/HelpCommandRow";
 
-const HelpResponse = memo(() => (
-  <Response>
-    <Stack gap={2}>
-      <Label>[command] [...arguments]</Label>
-      <Stack>
-        {commandDefs.map((def) => (
-          <p
-            key={def.usage}
-            className="grid grid-cols-1 md:grid-cols-[200px_1fr] md:gap-4"
-          >
-            {def.usage}
-            <Muted>{def.description}</Muted>
-          </p>
+interface Props {
+  response: HelpResponseType;
+}
+
+const HelpResponse = ({ response }: Props) => (
+  <Response className="flex flex-col gap-3">
+    {response.sections.map((section) => (
+      <div key={section.title} className="flex flex-col gap-1.5">
+        {section.commands.map((command) => (
+          <HelpCommandRow key={command.name} {...command} />
         ))}
-      </Stack>
-    </Stack>
+      </div>
+    ))}
   </Response>
-));
+);
 
 export default HelpResponse;

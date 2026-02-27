@@ -6,14 +6,24 @@ import { resolve } from "node:path";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      "/agentation": {
+        target: "http://localhost:4747",
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/agentation/, ""),
+      },
+    },
+  },
   resolve: {
     alias: {
       "@components": resolve(__dirname, "src/components"),
       "@constants": resolve(__dirname, "src/constants.ts"),
       "@contexts": resolve(__dirname, "src/contexts"),
       "@hooks": resolve(__dirname, "src/hooks"),
-      "@lib": resolve(__dirname, "src/lib"),
       "@types": resolve(__dirname, "src/types.ts"),
+      "@providers": resolve(__dirname, "src/providers"),
       "@stores": resolve(__dirname, "src/stores"),
       "@utils": resolve(__dirname, "src/utils"),
     },
@@ -23,5 +33,6 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    setupFiles: ["./src/__tests__/setup.ts"],
   },
 });
