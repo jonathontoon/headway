@@ -1,11 +1,11 @@
 import { ResponseType, type ResponseItem } from "@types";
 import {
-  todosAtom,
+  $todos,
   addTodo,
   removeTodo,
   updateTodo,
   completeTodo,
-} from "@atoms/todoAtoms";
+} from "@stores/todos";
 
 type CommandHandler = (args: string[]) => ResponseItem[];
 
@@ -32,7 +32,7 @@ const warning = (t: string): ResponseItem => ({
 });
 
 const listTodos = (): ResponseItem[] => {
-  const todos = todosAtom.get();
+  const todos = $todos.get();
   if (!todos.length) return [text("No todos.")];
   return todos.map(
     (t, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text: t })
@@ -80,7 +80,7 @@ const handlers: Record<string, CommandHandler> = {
   },
   done: (args) => {
     const n = parseIndex(args[0]);
-    const todos = todosAtom.get();
+    const todos = $todos.get();
     if (n === null) return [error("usage: done <number>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
     if (todos[n - 1].startsWith("x "))
@@ -90,7 +90,7 @@ const handlers: Record<string, CommandHandler> = {
   },
   delete: (args) => {
     const n = parseIndex(args[0]);
-    const todos = todosAtom.get();
+    const todos = $todos.get();
     if (n === null) return [error("usage: delete <number>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
     removeTodo(n);
@@ -99,7 +99,7 @@ const handlers: Record<string, CommandHandler> = {
   update: (args) => {
     const n = parseIndex(args[0]);
     const newText = args.slice(1).join(" ");
-    const todos = todosAtom.get();
+    const todos = $todos.get();
     if (n === null || !newText) return [error("usage: update <number> <text>")];
     if (n < 1 || n > todos.length) return [error(`No todo #${n}`)];
     updateTodo({ index: n, text: newText });

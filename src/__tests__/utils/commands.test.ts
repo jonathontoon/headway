@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { processCommand } from "@utils/commands";
-import { todosAtom } from "@atoms/todoAtoms";
+import { $todos } from "@stores/todos";
 import { ResponseType } from "@types";
 
 const TEST_TODOS = [
@@ -10,7 +10,7 @@ const TEST_TODOS = [
 ];
 
 beforeEach(() => {
-  todosAtom.set([...TEST_TODOS]);
+  $todos.set([...TEST_TODOS]);
 });
 
 describe("unknown command", () => {
@@ -55,7 +55,7 @@ describe("list", () => {
   });
 
   it("returns Text 'No todos.' when store is empty", () => {
-    todosAtom.set([]);
+    $todos.set([]);
     const result = processCommand("list", []);
     expect(result).toMatchObject([
       { type: ResponseType.Text, text: "No todos." },
@@ -81,7 +81,7 @@ describe("add", () => {
     expect(result.slice(1).every((r) => r.type === ResponseType.Todo)).toBe(
       true
     );
-    expect(todosAtom.get()).toHaveLength(4);
+    expect($todos.get()).toHaveLength(4);
   });
 
   it("returns Error when no args", () => {
@@ -97,7 +97,7 @@ describe("done", () => {
     expect(result.slice(1).every((r) => r.type === ResponseType.Todo)).toBe(
       true
     );
-    expect(todosAtom.get()[0]).toMatch(/^x /);
+    expect($todos.get()[0]).toMatch(/^x /);
   });
 
   it("returns Error when no args", () => {
@@ -123,7 +123,7 @@ describe("done", () => {
   });
 
   it("returns Warning when todo is already complete", () => {
-    todosAtom.set(["x 2026-02-24 Already done"]);
+    $todos.set(["x 2026-02-24 Already done"]);
     const result = processCommand("done", ["1"]);
     expect(result).toMatchObject([{ type: ResponseType.Warning }]);
   });
@@ -136,7 +136,7 @@ describe("delete", () => {
     expect(result.slice(1).every((r) => r.type === ResponseType.Todo)).toBe(
       true
     );
-    expect(todosAtom.get()).toHaveLength(2);
+    expect($todos.get()).toHaveLength(2);
   });
 
   it("returns Error when no args", () => {
@@ -149,7 +149,7 @@ describe("rm alias", () => {
   it("behaves the same as delete", () => {
     const result = processCommand("rm", ["1"]);
     expect(result[0].type).toBe(ResponseType.Success);
-    expect(todosAtom.get()).toHaveLength(2);
+    expect($todos.get()).toHaveLength(2);
   });
 });
 
@@ -157,7 +157,7 @@ describe("update", () => {
   it("updates todo text and returns success + list", () => {
     const result = processCommand("update", ["1", "new", "text"]);
     expect(result[0].type).toBe(ResponseType.Success);
-    expect(todosAtom.get()[0]).toBe("new text");
+    expect($todos.get()[0]).toBe("new text");
   });
 
   it("returns Error when no args", () => {
