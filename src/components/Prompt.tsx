@@ -48,14 +48,14 @@ Prompt.displayName = "Prompt";
 export default Prompt;
 
 // Extracted so hooks are only called in the interactive path
-function InteractivePrompt({
+const InteractivePrompt = ({
   value,
   onChange,
   onKeyDown,
   forwardedRef,
 }: Omit<InteractiveProps, "readOnly"> & {
   forwardedRef: React.ForwardedRef<HTMLInputElement>;
-}) {
+}) => {
   const [cursorPos, setCursorPos] = useState(value.length);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -118,4 +118,4 @@ function InteractivePrompt({
       </div>
     </div>
   );
-}
+};

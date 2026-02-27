@@ -52,7 +52,7 @@ export const useTerminal = (
         }
       }
     },
-    [input]
+    [input, inputRef]
   );
 
   return { input, onInputChange, onInputKeyDown };

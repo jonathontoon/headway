@@ -16,7 +16,7 @@ const renderName = (name: string) => {
       part
     );
   });
-}
+};
 
 const HelpCommandRow = ({ name, description }: HelpCommand) => (
   <div className="flex flex-col gap-1 mb-2 md:mb-0 md:gap-4 md:flex-row">
