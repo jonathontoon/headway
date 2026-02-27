@@ -21,11 +21,13 @@ pnpm dev
 ```
 
 The Agentation component will appear in the bottom-right corner of the dev app (only in development mode).
+The frontend proxies Agentation requests through the Vite dev server at `/agentation`, which forwards to `http://localhost:4747`.
 
 ## How It Works
 
-- The `Agentation` component is added to `src/App.tsx` and only loads when `NODE_ENV === "development"`
-- It connects to the MCP server at `http://localhost:4747`
+- The `Agentation` component is added to `src/App.tsx` and only loads in Vite dev mode
+- It connects through the app origin at `/agentation`
+- Vite proxies `/agentation/*` to `http://localhost:4747/*`
 - Annotations are stored locally and synced to the server when available
 - The server enables AI agents (like Amp) to read and manage annotations in real-time
 

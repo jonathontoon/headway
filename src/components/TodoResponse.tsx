@@ -1,16 +1,16 @@
-import type { TodoResponse as TodoResponseType } from "@types";
+import type { TodoResponse as TodoResponseData } from "@types";
 import Response from "./Response";
-import TodoIndex from "@components/TodoIndex";
-import TodoText from "@components/TodoText";
+import TodoRow from "@components/TodoRow";
 
 interface Props {
-  response: TodoResponseType;
+  response: TodoResponseData;
 }
 
 const TodoResponse = ({ response }: Props) => (
-  <Response className="flex gap-2">
-    <TodoIndex index={response.index} />
-    <TodoText text={response.text} />
+  <Response className="flex flex-col gap-0.5">
+    {response.items.map((r, i) => (
+      <TodoRow key={i} response={r} />
+    ))}
   </Response>
 );
 

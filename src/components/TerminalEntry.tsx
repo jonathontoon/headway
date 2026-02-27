@@ -3,7 +3,6 @@ import {
   ResponseType,
   type HistoryEntry as HistoryEntryType,
   type ResponseItem,
-  type TodoResponse as TodoResponseType,
 } from "@types";
 
 import Prompt from "@components/Prompt";
@@ -11,31 +10,10 @@ import TextResponse from "@components/TextResponse";
 import StatusResponse from "@components/StatusResponse";
 import TodoResponse from "@components/TodoResponse";
 import HelpResponse from "@components/HelpResponse";
-import TodoList from "@components/TodoList";
 
 interface Props {
   entry: HistoryEntryType;
 }
-
-type TodoGroup = { type: "todo-group"; items: TodoResponseType[] };
-type Grouped = ResponseItem | TodoGroup;
-
-const groupResponses = (responses: ResponseItem[]): Grouped[] => {
-  const result: Grouped[] = [];
-  for (const response of responses) {
-    if (response.type === ResponseType.Todo) {
-      const last = result[result.length - 1];
-      if (last && "type" in last && last.type === "todo-group") {
-        (last as TodoGroup).items.push(response);
-      } else {
-        result.push({ type: "todo-group", items: [response] });
-      }
-    } else {
-      result.push(response);
-    }
-  }
-  return result;
-};
 
 const renderResponse = (response: ResponseItem, i: number) => {
   switch (response.type) {
@@ -52,17 +30,10 @@ const renderResponse = (response: ResponseItem, i: number) => {
   }
 };
 
-const renderGrouped = (item: Grouped, i: number) => {
-  if (item.type === "todo-group") {
-    return <TodoList key={i} responses={item.items} />;
-  }
-  return renderResponse(item, i);
-};
-
 const TerminalEntry = memo(({ entry }: Props) => (
   <div className="flex flex-col gap-4">
     {entry.command && <Prompt readOnly value={entry.command} />}
-    {groupResponses(entry.responses).map((item, i) => renderGrouped(item, i))}
+    {entry.responses.map((response, i) => renderResponse(response, i))}
   </div>
 ));
 

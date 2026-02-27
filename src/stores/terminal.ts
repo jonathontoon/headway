@@ -12,11 +12,17 @@ export const $history = atom<HistoryEntry[]>([
         type: ResponseType.Text,
         text: "Welcome to Headway. Type 'help' for available commands.",
       },
-      ...$todos.get().map((text, i) => ({
-        type: ResponseType.Todo as const,
-        index: i + 1,
-        text,
-      })),
+      ...($todos.get().length > 0
+        ? [
+            {
+              type: ResponseType.Todo as const,
+              items: $todos.get().map((text, i) => ({
+                index: i + 1,
+                text,
+              })),
+            },
+          ]
+        : []),
     ],
   },
 ]);

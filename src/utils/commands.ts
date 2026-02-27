@@ -34,9 +34,12 @@ const warning = (t: string): ResponseItem => ({
 const listTodos = (): ResponseItem[] => {
   const todos = $todos.get();
   if (!todos.length) return [text("No todos.")];
-  return todos.map(
-    (t, i): ResponseItem => ({ type: ResponseType.Todo, index: i + 1, text: t })
-  );
+  return [
+    {
+      type: ResponseType.Todo,
+      items: todos.map((t, i) => ({ index: i + 1, text: t })),
+    },
+  ];
 };
 
 const handlers: Record<string, CommandHandler> = {

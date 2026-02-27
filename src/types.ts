@@ -11,10 +11,14 @@ export type TextResponse = { type: ResponseType.Text; text: string };
 export type ErrorResponse = { type: ResponseType.Error; text: string };
 export type SuccessResponse = { type: ResponseType.Success; text: string };
 export type WarningResponse = { type: ResponseType.Warning; text: string };
-export type TodoResponse = {
-  type: ResponseType.Todo;
+export type Todo = {
   index: number;
   text: string;
+};
+
+export type TodoResponse = {
+  type: ResponseType.Todo;
+  items: Todo[];
 };
 export type HelpCommand = { name: string; description: string };
 export type HelpSection = { title: string; commands: HelpCommand[] };

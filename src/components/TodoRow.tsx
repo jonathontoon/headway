@@ -1,9 +1,9 @@
-import type { TodoResponse } from "@types";
+import type { Todo } from "@types";
 import TodoIndex from "@components/TodoIndex";
 import TodoText from "@components/TodoText";
 
 interface Props {
-  response: TodoResponse;
+  response: Todo;
 }
 
 const TodoRow = ({ response }: Props) => (
