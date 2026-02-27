@@ -63,7 +63,7 @@ const handlers: Record<string, CommandHandler> = {
         {
           title: "Terminal",
           commands: [
-            { name: "echo [text]", description: "print text to the terminal" },
+            { name: "echo <text>", description: "print text to the terminal" },
             { name: "date", description: "show current date and time" },
             { name: "clear", description: "clear the terminal history" },
             { name: "help", description: "show this help message" },
@@ -111,6 +111,8 @@ const handlers: Record<string, CommandHandler> = {
 };
 
 handlers.rm = handlers.delete;
+
+export const COMMAND_NAMES = [...Object.keys(handlers), "clear"];
 
 export const processCommand = (
   command: string,

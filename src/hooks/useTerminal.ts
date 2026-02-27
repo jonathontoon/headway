@@ -1,10 +1,11 @@
-import { useCallback, type ChangeEvent, type KeyboardEvent } from "react";
+import { useCallback, type ChangeEvent, type KeyboardEvent, type RefObject } from "react";
 import { useStore } from "@nanostores/react";
 import {
   $input,
   executeCommand,
   navigateHistory,
 } from "@stores/terminal";
+import { getAutocomplete } from "@utils/autocomplete";
 
 export interface UseTerminalReturn {
   input: string;
@@ -12,7 +13,9 @@ export interface UseTerminalReturn {
   onInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
 }
 
-export const useTerminal = (): UseTerminalReturn => {
+export const useTerminal = (
+  inputRef: RefObject<HTMLInputElement | null>
+): UseTerminalReturn => {
   const input = useStore($input);
 
   const onInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -28,6 +31,25 @@ export const useTerminal = (): UseTerminalReturn => {
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         navigateHistory("down");
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        $input.set("");
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        const cursorPos = (e.target as HTMLInputElement).selectionStart ?? input.length;
+        const result = getAutocomplete(input, cursorPos);
+        if (result) {
+          $input.set(result.completed);
+          // Schedule cursor position update after state update
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.setSelectionRange(
+                result.insertPosition,
+                result.insertPosition
+              );
+            }
+          }, 0);
+        }
       }
     },
     [input]

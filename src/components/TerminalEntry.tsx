@@ -8,9 +8,7 @@ import {
 
 import Prompt from "@components/Prompt";
 import TextResponse from "@components/TextResponse";
-import ErrorResponse from "@components/ErrorResponse";
-import SuccessResponse from "@components/SuccessResponse";
-import WarningResponse from "@components/WarningResponse";
+import StatusResponse from "@components/StatusResponse";
 import TodoResponse from "@components/TodoResponse";
 import HelpResponse from "@components/HelpResponse";
 import TodoList from "@components/TodoList";
@@ -44,11 +42,9 @@ const renderResponse = (response: ResponseItem, i: number) => {
     case ResponseType.Text:
       return <TextResponse key={i} response={response} />;
     case ResponseType.Error:
-      return <ErrorResponse key={i} response={response} />;
     case ResponseType.Success:
-      return <SuccessResponse key={i} response={response} />;
     case ResponseType.Warning:
-      return <WarningResponse key={i} response={response} />;
+      return <StatusResponse key={i} response={response} />;
     case ResponseType.Todo:
       return <TodoResponse key={i} response={response} />;
     case ResponseType.Help:

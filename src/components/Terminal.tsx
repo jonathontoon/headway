@@ -8,10 +8,9 @@ import Prompt from "@components/Prompt";
 
 const Terminal = () => {
   const history = useStore($history);
-  const { input, onInputChange, onInputKeyDown } = useTerminal();
-
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { input, onInputChange, onInputKeyDown } = useTerminal(inputRef);
 
   useScrollToBottom(scrollRef, [history]);
 
