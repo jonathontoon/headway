@@ -6,29 +6,29 @@ import TodoText from "@components/TodoText";
 afterEach(cleanup);
 
 describe("TodoText", () => {
-  it("renders @context token with text-cyan-400 class", () => {
+  it("renders @context token with text-terminal-prioF class", () => {
     render(<TodoText text="buy @groceries" />);
-    expect(screen.getByText("@groceries")).toHaveClass("text-cyan-400");
+    expect(screen.getByText("@groceries")).toHaveClass("text-terminal-prioF");
   });
 
-  it("renders +project token with text-blue-400 class", () => {
+  it("renders +project token with text-terminal-prioH class", () => {
     render(<TodoText text="fix +headway bug" />);
-    expect(screen.getByText("+headway")).toHaveClass("text-blue-400");
+    expect(screen.getByText("+headway")).toHaveClass("text-terminal-prioH");
   });
 
-  it("renders (A) priority with text-red-400 class", () => {
+  it("renders (A) priority with text-terminal-prioA class", () => {
     render(<TodoText text="(A) urgent task" />);
-    expect(screen.getByText("(A)")).toHaveClass("text-red-400");
+    expect(screen.getByText("(A)")).toHaveClass("text-terminal-prioA");
   });
 
-  it("renders (B) priority with text-yellow-400 class", () => {
+  it("renders (B) priority with text-terminal-prioB class", () => {
     render(<TodoText text="(B) less urgent" />);
-    expect(screen.getByText("(B)")).toHaveClass("text-yellow-400");
+    expect(screen.getByText("(B)")).toHaveClass("text-terminal-prioB");
   });
 
-  it("renders YYYY-MM-DD date with text-zinc-500 class", () => {
+  it("renders YYYY-MM-DD date with text-zinc-600 class", () => {
     render(<TodoText text="2024-01-15 some task" />);
-    expect(screen.getByText("2024-01-15")).toHaveClass("text-zinc-500");
+    expect(screen.getByText("2024-01-15")).toHaveClass("text-zinc-600");
   });
 
   it("renders plain text token with no class", () => {

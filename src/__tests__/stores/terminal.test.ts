@@ -24,11 +24,13 @@ const makeWelcomeEntry = (): HistoryEntry => ({
       type: ResponseType.Text,
       text: "Welcome to Headway. Type 'help' for available commands.",
     },
-    ...TEST_TODOS.map((text, i) => ({
+    {
       type: ResponseType.Todo as const,
-      index: i + 1,
-      text,
-    })),
+      items: TEST_TODOS.map((text, i) => ({
+        index: i + 1,
+        text,
+      })),
+    },
   ],
 });
 

@@ -38,7 +38,7 @@ describe("TerminalEntry", () => {
         entry={makeEntry("", [{ type: ResponseType.Error, text: "bad error" }])}
       />
     );
-    expect(screen.getByText("✗")).toBeInTheDocument();
+    expect(screen.getByText("[✗]")).toBeInTheDocument();
     expect(screen.getByText("bad error")).toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe("TerminalEntry", () => {
         ])}
       />
     );
-    expect(screen.getByText("✓")).toBeInTheDocument();
+    expect(screen.getByText("[✓]")).toBeInTheDocument();
     expect(screen.getByText("all good")).toBeInTheDocument();
   });
 
@@ -62,7 +62,7 @@ describe("TerminalEntry", () => {
         ])}
       />
     );
-    expect(screen.getByText("~")).toBeInTheDocument();
+    expect(screen.getByText("[~]")).toBeInTheDocument();
     expect(screen.getByText("be careful")).toBeInTheDocument();
   });
 
@@ -70,7 +70,10 @@ describe("TerminalEntry", () => {
     const { container } = render(
       <TerminalEntry
         entry={makeEntry("", [
-          { type: ResponseType.Todo, index: 3, text: "my task" },
+          {
+            type: ResponseType.Todo,
+            items: [{ index: 3, text: "my task" }],
+          },
         ])}
       />
     );
@@ -98,30 +101,40 @@ describe("TerminalEntry", () => {
     expect(screen.getByText("add")).toBeInTheDocument();
   });
 
-  it("spaceBefore: first Todo after a Text response gets mt-4 class", () => {
+  it("renders multiple todo rows from a grouped todo response", () => {
     const { container } = render(
       <TerminalEntry
         entry={makeEntry("", [
-          { type: ResponseType.Text, text: "results:" },
-          { type: ResponseType.Todo, index: 1, text: "first todo" },
+          {
+            type: ResponseType.Todo,
+            items: [
+              { index: 1, text: "first todo" },
+              { index: 2, text: "second todo" },
+            ],
+          },
         ])}
       />
     );
-    const todoRow = container.querySelector(".mt-4");
-    expect(todoRow).not.toBeNull();
+    expect(screen.getByText("1.")).toBeInTheDocument();
+    expect(screen.getByText("2.")).toBeInTheDocument();
+    expect(container.textContent).toContain("first todo");
+    expect(container.textContent).toContain("second todo");
   });
 
-  it("spaceBefore: second consecutive Todo does NOT get mt-4 class", () => {
+  it("renders text and a following grouped todo response together", () => {
     const { container } = render(
       <TerminalEntry
         entry={makeEntry("", [
           { type: ResponseType.Text, text: "results:" },
-          { type: ResponseType.Todo, index: 1, text: "first todo" },
-          { type: ResponseType.Todo, index: 2, text: "second todo" },
+          {
+            type: ResponseType.Todo,
+            items: [{ index: 1, text: "first todo" }],
+          },
         ])}
       />
     );
-    const mtElements = container.querySelectorAll(".mt-4");
-    expect(mtElements).toHaveLength(1);
+    expect(screen.getByText("results:")).toBeInTheDocument();
+    expect(screen.getByText("1.")).toBeInTheDocument();
+    expect(container.textContent).toContain("first todo");
   });
 });

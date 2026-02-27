@@ -48,10 +48,15 @@ describe("date", () => {
 });
 
 describe("list", () => {
-  it("returns 3 Todo items matching store state", () => {
+  it("returns 1 grouped Todo response matching store state", () => {
     const result = processCommand("list", []);
-    expect(result).toHaveLength(3);
-    result.forEach((item) => expect(item.type).toBe(ResponseType.Todo));
+    expect(result).toHaveLength(1);
+    expect(result).toMatchObject([
+      {
+        type: ResponseType.Todo,
+        items: TEST_TODOS.map((text, i) => ({ index: i + 1, text })),
+      },
+    ]);
   });
 
   it("returns Text 'No todos.' when store is empty", () => {
