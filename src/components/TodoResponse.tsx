@@ -5,11 +5,10 @@ import TodoText from "@components/TodoText";
 
 interface Props {
   response: TodoResponseType;
-  spaceBefore?: boolean;
 }
 
-const TodoResponse = ({ response, spaceBefore }: Props) => (
-  <Response className={`flex gap-2${spaceBefore ? " mt-4" : ""}`}>
+const TodoResponse = ({ response }: Props) => (
+  <Response className="flex gap-2">
     <TodoIndex index={response.index} />
     <TodoText text={response.text} />
   </Response>

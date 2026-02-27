@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
-import { historyAtom } from "@atoms/terminalAtoms";
+import { $history } from "@stores/terminal";
 import { useTerminal } from "@hooks/useTerminal";
 import { useScrollToBottom } from "@hooks/useScrollToBottom";
 import TerminalHistory from "@components/TerminalHistory";
 import Prompt from "@components/Prompt";
 
 const Terminal = () => {
-  const history = useStore(historyAtom);
+  const history = useStore($history);
   const { input, onInputChange, onInputKeyDown } = useTerminal();
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -29,11 +29,6 @@ const Terminal = () => {
         [&::-webkit-scrollbar-thumb]:rounded-sm
         [&::-webkit-scrollbar-thumb:hover]:bg-zinc-700"
     >
-      {/*
-        Optimization: TerminalHistory is memoized and only depends on 'history'.
-        This prevents the entire history list from being re-mapped/re-processed
-        on every keystroke (when 'input' changes).
-      */}
       <TerminalHistory history={history} />
       <Prompt
         ref={inputRef}

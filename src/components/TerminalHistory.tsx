@@ -1,4 +1,4 @@
-import { Fragment, memo } from "react";
+import { memo } from "react";
 import type { HistoryEntry as HistoryEntryType } from "@types";
 import TerminalEntry from "@components/TerminalEntry";
 
@@ -7,11 +7,11 @@ interface Props {
 }
 
 const TerminalHistory = memo(({ history }: Props) => (
-  <Fragment>
+  <div className="flex flex-col gap-4">
     {history.map((entry) => (
       <TerminalEntry key={entry.id} entry={entry} />
     ))}
-  </Fragment>
+  </div>
 ));
 
 TerminalHistory.displayName = "TerminalHistory";

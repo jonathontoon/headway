@@ -1,10 +1,10 @@
 import { useCallback, type ChangeEvent, type KeyboardEvent } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  inputAtom,
+  $input,
   executeCommand,
   navigateHistory,
-} from "@atoms/terminalAtoms";
+} from "@stores/terminal";
 
 export interface UseTerminalReturn {
   input: string;
@@ -13,10 +13,10 @@ export interface UseTerminalReturn {
 }
 
 export const useTerminal = (): UseTerminalReturn => {
-  const input = useStore(inputAtom);
+  const input = useStore($input);
 
   const onInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    inputAtom.set(e.target.value);
+    $input.set(e.target.value);
   }, []);
 
   const onInputKeyDown = useCallback(

@@ -6,7 +6,7 @@ interface Props {
 }
 
 const SuccessResponse = ({ response }: Props) => (
-  <Response className="flex gap-2 text-green-400">
+  <Response className="flex gap-2 text-terminal-success">
     <span className="select-none shrink-0" aria-hidden>
       ✓
     </span>

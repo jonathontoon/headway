@@ -6,7 +6,7 @@ interface Props {
 }
 
 const WarningResponse = ({ response }: Props) => (
-  <Response className="flex gap-2 text-amber-400">
+  <Response className="flex gap-2 text-terminal-warning">
     <span className="select-none shrink-0" aria-hidden>
       ~
     </span>
