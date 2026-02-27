@@ -24,7 +24,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: #e8e8ea;
   background-color: #09090b;
 
   font-synthesis: none;
@@ -68,6 +68,43 @@ body {
 
 @theme {
   --animate-terminal-blink: terminal-blink 1s step-end infinite;
+
+  /* Terminal color palette */
+  --color-terminal-text: #e8e8ea;
+  --color-terminal-success: #3dbf8f;
+  --color-terminal-error: #e05c5c;
+  --color-terminal-warning: #e8b84b;
+  --color-terminal-info: #5ba8e8;
+  --color-terminal-accent: #a07ae8;
+  --color-terminal-prompt: #5bcce8;
+  --color-terminal-prioA: #e05c5c;
+  --color-terminal-prioB: #e8b84b;
+  --color-terminal-prioC: #3dbf8f;
+  --color-terminal-prioD: #3dbfaa;
+  --color-terminal-prioE: #3dccc0;
+  --color-terminal-prioF: #5bcce8;
+  --color-terminal-prioG: #5aaae8;
+  --color-terminal-prioH: #6898e8;
+  --color-terminal-prioI: #7888e8;
+  --color-terminal-prioJ: #9070e8;
+  --color-terminal-prioK: #a070e8;
+  --color-terminal-prioL: #b858c8;
+  --color-terminal-prioM: #b860a8;
+  --color-terminal-prioN: #b86090;
+  --color-terminal-prioO: #c07860;
+  --color-terminal-prioP: #e8b84b;
+  --color-terminal-prioQ: #90c840;
+  --color-terminal-prioR: #c06060;
+  --color-terminal-prioS: #c07848;
+  --color-terminal-prioT: #c8a848;
+  --color-terminal-prioU: #80b848;
+  --color-terminal-prioV: #48b888;
+  --color-terminal-prioW: #4898c8;
+  --color-terminal-prioX: #8858c8;
+  --color-terminal-prioY: #b04890;
+  --color-terminal-prioZ: #7878a0;
+  --color-terminal-subtle: #1a1a1f;
+  --color-terminal-hover: #252530;
 }
 
 @keyframes terminal-blink {
