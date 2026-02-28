@@ -2,84 +2,95 @@
 
 ## Design Philosophy
 
-The color system uses a **calm, expressive pastel palette** rather than harsh high-contrast colors. This creates a gentler, more inviting interface while maintaining readability. All colors are desaturated and softened compared to standard bright terminal colors.
+The color system now tracks a more classic terminal palette: **zinc neutrals**
+for structure, then a small set of vivid Tailwind utility colors for status and
+highlights. It keeps the interface dark and legible, but reads closer to the
+reference terminal styling.
 
 ## Core Colors
 
 ### Neutral
-- **text** (#e8e8ea): Off-white base text. Slightly warm, reduces glare compared to pure white
-- **subtle** (#1a1a1f): Very dark background for secondary elements
-- **hover** (#252530): Slightly lighter for interactive states
+
+- **text** (`#fafafa`): Near-white primary text
+- **muted** (`#71717a`): Zinc secondary text (`zinc-500`)
+- **dim** (`#52525b`): Lower-emphasis text (`zinc-600`)
+- **background** (`#09090b`): Main terminal background (`zinc-950`)
+- **surface** (`#18181b`): Elevated surface (`zinc-900`)
+- **hover** (`#27272a`): Hover/strong border surface (`zinc-800`)
 
 ### Status Colors
-These use soft pastels instead of bright primaries:
 
-- **success** (#8dd7b8): Soft mint green — calm confirmation
-- **error** (#d89b9b): Soft rose red — gentle error indication
-- **warning** (#dcc89d): Soft warm sand — muted caution
-- **info** (#a8c7e8): Soft sky blue — secondary information
+These now map directly to the reference palette:
+
+- **success** (`#22c55e`): `green-500`
+- **error** (`#ef4444`): `red-500`
+- **warning** (`#f59e0b`): `amber-500`
+- **info** (`#67e8f9`): `cyan-300`
 
 ### Accents
-- **accent** (#b8a8d8): Soft lavender for highlights
-- **prompt** (#a8d7e8): Soft cyan for the prompt prefix
+
+- **accent** (`#fef08a`): `yellow-200` for highlighted arguments and links
+- **prompt** (`#fafafa`): Bright prompt marker text
 
 ## Todo Priority Colors (A-Z)
 
-Each priority level gets its own pastel shade:
+Each priority level uses a Tailwind accent that stays readable on the dark zinc
+background:
 
-| Priority | Color | Hex |
-|----------|-------|-----|
-| A | Soft Red | #d89b9b |
-| B | Soft Yellow | #dcc89d |
-| C | Soft Mint | #8dd7b8 |
-| D | Soft Emerald | #8dd7b0 |
-| E | Soft Teal | #8dd7d0 |
-| F | Soft Cyan | #a8d7e8 |
-| G | Soft Sky | #b0c7e8 |
-| H | Soft Blue | #b8c0e8 |
-| I | Soft Indigo | #c0b8e8 |
-| J | Soft Violet | #c8b0e8 |
-| K | Soft Purple | #d0a8e8 |
-| L | Soft Fuchsia | #d8a0d8 |
-| M | Soft Pink | #d8a8c8 |
-| N | Soft Rose | #d8a8b8 |
-| O | Soft Orange | #d8b8a0 |
-| P | Soft Amber | #dcc89d |
-| Q | Soft Lime | #c8d89d |
-| R | Soft Red-3 | #d8a8a0 |
-| S | Soft Orange-3 | #dcc0a0 |
-| T | Soft Yellow-3 | #dcd0a0 |
-| U | Soft Green-3 | #c0d0a0 |
-| V | Soft Teal-3 | #a8d0c0 |
-| W | Soft Blue-3 | #a8c0d8 |
-| X | Soft Violet-3 | #c0a8d8 |
-| Y | Soft Pink-3 | #d0a8c0 |
-| Z | Soft Zinc | #b0b0b8 |
+| Priority | Color     | Hex     |
+| -------- | --------- | ------- |
+| A        | Red       | #ef4444 |
+| B        | Yellow    | #fef08a |
+| C        | Green     | #22c55e |
+| D        | Green-2   | #4ade80 |
+| E        | Emerald   | #6ee7b7 |
+| F        | Cyan      | #67e8f9 |
+| G        | Sky       | #7dd3fc |
+| H        | Blue      | #93c5fd |
+| I        | Indigo    | #a5b4fc |
+| J        | Violet    | #c4b5fd |
+| K        | Purple    | #d8b4fe |
+| L        | Fuchsia   | #f0abfc |
+| M        | Pink      | #f9a8d4 |
+| N        | Rose      | #fda4af |
+| O        | Orange    | #fdba74 |
+| P        | Amber     | #fcd34d |
+| Q        | Lime      | #bef264 |
+| R        | Teal      | #5eead4 |
+| S        | Cyan-2    | #22d3ee |
+| T        | Yellow-2  | #fde047 |
+| U        | Green-3   | #86efac |
+| V        | Emerald-2 | #34d399 |
+| W        | Sky-2     | #38bdf8 |
+| X        | Violet-2  | #a78bfa |
+| Y        | Pink-2    | #f472b6 |
+| Z        | Zinc      | #a1a1aa |
 
 ## Implementation
 
-Colors are defined in `tailwind.config.js` under the `terminal` namespace and used via Tailwind classes like `text-terminal-success`, `text-terminal-prioA`, etc.
+Colors are defined in [src/styles/global.css](/Users/toon/src/headway/src/styles/global.css)
+inside Tailwind v4's `@theme` block and used via classes like
+`text-terminal-success`, `text-terminal-muted`, and `text-terminal-prioA`.
 
 ### Usage Examples
 
 ```tsx
-// Status responses
-<span className="text-terminal-success">✓ Task completed</span>
-<span className="text-terminal-error">✗ Error occurred</span>
-<span className="text-terminal-warning">~ Warning</span>
+// Status icon + message
+<span className="text-terminal-success">[✓]</span>
+<span className="text-terminal-text">Task completed</span>
 
 // Todo priorities
 <span className="text-terminal-prioA">(A)</span>
 <span className="text-terminal-prioB">(B)</span>
 
 // Prompt
-<span className="text-terminal-prompt">~$</span>
+<span className="text-terminal-muted">~</span>
+<span className="text-terminal-text">$</span>
 ```
 
-## Why Pastels Instead of High Contrast?
+## Why This Palette?
 
-1. **Calm tone** — Pastel colors feel less aggressive and more approachable
-2. **Expressive** — Each color maintains its semantic meaning while being softer
-3. **Less eye strain** — Desaturated colors are gentler for extended terminal use
-4. **Visual harmony** — All colors share similar saturation and brightness, creating cohesion
-5. **Distinction without intensity** — Colors remain distinct but don't compete for attention
+1. **Closer visual match** to the reference terminal styles
+2. **Stronger semantic signals** from familiar Tailwind status colors
+3. **Cleaner hierarchy** with zinc neutrals handling most UI chrome
+4. **Better contrast** for prompts, status markers, and command output
