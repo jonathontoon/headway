@@ -19,13 +19,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@components": resolve(__dirname, "src/components"),
-      "@constants": resolve(__dirname, "src/constants.ts"),
       "@contexts": resolve(__dirname, "src/contexts"),
       "@hooks": resolve(__dirname, "src/hooks"),
-      "@types": resolve(__dirname, "src/types.ts"),
-      "@providers": resolve(__dirname, "src/providers"),
-      "@stores": resolve(__dirname, "src/stores"),
-      "@utils": resolve(__dirname, "src/utils"),
+      "@reducers": resolve(__dirname, "src/reducers"),
     },
   },
   build: {
@@ -33,6 +29,6 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    setupFiles: ["./src/__tests__/setup.ts"],
+    setupFiles: ["./src/setupTests.ts"],
   },
 });
