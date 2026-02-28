@@ -1,6 +1,5 @@
 import { atom } from "nanostores";
 import { ResponseType, type HistoryEntry } from "@types";
-import { processCommand } from "@utils/commands";
 import { $todos } from "@stores/todos";
 
 export const $history = atom<HistoryEntry[]>([
@@ -49,36 +48,3 @@ export const navigateHistory = (direction: "up" | "down") => {
   }
 };
 
-export const executeCommand = (raw: string) => {
-  const trimmed = raw.trim();
-  if (!trimmed) return;
-
-  const [command, ...args] = trimmed.split(/\s+/);
-
-  if (command === "clear") {
-    $history.set([]);
-    $input.set("");
-    $cmdHistoryIndex.set(-1);
-    return;
-  }
-
-  const history = $history.get();
-  const cmdHistory = $cmdHistory.get();
-  let responses: HistoryEntry["responses"];
-  try {
-    responses = processCommand(command, args);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "unknown error";
-    responses = [{ type: ResponseType.Error, text: `${command}: ${message}` }];
-  }
-  const entry: HistoryEntry = {
-    id: crypto.randomUUID(),
-    command: trimmed,
-    responses,
-  };
-
-  $history.set([...history, entry]);
-  $cmdHistory.set([trimmed, ...cmdHistory]);
-  $input.set("");
-  $cmdHistoryIndex.set(-1);
-};

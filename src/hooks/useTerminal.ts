@@ -5,8 +5,9 @@ import {
   type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
-import { $input, executeCommand, navigateHistory } from "@stores/terminal";
-import { getAutocomplete } from "@utils/autocomplete";
+import { $input, navigateHistory } from "@stores/terminal";
+import { useAutocomplete } from "@hooks/useAutocomplete";
+import { useCommands } from "@hooks/useCommands";
 
 export interface UseTerminalReturn {
   input: string;
@@ -18,6 +19,8 @@ export const useTerminal = (
   inputRef: RefObject<HTMLInputElement | null>
 ): UseTerminalReturn => {
   const input = useStore($input);
+  const getAutocomplete = useAutocomplete();
+  const executeCommand = useCommands();
 
   const onInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     $input.set(e.target.value);
@@ -54,7 +57,7 @@ export const useTerminal = (
         }
       }
     },
-    [input, inputRef]
+    [input, inputRef, getAutocomplete, executeCommand]
   );
 
   return { input, onInputChange, onInputKeyDown };
