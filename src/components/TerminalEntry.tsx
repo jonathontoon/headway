@@ -9,6 +9,7 @@ import Prompt from "@components/Prompt";
 import TextResponse from "@components/TextResponse";
 import StatusResponse from "@components/StatusResponse";
 import TodoResponse from "@components/TodoResponse";
+import BucketedTodoResponse from "@components/BucketedTodoResponse";
 import HelpResponse from "@components/HelpResponse";
 
 interface Props {
@@ -25,6 +26,8 @@ const renderResponse = (response: ResponseItem, i: number) => {
       return <StatusResponse key={i} response={response} />;
     case ResponseType.Todo:
       return <TodoResponse key={i} response={response} />;
+    case ResponseType.BucketedTodo:
+      return <BucketedTodoResponse key={i} response={response} />;
     case ResponseType.Help:
       return <HelpResponse key={i} response={response} />;
   }

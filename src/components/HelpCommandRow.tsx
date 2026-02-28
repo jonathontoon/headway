@@ -24,7 +24,7 @@ const renderName = (name: string) => {
 
 const HelpCommandRow = ({ name, description }: HelpCommand) => (
   <div className="flex flex-col gap-1 md:flex-row md:gap-4">
-    <dt className="m-0 text-terminal-text md:w-64 md:shrink-0">
+    <dt className="m-0 text-terminal-text md:w-90 md:shrink-0">
       {renderName(name)}
     </dt>
     <dd className="m-0 text-terminal-muted">{description}</dd>

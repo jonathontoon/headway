@@ -4,6 +4,7 @@ export enum ResponseType {
   Success = "success",
   Warning = "warning",
   Todo = "todo",
+  BucketedTodo = "bucketed_todo",
   Help = "help",
 }
 
@@ -20,6 +21,13 @@ export type TodoResponse = {
   type: ResponseType.Todo;
   items: Todo[];
 };
+export type BucketedSection = { label: string; items: Todo[] };
+
+export type BucketedTodoResponse = {
+  type: ResponseType.BucketedTodo;
+  sections: BucketedSection[];
+};
+
 export type HelpCommand = { name: string; description: string };
 export type HelpSection = { title: string; commands: HelpCommand[] };
 export type HelpResponse = {
@@ -33,6 +41,7 @@ export type ResponseItem =
   | SuccessResponse
   | WarningResponse
   | TodoResponse
+  | BucketedTodoResponse
   | HelpResponse;
 
 export interface HistoryEntry {

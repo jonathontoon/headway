@@ -68,6 +68,10 @@ const tokenize = (text: string) => {
       return { ...token, className: "text-terminal-prioF" };
     if (token.word.startsWith("+"))
       return { ...token, className: "text-terminal-prioH" };
+    if (token.word.startsWith("due:"))
+      return { ...token, className: "text-terminal-warning" };
+    if (token.word.startsWith("bucket:"))
+      return { ...token, className: "text-terminal-muted" };
     return token;
   });
 };
