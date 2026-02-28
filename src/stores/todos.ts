@@ -13,8 +13,36 @@ export const $todos = persistentAtom<string[]>("headway:todos", [...DEFAULTS], {
   decode: JSON.parse,
 });
 
+const DATE_TOKEN = /^\d{4}-\d{2}-\d{2}$/;
+const PRIORITY_TOKEN = /^\([A-Z]\)$/;
+
+const today = (): string => new Date().toISOString().slice(0, 10);
+
+const withCreationDate = (raw: string): string => {
+  const tokens = raw.trim().split(/\s+/);
+
+  if (!tokens[0]) return raw;
+
+  if (tokens[0] === "x") {
+    if (!DATE_TOKEN.test(tokens[1] ?? "")) return tokens.join(" ");
+    if (DATE_TOKEN.test(tokens[2] ?? "")) return tokens.join(" ");
+    return ["x", tokens[1], today(), ...tokens.slice(2)].join(" ");
+  }
+
+  if (PRIORITY_TOKEN.test(tokens[0])) {
+    if (DATE_TOKEN.test(tokens[1] ?? "")) return tokens.join(" ");
+    return [tokens[0], today(), ...tokens.slice(1)].join(" ");
+  }
+
+  if (DATE_TOKEN.test(tokens[0])) return tokens.join(" ");
+
+  return [today(), ...tokens].join(" ");
+};
+
 export const addTodo = (raw: string) => {
-  $todos.set([...$todos.get(), raw]);
+  const todo = withCreationDate(raw);
+  $todos.set([...$todos.get(), todo]);
+  return todo;
 };
 
 export const removeTodo = (index: number) => {

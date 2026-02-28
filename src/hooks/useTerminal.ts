@@ -1,10 +1,11 @@
-import { useCallback, type ChangeEvent, type KeyboardEvent, type RefObject } from "react";
-import { useStore } from "@nanostores/react";
 import {
-  $input,
-  executeCommand,
-  navigateHistory,
-} from "@stores/terminal";
+  useCallback,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type RefObject,
+} from "react";
+import { useStore } from "@nanostores/react";
+import { $input, executeCommand, navigateHistory } from "@stores/terminal";
 import { getAutocomplete } from "@utils/autocomplete";
 
 export interface UseTerminalReturn {
@@ -36,7 +37,8 @@ export const useTerminal = (
         $input.set("");
       } else if (e.key === "Tab") {
         e.preventDefault();
-        const cursorPos = (e.target as HTMLInputElement).selectionStart ?? input.length;
+        const cursorPos =
+          (e.target as HTMLInputElement).selectionStart ?? input.length;
         const result = getAutocomplete(input, cursorPos);
         if (result) {
           $input.set(result.completed);

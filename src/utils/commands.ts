@@ -78,8 +78,8 @@ const handlers: Record<string, CommandHandler> = {
   list: () => listTodos(),
   add: (args) => {
     if (!args.length) return [error("usage: add <text>")];
-    addTodo(args.join(" "));
-    return [success(`Added: ${args.join(" ")}`), ...listTodos()];
+    const todo = addTodo(args.join(" "));
+    return [success(`Added: ${todo}`), ...listTodos()];
   },
   done: (args) => {
     const n = parseIndex(args[0]);

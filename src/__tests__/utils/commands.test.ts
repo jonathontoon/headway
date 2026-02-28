@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { processCommand } from "@utils/commands";
 import { $todos } from "@stores/todos";
 import { ResponseType } from "@types";
@@ -11,6 +11,10 @@ const TEST_TODOS = [
 
 beforeEach(() => {
   $todos.set([...TEST_TODOS]);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("unknown command", () => {
@@ -81,12 +85,19 @@ describe("help", () => {
 
 describe("add", () => {
   it("returns Success + updated list on success", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-26"));
+
     const result = processCommand("add", ["buy", "milk"]);
-    expect(result[0].type).toBe(ResponseType.Success);
+    expect(result[0]).toMatchObject({
+      type: ResponseType.Success,
+      text: "Added: 2026-02-26 buy milk",
+    });
     expect(result.slice(1).every((r) => r.type === ResponseType.Todo)).toBe(
       true
     );
     expect($todos.get()).toHaveLength(4);
+    expect($todos.get()[3]).toBe("2026-02-26 buy milk");
   });
 
   it("returns Error when no args", () => {

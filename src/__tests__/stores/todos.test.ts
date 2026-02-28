@@ -19,6 +19,10 @@ beforeEach(() => {
   $todos.set([...DEFAULTS]);
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("initial state", () => {
   it("contains 5 default todos", () => {
     expect($todos.get()).toHaveLength(5);
@@ -26,11 +30,39 @@ describe("initial state", () => {
 });
 
 describe("addTodo", () => {
-  it("appends to end of list", () => {
+  it("prepends today's date when a creation date is missing", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-26"));
+
     addTodo("Buy milk");
+
     const todos = $todos.get();
     expect(todos).toHaveLength(6);
-    expect(todos[5]).toBe("Buy milk");
+    expect(todos[5]).toBe("2026-02-26 Buy milk");
+  });
+
+  it("inserts today's date after a priority marker", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-26"));
+
+    addTodo("(A) Buy milk");
+
+    expect($todos.get()[5]).toBe("(A) 2026-02-26 Buy milk");
+  });
+
+  it("preserves an existing creation date", () => {
+    addTodo("2026-02-01 Buy milk");
+
+    expect($todos.get()[5]).toBe("2026-02-01 Buy milk");
+  });
+
+  it("adds a creation date to completed tasks when only a completion date exists", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-26"));
+
+    addTodo("x 2026-02-25 Ship release");
+
+    expect($todos.get()[5]).toBe("x 2026-02-25 2026-02-26 Ship release");
   });
 });
 
@@ -69,18 +101,12 @@ describe("updateTodo", () => {
   });
 
   it("does not throw for out-of-range index", () => {
-    expect(() =>
-      updateTodo({ index: 99, text: "text" })
-    ).not.toThrow();
+    expect(() => updateTodo({ index: 99, text: "text" })).not.toThrow();
     expect($todos.get()).toHaveLength(5);
   });
 });
 
 describe("completeTodo", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("prefixes with x YYYY-MM-DD", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-02-26"));
@@ -94,9 +120,7 @@ describe("completeTodo", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-02-26"));
     completeTodo(1); // "(A) Call mom @phone +personal"
-    expect($todos.get()[0]).toBe(
-      "x 2026-02-26 Call mom @phone +personal"
-    );
+    expect($todos.get()[0]).toBe("x 2026-02-26 Call mom @phone +personal");
   });
 
   it("does not double-complete an already-completed todo", () => {
