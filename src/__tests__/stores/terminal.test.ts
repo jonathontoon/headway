@@ -4,9 +4,9 @@ import {
   $input,
   $cmdHistory,
   $cmdHistoryIndex,
-  executeCommand,
   navigateHistory,
 } from "@stores/terminal";
+import { executeCommand } from "@hooks/useCommands";
 import { $todos } from "@stores/todos";
 import { ResponseType, type HistoryEntry } from "@types";
 

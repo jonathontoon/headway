@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { processCommand } from "@utils/commands";
+import { processCommand } from "@hooks/useCommands";
 import { $todos } from "@stores/todos";
 import { ResponseType } from "@types";
 
