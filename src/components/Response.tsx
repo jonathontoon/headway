@@ -1,12 +1,13 @@
-import type { ReactNode } from "react";
+import type { ElementType, ReactNode } from "react";
 
 interface Props {
+  as?: ElementType;
   children: ReactNode;
   className: string;
 }
 
-const Response = ({ children, className }: Props) => (
-  <div className={className}>{children}</div>
+const Response = ({ as: Component = "div", children, className }: Props) => (
+  <Component className={className}>{children}</Component>
 );
 
 export default Response;

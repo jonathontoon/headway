@@ -23,8 +23,8 @@ type ReadOnlyProps = {
 type Props = InteractiveProps | ReadOnlyProps;
 
 const PromptPrefix = () => (
-  <span className="select-none text-terminal-prompt">
-    <span className="text-terminal-text">~</span>$
+  <span aria-hidden="true" className="select-none text-terminal-prompt">
+    <span className="text-terminal-muted">~</span>$
   </span>
 );
 
@@ -96,7 +96,7 @@ const InteractivePrompt = ({
           className="pointer-events-none select-none whitespace-pre"
         >
           {textBefore}
-          <span className="animate-terminal-blink bg-terminal-text text-black">
+          <span className="animate-terminal-blink bg-terminal-text text-terminal-background">
             {cursorChar}
           </span>
           {textAfter}
@@ -110,6 +110,7 @@ const InteractivePrompt = ({
           onSelect={syncCursor}
           onFocus={syncCursor}
           onKeyDown={onKeyDown}
+          aria-label="Terminal command"
           className="absolute inset-0 w-full bg-transparent text-transparent caret-transparent outline-none"
           autoComplete="off"
           autoCorrect="off"

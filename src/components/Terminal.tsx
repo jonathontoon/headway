@@ -22,11 +22,11 @@ const Terminal = () => {
     <div
       ref={scrollRef}
       className="h-full overflow-y-auto p-4 flex flex-col gap-4
-        [&::-webkit-scrollbar]:w-1
+        [&::-webkit-scrollbar]:w-2
         [&::-webkit-scrollbar-track]:bg-transparent
-        [&::-webkit-scrollbar-thumb]:bg-zinc-800
+        [&::-webkit-scrollbar-thumb]:bg-zinc-500
         [&::-webkit-scrollbar-thumb]:rounded-sm
-        [&::-webkit-scrollbar-thumb:hover]:bg-zinc-700"
+        [&::-webkit-scrollbar-thumb:hover]:bg-zinc-400"
     >
       <TerminalHistory history={history} />
       <Prompt

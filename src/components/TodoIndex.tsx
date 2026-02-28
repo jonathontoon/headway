@@ -3,7 +3,10 @@ interface Props {
 }
 
 const TodoIndex = ({ index }: Props) => (
-  <span className="text-zinc-500 select-none pl-2.5 text-right shrink-0">
+  <span
+    aria-hidden="true"
+    className="w-10 text-terminal-muted select-none text-right tabular-nums shrink-0"
+  >
     {index}.
   </span>
 );

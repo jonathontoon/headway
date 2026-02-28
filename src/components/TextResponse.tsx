@@ -6,7 +6,7 @@ interface Props {
 }
 
 const TextResponse = ({ response }: Props) => (
-  <Response className="text-zinc-400">{response.text}</Response>
+  <Response className="text-terminal-text">{response.text}</Response>
 );
 
 export default TextResponse;

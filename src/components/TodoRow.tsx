@@ -7,10 +7,10 @@ interface Props {
 }
 
 const TodoRow = ({ response }: Props) => (
-  <div className="flex gap-2">
+  <li className="flex gap-2">
     <TodoIndex index={response.index} />
     <TodoText text={response.text} />
-  </div>
+  </li>
 );
 
 export default TodoRow;

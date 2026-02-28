@@ -7,7 +7,7 @@ interface Props {
 }
 
 const TodoResponse = ({ response }: Props) => (
-  <Response className="flex flex-col gap-0.5">
+  <Response as="ol" className="m-0 flex flex-col gap-0.5 list-none p-0">
     {response.items.map((r, i) => (
       <TodoRow key={i} response={r} />
     ))}

@@ -7,14 +7,15 @@ interface Props {
 }
 
 const HelpResponse = ({ response }: Props) => (
-  <Response className="flex flex-col gap-3">
-    {response.sections.map((section) => (
-      <div key={section.title} className="flex flex-col gap-1.5">
-        {section.commands.map((command) => (
-          <HelpCommandRow key={command.name} {...command} />
-        ))}
-      </div>
-    ))}
+  <Response as="dl" className="m-0 flex flex-col gap-2">
+    {response.sections.flatMap((section, sectionIndex) =>
+      section.commands.map((command, commandIndex) => (
+        <HelpCommandRow
+          key={`${section.title}-${sectionIndex}-${command.name}-${commandIndex}`}
+          {...command}
+        />
+      ))
+    )}
   </Response>
 );
 

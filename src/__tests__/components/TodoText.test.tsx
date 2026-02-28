@@ -26,9 +26,14 @@ describe("TodoText", () => {
     expect(screen.getByText("(B)")).toHaveClass("text-terminal-prioB");
   });
 
-  it("renders YYYY-MM-DD date with text-zinc-600 class", () => {
+  it("renders a non-completed date without a special class", () => {
     render(<TodoText text="2024-01-15 some task" />);
-    expect(screen.getByText("2024-01-15")).toHaveClass("text-zinc-600");
+    expect(screen.getByText("2024-01-15").className).toBe("");
+  });
+
+  it("does not highlight a date that is part of the task body", () => {
+    render(<TodoText text="plan launch for 2024-01-15" />);
+    expect(screen.getByText("2024-01-15").className).toBe("");
   });
 
   it("renders plain text token with no class", () => {
@@ -37,20 +42,20 @@ describe("TodoText", () => {
     expect(el.className).toBe("");
   });
 
-  it("completed todo: root span has line-through and text-zinc-700", () => {
-    const { container } = render(<TodoText text="x done task" />);
+  it("completed todo: root span has line-through and text-terminal-muted", () => {
+    const { container } = render(<TodoText text="x 2024-01-16 done task" />);
     const root = container.firstChild as HTMLElement;
     expect(root).toHaveClass("line-through");
-    expect(root).toHaveClass("text-zinc-700");
+    expect(root).toHaveClass("text-terminal-muted");
   });
 
   it("completed todo: x prefix is not rendered as a token", () => {
-    render(<TodoText text="x done task" />);
+    render(<TodoText text="x 2024-01-16 done task" />);
     expect(screen.queryByText("x")).toBeNull();
   });
 
   it("completed todo: colored tokens lose their class", () => {
-    render(<TodoText text="x done @context +project" />);
+    render(<TodoText text="x 2024-01-16 @context +project" />);
     expect(screen.getByText("@context").className).toBe("");
     expect(screen.getByText("+project").className).toBe("");
   });

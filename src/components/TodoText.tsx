@@ -36,23 +36,48 @@ const PRIORITY_COLORS: Record<string, string> = {
 const priorityClass = (p: string): string =>
   PRIORITY_COLORS[p] ?? "text-terminal-text";
 
-const tokenize = (text: string) =>
-  text.split(" ").map((word) => {
-    if (/^\([A-Z]\)$/.test(word))
-      return { word, className: priorityClass(word[1]) };
-    if (/^\d{4}-\d{2}-\d{2}$/.test(word))
-      return { word, className: "text-zinc-600" };
-    if (word.startsWith("@")) return { word, className: "text-terminal-prioF" };
-    if (word.startsWith("+")) return { word, className: "text-terminal-prioH" };
-    return { word, className: "" };
+const DATE_TOKEN = /^\d{4}-\d{2}-\d{2}$/;
+const PRIORITY_TOKEN = /^\([A-Z]\)$/;
+
+const tokenize = (text: string) => {
+  const done = text.startsWith("x ");
+  const tokens = text
+    .split(" ")
+    .slice(done ? 1 : 0)
+    .map((word) => ({ word, className: "" }));
+
+  let cursor = 0;
+
+  if (!done && PRIORITY_TOKEN.test(tokens[0]?.word ?? "")) {
+    tokens[0].className = priorityClass(tokens[0].word[1]);
+    cursor = 1;
+  }
+
+  if (done && DATE_TOKEN.test(tokens[0]?.word ?? "")) {
+    tokens[0].className = "text-terminal-muted";
+    cursor = 1;
+  }
+
+  if (done && DATE_TOKEN.test(tokens[cursor]?.word ?? "")) {
+    tokens[cursor].className = "text-terminal-muted";
+  }
+
+  return tokens.map((token) => {
+    if (token.className) return token;
+    if (token.word.startsWith("@"))
+      return { ...token, className: "text-terminal-prioF" };
+    if (token.word.startsWith("+"))
+      return { ...token, className: "text-terminal-prioH" };
+    return token;
   });
+};
 
 const TodoText = ({ text }: Props) => {
   const done = text.startsWith("x ");
-  const tokens = tokenize(done ? text.slice(2) : text);
+  const tokens = tokenize(text);
 
   return (
-    <span className={done ? "text-zinc-700 line-through" : ""}>
+    <span className={done ? "text-terminal-muted line-through" : ""}>
       {tokens.flatMap((token, i) => [
         <TodoToken
           key={i}

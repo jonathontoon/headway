@@ -7,7 +7,13 @@ interface Props {
 }
 
 const TerminalHistory = memo(({ history }: Props) => (
-  <div className="flex flex-col gap-4">
+  <div
+    role="log"
+    aria-label="Terminal output"
+    aria-live="polite"
+    aria-relevant="additions text"
+    className="flex flex-col gap-4"
+  >
     {history.map((entry) => (
       <TerminalEntry key={entry.id} entry={entry} />
     ))}

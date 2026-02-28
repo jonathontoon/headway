@@ -77,6 +77,7 @@ describe("TerminalEntry", () => {
         ])}
       />
     );
+    expect(screen.getByRole("list")).toBeInTheDocument();
     expect(screen.getByText("3.")).toBeInTheDocument();
     // TodoText splits words into individual spans; check via container textContent
     expect(container.textContent).toContain("my task");
