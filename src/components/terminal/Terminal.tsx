@@ -1,21 +1,87 @@
-import { useEffect, useRef } from "react";
-import { useTerminal } from "@hooks/useTerminal";
-import { useScrollToBottom } from "@hooks/useScrollToBottom";
-import Prompt from "@components/terminal/Prompt";
-import TerminalHistory from "@components/terminal/TerminalHistory";
+import {
+  useEffect,
+  useRef,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
+import { TERMINAL_DEPLOY_DELAY_MS } from "../../constants";
+import {
+  clearInput,
+  navigateHistory,
+  resolvePendingCommand,
+  setInput,
+  submitInput,
+} from "../../actions/terminalActions";
+import { useAppDispatch } from "../../hooks/useAppDispatch";
+import { useAppSelector } from "../../hooks/useAppSelector";
+import {
+  createPendingCommandCompletionItems,
+} from "../../lib/terminal/commands";
+import { selectTerminalInput } from "../../selectors/selectTerminalInput";
+import { selectTerminalItems } from "../../selectors/selectTerminalItems";
+import { selectTerminalPendingCommand } from "../../selectors/selectTerminalPendingCommand";
+import Prompt from "./Prompt";
+import TerminalHistory from "./TerminalHistory";
 
 const Terminal = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { transcript, input, onInputChange, onInputKeyDown } = useTerminal(
-    inputRef
-  );
-
-  useScrollToBottom(scrollRef, [transcript]);
+  const dispatch = useAppDispatch();
+  const input = useAppSelector(selectTerminalInput);
+  const items = useAppSelector(selectTerminalItems);
+  const pendingCommand = useAppSelector(selectTerminalPendingCommand);
 
   useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+
     inputRef.current?.focus();
-  }, [transcript]);
+  }, [items]);
+
+  useEffect(() => {
+    if (!pendingCommand) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      dispatch(
+        resolvePendingCommand(
+          createPendingCommandCompletionItems(pendingCommand)
+        )
+      );
+    }, TERMINAL_DEPLOY_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [dispatch, pendingCommand]);
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    dispatch(setInput(event.target.value));
+  };
+
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    switch (event.key) {
+      case "Enter":
+        dispatch(submitInput());
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        dispatch(navigateHistory("up"));
+        break;
+      case "ArrowDown":
+        event.preventDefault();
+        dispatch(navigateHistory("down"));
+        break;
+      case "Escape":
+        event.preventDefault();
+        dispatch(clearInput());
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div
@@ -27,12 +93,12 @@ const Terminal = () => {
         [&::-webkit-scrollbar-thumb]:rounded-sm
         [&::-webkit-scrollbar-thumb:hover]:bg-zinc-400"
     >
-      <TerminalHistory history={transcript} />
+      <TerminalHistory items={items} />
       <Prompt
         ref={inputRef}
         value={input}
-        onChange={onInputChange}
-        onKeyDown={onInputKeyDown}
+        onChange={handleInputChange}
+        onKeyDown={handleInputKeyDown}
       />
     </div>
   );

@@ -1,23 +1,5 @@
-import {
-  type ChangeEvent,
-  type KeyboardEvent,
-  type Ref,
-} from "react";
-
-type InteractiveProps = {
-  readOnly?: false;
-  ref?: Ref<HTMLInputElement>;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
-};
-
-type ReadOnlyProps = {
-  readOnly: true;
-  value: string;
-};
-
-type Props = InteractiveProps | ReadOnlyProps;
+import { TERMINAL_INPUT_LABEL } from "../../constants";
+import type { PromptProps } from "../../types";
 
 const PromptPrefix = () => (
   <span aria-hidden="true" className="select-none text-terminal-prompt">
@@ -25,7 +7,7 @@ const PromptPrefix = () => (
   </span>
 );
 
-const Prompt = (props: Props) => {
+const Prompt = (props: PromptProps) => {
   const { value, readOnly } = props;
 
   if (readOnly) {
@@ -45,7 +27,7 @@ const Prompt = (props: Props) => {
         value={value}
         onChange={props.onChange}
         onKeyDown={props.onKeyDown}
-        aria-label="Terminal command"
+        aria-label={TERMINAL_INPUT_LABEL}
         className="min-w-0 flex-1 bg-transparent text-terminal-text outline-none"
         autoComplete="off"
         autoCorrect="off"

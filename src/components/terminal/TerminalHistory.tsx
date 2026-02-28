@@ -1,21 +1,18 @@
 import { memo } from "react";
-import type { TranscriptEntry } from "@reducers/terminal/terminalTypes";
-import TerminalEntry from "@components/terminal/TerminalEntry";
+import { TERMINAL_OUTPUT_LABEL } from "../../constants";
+import type { TerminalHistoryProps } from "../../types";
+import TerminalLine from "./TerminalLine";
 
-interface Props {
-  history: readonly TranscriptEntry[];
-}
-
-const TerminalHistory = memo(({ history }: Props) => (
+const TerminalHistory = memo(({ items }: TerminalHistoryProps) => (
   <div
     role="log"
-    aria-label="Terminal output"
+    aria-label={TERMINAL_OUTPUT_LABEL}
     aria-live="polite"
     aria-relevant="additions text"
     className="flex flex-col gap-4"
   >
-    {history.map((entry) => (
-      <TerminalEntry key={entry.id} entry={entry} />
+    {items.map((item) => (
+      <TerminalLine key={item.id} item={item} />
     ))}
   </div>
 ));
