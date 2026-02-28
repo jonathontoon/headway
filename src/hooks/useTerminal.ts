@@ -4,12 +4,13 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react";
-import { useStore } from "@nanostores/react";
-import { $input, navigateHistory } from "@stores/terminal";
+import { useTerminalController } from "@contexts/TerminalContext";
 import { useAutocomplete } from "@hooks/useAutocomplete";
-import { useCommands } from "@hooks/useCommands";
+import { useTerminalEntries } from "@hooks/useTerminalEntries";
+import type { TranscriptEntry } from "@reducers/terminal/terminalTypes";
 
 export interface UseTerminalReturn {
+  transcript: readonly TranscriptEntry[];
   input: string;
   onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
@@ -18,18 +19,22 @@ export interface UseTerminalReturn {
 export const useTerminal = (
   inputRef: RefObject<HTMLInputElement | null>
 ): UseTerminalReturn => {
-  const input = useStore($input);
+  const transcript = useTerminalEntries();
   const getAutocomplete = useAutocomplete();
-  const executeCommand = useCommands();
+  const { input, navigateHistory, setInput, submit } = useTerminalController();
 
-  const onInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    $input.set(e.target.value);
-  }, []);
+  const onInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setInput(e.target.value);
+    },
+    [setInput]
+  );
 
   const onInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") executeCommand(input);
-      else if (e.key === "ArrowUp") {
+      if (e.key === "Enter") {
+        void submit(input);
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         navigateHistory("up");
       } else if (e.key === "ArrowDown") {
@@ -37,28 +42,25 @@ export const useTerminal = (
         navigateHistory("down");
       } else if (e.key === "Escape") {
         e.preventDefault();
-        $input.set("");
+        setInput("");
       } else if (e.key === "Tab") {
         e.preventDefault();
         const cursorPos =
-          (e.target as HTMLInputElement).selectionStart ?? input.length;
+          (e.currentTarget.selectionStart ?? input.length);
         const result = getAutocomplete(input, cursorPos);
         if (result) {
-          $input.set(result.completed);
-          // Schedule cursor position update after state update
+          setInput(result.completed);
           setTimeout(() => {
-            if (inputRef.current) {
-              inputRef.current.setSelectionRange(
-                result.insertPosition,
-                result.insertPosition
-              );
-            }
+            inputRef.current?.setSelectionRange(
+              result.insertPosition,
+              result.insertPosition
+            );
           }, 0);
         }
       }
     },
-    [input, inputRef, getAutocomplete, executeCommand]
+    [getAutocomplete, input, inputRef, navigateHistory, setInput, submit]
   );
 
-  return { input, onInputChange, onInputKeyDown };
+  return { transcript, input, onInputChange, onInputKeyDown };
 };
