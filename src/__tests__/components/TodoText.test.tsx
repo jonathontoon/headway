@@ -26,12 +26,12 @@ describe("TodoText", () => {
     expect(screen.getByText("(B)")).toHaveClass("text-terminal-prioB");
   });
 
-  it("renders a non-completed date without a special class", () => {
+  it("does not highlight a date at the start of active todo", () => {
     render(<TodoText text="2024-01-15 some task" />);
     expect(screen.getByText("2024-01-15").className).toBe("");
   });
 
-  it("does not highlight a date that is part of the task body", () => {
+  it("does not highlight a date in the task body", () => {
     render(<TodoText text="plan launch for 2024-01-15" />);
     expect(screen.getByText("2024-01-15").className).toBe("");
   });
@@ -42,21 +42,36 @@ describe("TodoText", () => {
     expect(el.className).toBe("");
   });
 
-  it("completed todo: root span has line-through and text-terminal-muted", () => {
-    const { container } = render(<TodoText text="x 2024-01-16 done task" />);
-    const root = container.firstChild as HTMLElement;
-    expect(root).toHaveClass("line-through");
-    expect(root).toHaveClass("text-terminal-muted");
+  it("renders multiple tokens in one todo", () => {
+    render(<TodoText text="(A) @phone +personal call mom" />);
+    expect(screen.getByText("(A)")).toHaveClass("text-terminal-prioA");
+    expect(screen.getByText("@phone")).toHaveClass("text-terminal-prioF");
+    expect(screen.getByText("+personal")).toHaveClass("text-terminal-prioH");
+    expect(screen.getByText("call").className).toBe("");
   });
 
-  it("completed todo: x prefix is not rendered as a token", () => {
-    render(<TodoText text="x 2024-01-16 done task" />);
-    expect(screen.queryByText("x")).toBeNull();
-  });
+  describe("completed todos", () => {
+    it("root span has line-through and text-terminal-muted", () => {
+      const { container } = render(<TodoText text="x 2024-01-16 done task" />);
+      const root = container.firstChild as HTMLElement;
+      expect(root).toHaveClass("line-through");
+      expect(root).toHaveClass("text-terminal-muted");
+    });
 
-  it("completed todo: colored tokens lose their class", () => {
-    render(<TodoText text="x 2024-01-16 @context +project" />);
-    expect(screen.getByText("@context").className).toBe("");
-    expect(screen.getByText("+project").className).toBe("");
+    it("x prefix is not rendered as a token", () => {
+      render(<TodoText text="x 2024-01-16 done task" />);
+      expect(screen.queryByText("x")).toBeNull();
+    });
+
+    it("colored tokens lose their class", () => {
+      render(<TodoText text="x 2024-01-16 @context +project" />);
+      expect(screen.getByText("@context").className).toBe("");
+      expect(screen.getByText("+project").className).toBe("");
+    });
+
+    it("date token loses its class when completed", () => {
+      render(<TodoText text="x 2024-01-16 reminder" />);
+      expect(screen.getByText("2024-01-16").className).toBe("");
+    });
   });
 });
