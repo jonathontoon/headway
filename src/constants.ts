@@ -31,6 +31,9 @@ export const TERMINAL_COMMAND_SIGNATURES = {
   jobs: {
     command: "jobs",
   },
+  steps: {
+    command: "steps",
+  },
   deploy: {
     command: "deploy",
     arguments: [{ kind: "choice", options: TERMINAL_DEPLOY_TARGETS }],
@@ -62,6 +65,10 @@ export const TERMINAL_HELP_ROWS = [
     description: "show queued jobs",
   },
   {
+    signature: TERMINAL_COMMAND_SIGNATURES.steps,
+    description: "show deployment steps",
+  },
+  {
     signature: TERMINAL_COMMAND_SIGNATURES.deploy,
     description: "simulate a deployment",
   },
@@ -74,6 +81,7 @@ export const TERMINAL_HELP_ROWS = [
 export const TERMINAL_DEPLOY_DELAY_MS = 700;
 export const TERMINAL_LOGS_HEADING = "Recent logs";
 export const TERMINAL_JOBS_HEADING = "Queued jobs";
+export const TERMINAL_STEPS_HEADING = "Deployment steps";
 export const TERMINAL_LOG_MESSAGES = [
   "vite build completed in 842ms",
   "smoke tests passed on preview-143",
@@ -84,6 +92,11 @@ export const TERMINAL_JOB_ITEMS = [
   "typecheck: queued behind preview deploy",
   "e2e: retrying flaky checkout suite",
 ] as const;
+export const TERMINAL_STEP_ITEMS = [
+  "Run typecheck and lint",
+  "Build the preview bundle",
+  "Promote the release to production",
+] as const;
 export const TERMINAL_PENDING_WARNING = "A command is already running.";
 export const TERMINAL_PENDING_WARNING_DETAIL =
   "Wait for the current command to finish before starting another.";
@@ -92,4 +105,4 @@ export const TERMINAL_UNKNOWN_COMMAND_DETAIL =
 export const TERMINAL_INPUT_LABEL = "Terminal command";
 export const TERMINAL_OUTPUT_LABEL = "Terminal output";
 export const TERMINAL_WELCOME_MESSAGE =
-  "React Redux terminal POC. Type \"help\".";
+  'React Redux terminal POC. Type "help".';

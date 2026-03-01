@@ -40,7 +40,8 @@ export type TerminalTranscriptItemContent =
       signature?: TerminalCommandSignature;
     }
   | { kind: "heading"; text: string }
-  | { kind: "list"; items: readonly string[] }
+  | { kind: "unordered-list"; items: readonly string[] }
+  | { kind: "ordered-list"; items: readonly string[] }
   | { kind: "loading"; text: string }
   | { kind: "help"; rows: readonly TerminalHelpRow[] }
   | { kind: "grid"; rows: readonly TerminalGridRow[] };
@@ -142,6 +143,7 @@ export interface TerminalHeadingProps {
 
 export interface TerminalListProps {
   items: readonly string[];
+  variant: "unordered" | "ordered";
 }
 
 export interface TerminalLoadingProps {
