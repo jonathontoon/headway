@@ -1,11 +1,10 @@
 import type { TerminalHeadingProps } from "../../../types";
 
 const TerminalHeading = ({ text }: TerminalHeadingProps) => (
-  <div>
-    <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-terminal-accent">
+  <div className="inline-flex items-center gap-2 text-terminal-text">
+    <span className="bg-terminal-info px-2 py-0.5 font-semibold text-terminal-background">
       {text}
-    </h2>
-    <div className="mt-1 h-px bg-terminal-border" />
+    </span>
   </div>
 );
 

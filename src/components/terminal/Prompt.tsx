@@ -127,6 +127,7 @@ const Prompt = (props: PromptProps) => {
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onSelect={handleSelect}
+          autoFocus
           aria-label={TERMINAL_INPUT_LABEL}
           className="min-w-0 w-full bg-transparent caret-transparent text-terminal-text outline-none"
           autoComplete="off"

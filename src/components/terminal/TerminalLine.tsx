@@ -26,8 +26,10 @@ const TerminalLine = memo(({ item }: TerminalLineProps) => {
       );
     case "heading":
       return <TerminalHeading text={item.text} />;
-    case "list":
-      return <TerminalList items={item.items} />;
+    case "unordered-list":
+      return <TerminalList items={item.items} variant="unordered" />;
+    case "ordered-list":
+      return <TerminalList items={item.items} variant="ordered" />;
     case "loading":
       return <TerminalLoading text={item.text} />;
     case "help":

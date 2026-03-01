@@ -36,7 +36,7 @@ const getArgumentClassName = (argument: TerminalCommandSignatureArgument) => {
 const TerminalCommandSignature = ({
   signature,
 }: TerminalCommandSignatureProps) => (
-  <span className="break-words whitespace-pre-wrap">
+  <span className="wrap-break-word whitespace-pre-wrap">
     <span className="text-terminal-text">{signature.command}</span>
     {signature.arguments?.map((argument) => {
       const token = getArgumentToken(argument);
