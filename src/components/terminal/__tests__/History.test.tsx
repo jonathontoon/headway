@@ -1,16 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { TERMINAL_OUTPUT_LABEL } from "../../../constants";
-import TerminalHistory from "../TerminalHistory";
+import History from "../History";
 
-describe("TerminalHistory", () => {
+describe("History", () => {
   it("renders an accessible log with one line per transcript item", () => {
     const items = [
       { id: 1, kind: "text" as const, text: "ready" },
       { id: 2, kind: "heading" as const, text: "Queued jobs" },
     ];
 
-    render(<TerminalHistory items={items} />);
+    render(<History items={items} />);
 
     const log = screen.getByRole("log", { name: TERMINAL_OUTPUT_LABEL });
 

@@ -1,19 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  TERMINAL_COMMAND_SIGNATURES,
+  TERMINAL_COMMAND_SYNTAXES,
   TERMINAL_HELP_ROWS,
 } from "../../../constants";
-import type { TerminalLineProps } from "../../../types";
-import TerminalLine from "../TerminalLine";
+import type { LineProps } from "../../../types";
+import Line from "../Line";
 
-type TerminalLineCase = {
+type LineCase = {
   name: string;
-  item: TerminalLineProps["item"];
+  item: LineProps["item"];
   assertRendered: () => void;
 };
 
-const cases: readonly TerminalLineCase[] = [
+const cases: readonly LineCase[] = [
   {
     name: "command",
     item: { id: 1, kind: "command", text: "help" },
@@ -36,7 +36,7 @@ const cases: readonly TerminalLineCase[] = [
       kind: "status",
       level: "error",
       message: "usage:",
-      signature: TERMINAL_COMMAND_SIGNATURES.status,
+      syntax: TERMINAL_COMMAND_SYNTAXES.status,
     },
     assertRendered: () => {
       expect(screen.getByText("[×]")).toBeInTheDocument();
@@ -95,9 +95,9 @@ const cases: readonly TerminalLineCase[] = [
   },
 ];
 
-describe("TerminalLine", () => {
+describe("Line", () => {
   it.each(cases)("renders $name items", ({ item, assertRendered }) => {
-    render(<TerminalLine item={item} />);
+    render(<Line item={item} />);
 
     assertRendered();
   });
@@ -106,9 +106,9 @@ describe("TerminalLine", () => {
     const item = {
       id: 10,
       kind: "mystery",
-    } as unknown as TerminalLineProps["item"];
+    } as unknown as LineProps["item"];
 
-    expect(() => render(<TerminalLine item={item} />)).toThrow(
+    expect(() => render(<Line item={item} />)).toThrow(
       /Unhandled terminal transcript item/
     );
   });

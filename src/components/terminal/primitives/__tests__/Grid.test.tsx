@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import TerminalGrid from "../TerminalGrid";
+import Grid from "../Grid";
 
-describe("TerminalGrid", () => {
+describe("Grid", () => {
   it("renders display cells with the responsive layout classes", () => {
     const rows = [
       {
@@ -13,7 +13,7 @@ describe("TerminalGrid", () => {
       },
     ] as const;
 
-    render(<TerminalGrid rows={rows} />);
+    render(<Grid rows={rows} />);
 
     expect(screen.getByText("help")).toBeInTheDocument();
     expect(screen.getByText("show the command palette")).toBeInTheDocument();

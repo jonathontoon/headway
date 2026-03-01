@@ -1,10 +1,10 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import TerminalText from "../TerminalText";
+import Text from "../Text";
 
-describe("TerminalText", () => {
+describe("Text", () => {
   it("renders terminal text with preserved wrapping classes", () => {
-    const { container } = render(<TerminalText text={"ready\nsteady"} />);
+    const { container } = render(<Text text={"ready\nsteady"} />);
     const wrapper = container.firstElementChild;
 
     expect(wrapper).toHaveTextContent("ready steady");

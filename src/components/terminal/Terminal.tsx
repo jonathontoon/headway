@@ -13,8 +13,8 @@ import { createPendingCommandCompletionItems } from "../../lib/terminal/commands
 import { selectTerminalInput } from "../../selectors/selectTerminalInput";
 import { selectTerminalItems } from "../../selectors/selectTerminalItems";
 import { selectTerminalPendingCommand } from "../../selectors/selectTerminalPendingCommand";
+import History from "./History";
 import Prompt from "./Prompt";
-import TerminalHistory from "./TerminalHistory";
 
 const Terminal = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -86,7 +86,7 @@ const Terminal = () => {
           [&::-webkit-scrollbar-thumb]:bg-zinc-600
           [&::-webkit-scrollbar-thumb:hover]:bg-zinc-500"
       >
-        <TerminalHistory items={items} />
+        <History items={items} />
         <Prompt
           ref={inputRef}
           value={input}

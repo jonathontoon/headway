@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { TERMINAL_COMMAND_SIGNATURES } from "../../../../constants";
-import TerminalCommandSignature from "../TerminalCommandSignature";
+import { TERMINAL_COMMAND_SYNTAXES } from "../../../../constants";
+import CommandSyntax from "../CommandSyntax";
 
-describe("TerminalCommandSignature", () => {
+describe("CommandSyntax", () => {
   it("renders command names and argument tokens with semantic colors", () => {
     render(
-      <TerminalCommandSignature
-        signature={TERMINAL_COMMAND_SIGNATURES.status}
+      <CommandSyntax
+        syntax={TERMINAL_COMMAND_SYNTAXES.status}
       />
     );
 

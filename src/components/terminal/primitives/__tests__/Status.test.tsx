@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { TERMINAL_COMMAND_SIGNATURES } from "../../../../constants";
-import TerminalStatus from "../TerminalStatus";
+import { TERMINAL_COMMAND_SYNTAXES } from "../../../../constants";
+import Status from "../Status";
 
-describe("TerminalStatus", () => {
+describe("Status", () => {
   it("renders a warning status with detail", () => {
     render(
-      <TerminalStatus
+      <Status
         level="warning"
         message="Initiating download"
         detail="Your file will begin downloading shortly."
@@ -22,7 +22,7 @@ describe("TerminalStatus", () => {
 
   it("renders a success status without a detail line", () => {
     const { container } = render(
-      <TerminalStatus
+      <Status
         level="success"
         message="secret.txt loaded successfully."
       />
@@ -35,12 +35,12 @@ describe("TerminalStatus", () => {
     expect(container.querySelector(".text-terminal-muted")).toBeNull();
   });
 
-  it("renders a usage status with a formatted signature", () => {
+  it("renders a usage status with formatted syntax", () => {
     render(
-      <TerminalStatus
+      <Status
         level="error"
         message="usage:"
-        signature={TERMINAL_COMMAND_SIGNATURES.status}
+        syntax={TERMINAL_COMMAND_SYNTAXES.status}
       />
     );
 

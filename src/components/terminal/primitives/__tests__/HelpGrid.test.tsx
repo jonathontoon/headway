@@ -1,11 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { TERMINAL_HELP_ROWS } from "../../../../constants";
-import TerminalHelpGrid from "../TerminalHelpGrid";
+import HelpGrid from "../HelpGrid";
 
-describe("TerminalHelpGrid", () => {
-  it("renders command signatures and descriptions", () => {
-    render(<TerminalHelpGrid rows={TERMINAL_HELP_ROWS} />);
+describe("HelpGrid", () => {
+  it("renders command syntax and descriptions", () => {
+    render(<HelpGrid rows={TERMINAL_HELP_ROWS} />);
 
     expect(screen.getByText("show the command palette")).toBeInTheDocument();
     expect(screen.getByText("help")).toHaveClass("text-terminal-text");

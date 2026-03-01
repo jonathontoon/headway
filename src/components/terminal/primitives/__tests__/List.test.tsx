@@ -1,11 +1,11 @@
 import { render, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import TerminalList from "../TerminalList";
+import List from "../List";
 
-describe("TerminalList", () => {
+describe("List", () => {
   it("renders an unordered list of terminal items", () => {
     const { container } = render(
-      <TerminalList items={["first task", "second task"]} variant="unordered" />
+      <List items={["first task", "second task"]} variant="unordered" />
     );
     const list = container.firstElementChild as HTMLElement;
 
@@ -17,7 +17,7 @@ describe("TerminalList", () => {
 
   it("renders an ordered list of terminal items", () => {
     const { container } = render(
-      <TerminalList items={["first step", "second step"]} variant="ordered" />
+      <List items={["first step", "second step"]} variant="ordered" />
     );
     const list = container.firstElementChild as HTMLElement;
 

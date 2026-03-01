@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import TerminalHeading from "../TerminalHeading";
+import Heading from "../Heading";
 
-describe("TerminalHeading", () => {
+describe("Heading", () => {
   it("renders terminal labels as a tagged terminal label", () => {
-    const { container } = render(<TerminalHeading text="jobs" />);
+    const { container } = render(<Heading text="jobs" />);
     const label = screen.getByText("jobs");
     const wrapper = container.firstElementChild;
 

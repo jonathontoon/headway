@@ -1,6 +1,6 @@
-import type { TerminalListProps } from "../../../types";
+import type { ListProps } from "../../../types";
 
-const TerminalList = ({ items, variant }: TerminalListProps) => {
+const List = ({ items, variant }: ListProps) => {
   const ListTag = variant === "ordered" ? "ol" : "ul";
 
   return (
@@ -10,7 +10,7 @@ const TerminalList = ({ items, variant }: TerminalListProps) => {
           <span aria-hidden="true" className="text-terminal-muted">
             {variant === "ordered" ? `${index + 1}.` : "•"}
           </span>
-          <span className="break-words whitespace-pre-wrap text-terminal-text">
+          <span className="wrap-break-word whitespace-pre-wrap text-terminal-text">
             {item}
           </span>
         </li>
@@ -19,4 +19,4 @@ const TerminalList = ({ items, variant }: TerminalListProps) => {
   );
 };
 
-export default TerminalList;
+export default List;

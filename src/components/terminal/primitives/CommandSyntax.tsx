@@ -1,9 +1,9 @@
 import type {
-  TerminalCommandSignatureArgument,
-  TerminalCommandSignatureProps,
+  CommandSyntaxProps,
+  TerminalCommandSyntaxArgument,
 } from "../../../types";
 
-const getArgumentToken = (argument: TerminalCommandSignatureArgument) => {
+const getArgumentToken = (argument: TerminalCommandSyntaxArgument) => {
   switch (argument.kind) {
     case "choice":
       return `<${argument.options.join("|")}>`;
@@ -12,13 +12,13 @@ const getArgumentToken = (argument: TerminalCommandSignatureArgument) => {
     default: {
       const exhaustiveCheck: never = argument;
       throw new Error(
-        `Unhandled terminal command signature argument: ${exhaustiveCheck}`
+        `Unhandled terminal command syntax argument: ${exhaustiveCheck}`
       );
     }
   }
 };
 
-const getArgumentClassName = (argument: TerminalCommandSignatureArgument) => {
+const getArgumentClassName = (argument: TerminalCommandSyntaxArgument) => {
   switch (argument.kind) {
     case "choice":
       return "text-cyan-300";
@@ -27,22 +27,22 @@ const getArgumentClassName = (argument: TerminalCommandSignatureArgument) => {
     default: {
       const exhaustiveCheck: never = argument;
       throw new Error(
-        `Unhandled terminal command signature argument: ${exhaustiveCheck}`
+        `Unhandled terminal command syntax argument: ${exhaustiveCheck}`
       );
     }
   }
 };
 
-const TerminalCommandSignature = ({
-  signature,
-}: TerminalCommandSignatureProps) => (
+const CommandSyntax = ({
+  syntax,
+}: CommandSyntaxProps) => (
   <span className="wrap-break-word whitespace-pre-wrap">
-    <span className="text-terminal-text">{signature.command}</span>
-    {signature.arguments?.map((argument) => {
+    <span className="text-terminal-text">{syntax.command}</span>
+    {syntax.arguments?.map((argument) => {
       const token = getArgumentToken(argument);
 
       return (
-        <span key={`${signature.command}:${token}`}>
+        <span key={`${syntax.command}:${token}`}>
           {" "}
           <span className={getArgumentClassName(argument)}>{token}</span>
         </span>
@@ -51,4 +51,4 @@ const TerminalCommandSignature = ({
   </span>
 );
 
-export default TerminalCommandSignature;
+export default CommandSyntax;

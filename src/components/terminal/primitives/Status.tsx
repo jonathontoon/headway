@@ -1,5 +1,5 @@
-import type { TerminalStatusLevel, TerminalStatusProps } from "../../../types";
-import TerminalCommandSignature from "./TerminalCommandSignature";
+import type { StatusProps, TerminalStatusLevel } from "../../../types";
+import CommandSyntax from "./CommandSyntax";
 
 const getStatusConfig = (level: TerminalStatusLevel) => {
   switch (level) {
@@ -25,12 +25,12 @@ const getStatusConfig = (level: TerminalStatusLevel) => {
   }
 };
 
-const TerminalStatus = ({
+const Status = ({
   level,
   message,
   detail,
-  signature,
-}: TerminalStatusProps) => {
+  syntax,
+}: StatusProps) => {
   const config = getStatusConfig(level);
 
   return (
@@ -38,7 +38,7 @@ const TerminalStatus = ({
       <div className="flex flex-wrap gap-2 wrap-break-word whitespace-pre-wrap">
         <span className={config.markerClassName}>{config.marker}</span>
         <span className="text-terminal-text">{message}</span>
-        {signature ? <TerminalCommandSignature signature={signature} /> : null}
+        {syntax ? <CommandSyntax syntax={syntax} /> : null}
       </div>
       {detail ? (
         <p className="wrap-break-word whitespace-pre-wrap text-terminal-muted">
@@ -49,4 +49,4 @@ const TerminalStatus = ({
   );
 };
 
-export default TerminalStatus;
+export default Status;

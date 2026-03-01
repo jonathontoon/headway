@@ -1,6 +1,6 @@
-import type { TerminalGridProps } from "../../../types";
+import type { GridProps } from "../../../types";
 
-const TerminalGrid = ({ rows }: TerminalGridProps) => (
+const Grid = ({ rows }: GridProps) => (
   <ul className="space-y-2">
     {rows.map((row, index) => (
       <li
@@ -14,4 +14,4 @@ const TerminalGrid = ({ rows }: TerminalGridProps) => (
   </ul>
 );
 
-export default TerminalGrid;
+export default Grid;
