@@ -6,6 +6,8 @@ import {
   TERMINAL_JOB_ITEMS,
   TERMINAL_LOG_MESSAGES,
   TERMINAL_LOGS_HEADING,
+  TERMINAL_STEPS_HEADING,
+  TERMINAL_STEP_ITEMS,
   TERMINAL_UNKNOWN_COMMAND_DETAIL,
 } from "../../constants";
 import type {
@@ -119,9 +121,16 @@ export const executeCommand = (raw: string): CommandExecutionResult => {
       return rest.length === 0
         ? createImmediateResult([
             { kind: "heading", text: TERMINAL_JOBS_HEADING },
-            { kind: "list", items: TERMINAL_JOB_ITEMS },
+            { kind: "unordered-list", items: TERMINAL_JOB_ITEMS },
           ])
         : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.jobs);
+    case "steps":
+      return rest.length === 0
+        ? createImmediateResult([
+            { kind: "heading", text: TERMINAL_STEPS_HEADING },
+            { kind: "ordered-list", items: TERMINAL_STEP_ITEMS },
+          ])
+        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.steps);
     case "deploy": {
       const [target, ...extra] = rest;
       if (!target || extra.length > 0 || !isDeployTarget(target)) {

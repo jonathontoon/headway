@@ -5,6 +5,8 @@ import {
   TERMINAL_JOB_ITEMS,
   TERMINAL_LOG_MESSAGES,
   TERMINAL_LOGS_HEADING,
+  TERMINAL_STEPS_HEADING,
+  TERMINAL_STEP_ITEMS,
   TERMINAL_UNKNOWN_COMMAND_DETAIL,
 } from "../../../constants";
 import { describe, expect, it } from "vitest";
@@ -14,8 +16,27 @@ import {
 } from "../commands";
 
 describe("executeCommand", () => {
+  it("rejects whitespace-only input", () => {
+    expect(executeCommand("   ")).toEqual({
+      mode: "immediate",
+      items: [{ kind: "status", level: "error", message: "Enter a command." }],
+    });
+  });
+
   it("returns an inline command palette for help", () => {
     expect(executeCommand("help")).toEqual({
+      mode: "immediate",
+      items: [
+        {
+          kind: "help",
+          rows: TERMINAL_HELP_ROWS,
+        },
+      ],
+    });
+  });
+
+  it("treats command names as case-insensitive and trims whitespace", () => {
+    expect(executeCommand("  HELP  ")).toEqual({
       mode: "immediate",
       items: [
         {
@@ -30,6 +51,20 @@ describe("executeCommand", () => {
     expect(executeCommand("echo hello world")).toEqual({
       mode: "immediate",
       items: [{ kind: "text", text: "hello world" }],
+    });
+  });
+
+  it("rejects echo commands without text", () => {
+    expect(executeCommand("echo")).toEqual({
+      mode: "immediate",
+      items: [
+        {
+          kind: "status",
+          level: "error",
+          message: "usage:",
+          signature: TERMINAL_COMMAND_SIGNATURES.echo,
+        },
+      ],
     });
   });
 
@@ -81,12 +116,41 @@ describe("executeCommand", () => {
     });
   });
 
+  it.each([
+    ["help extra", TERMINAL_COMMAND_SIGNATURES.help],
+    ["logs extra", TERMINAL_COMMAND_SIGNATURES.logs],
+    ["jobs extra", TERMINAL_COMMAND_SIGNATURES.jobs],
+    ["clear extra", TERMINAL_COMMAND_SIGNATURES.clear],
+  ])("rejects unexpected arguments for %s", (command, signature) => {
+    expect(executeCommand(command)).toEqual({
+      mode: "immediate",
+      items: [
+        {
+          kind: "status",
+          level: "error",
+          message: "usage:",
+          signature,
+        },
+      ],
+    });
+  });
+
   it("returns a queued jobs list", () => {
     expect(executeCommand("jobs")).toEqual({
       mode: "immediate",
       items: [
         { kind: "heading", text: TERMINAL_JOBS_HEADING },
-        { kind: "list", items: TERMINAL_JOB_ITEMS },
+        { kind: "unordered-list", items: TERMINAL_JOB_ITEMS },
+      ],
+    });
+  });
+
+  it("returns an ordered deployment steps list", () => {
+    expect(executeCommand("steps")).toEqual({
+      mode: "immediate",
+      items: [
+        { kind: "heading", text: TERMINAL_STEPS_HEADING },
+        { kind: "ordered-list", items: TERMINAL_STEP_ITEMS },
       ],
     });
   });
@@ -104,6 +168,24 @@ describe("executeCommand", () => {
       loadingItem: {
         kind: "loading",
         text: "Deploying to staging...",
+      },
+      completionItems: createPendingCommandCompletionItems(pendingCommand),
+    });
+  });
+
+  it("returns deferred deploy output for production", () => {
+    const pendingCommand = {
+      kind: "deploy" as const,
+      commandText: "deploy production",
+      target: "production",
+    };
+
+    expect(executeCommand("deploy production")).toEqual({
+      mode: "deferred",
+      pendingCommand,
+      loadingItem: {
+        kind: "loading",
+        text: "Deploying to production...",
       },
       completionItems: createPendingCommandCompletionItems(pendingCommand),
     });
@@ -138,6 +220,20 @@ describe("executeCommand", () => {
           level: "error",
           message: "usage:",
           signature: TERMINAL_COMMAND_SIGNATURES.deploy,
+        },
+      ],
+    });
+  });
+
+  it("rejects unexpected arguments for steps", () => {
+    expect(executeCommand("steps foo")).toEqual({
+      mode: "immediate",
+      items: [
+        {
+          kind: "status",
+          level: "error",
+          message: "usage:",
+          signature: TERMINAL_COMMAND_SIGNATURES.steps,
         },
       ],
     });

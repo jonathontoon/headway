@@ -1,10 +1,13 @@
 import {
+  TERMINAL_ACTION_TYPES,
   TERMINAL_COMMAND_SIGNATURES,
   TERMINAL_HELP_ROWS,
   TERMINAL_JOBS_HEADING,
   TERMINAL_JOB_ITEMS,
   TERMINAL_PENDING_WARNING,
   TERMINAL_PENDING_WARNING_DETAIL,
+  TERMINAL_STEPS_HEADING,
+  TERMINAL_STEP_ITEMS,
   TERMINAL_WELCOME_MESSAGE,
 } from "../../constants";
 import { describe, expect, it } from "vitest";
@@ -76,7 +79,19 @@ describe("terminalReducer", () => {
       { id: 0, kind: "text", text: TERMINAL_WELCOME_MESSAGE },
       { id: 1, kind: "command", text: "jobs" },
       { id: 2, kind: "heading", text: TERMINAL_JOBS_HEADING },
-      { id: 3, kind: "list", items: TERMINAL_JOB_ITEMS },
+      { id: 3, kind: "unordered-list", items: TERMINAL_JOB_ITEMS },
+    ]);
+    expect(state.pendingCommand).toBeNull();
+  });
+
+  it("submits steps and appends an ordered list", () => {
+    const state = reduce(setInput("steps"), submitInput());
+
+    expect(state.items).toEqual([
+      { id: 0, kind: "text", text: TERMINAL_WELCOME_MESSAGE },
+      { id: 1, kind: "command", text: "steps" },
+      { id: 2, kind: "heading", text: TERMINAL_STEPS_HEADING },
+      { id: 3, kind: "ordered-list", items: TERMINAL_STEP_ITEMS },
     ]);
     expect(state.pendingCommand).toBeNull();
   });
@@ -146,6 +161,17 @@ describe("terminalReducer", () => {
     expect(state.historyIndex).toBe(-1);
   });
 
+  it("does not navigate history when the history is empty", () => {
+    const initialState = createInitialTerminalState();
+
+    expect(terminalReducer(initialState, navigateHistory("up"))).toBe(
+      initialState
+    );
+    expect(terminalReducer(initialState, navigateHistory("down"))).toBe(
+      initialState
+    );
+  });
+
   it("shows a warning with detail when another command is already running", () => {
     const state = reduce(
       setInput("deploy staging"),
@@ -182,6 +208,74 @@ describe("terminalReducer", () => {
     expect(state.items).toEqual([
       { id: 0, kind: "text", text: TERMINAL_WELCOME_MESSAGE },
     ]);
+  });
+
+  it("resets the history index when clearInput is dispatched", () => {
+    const stateWithHistory = reduce(
+      setInput("echo one"),
+      submitInput(),
+      setInput("echo two"),
+      submitInput()
+    );
+    const navigatedState = terminalReducer(
+      stateWithHistory,
+      navigateHistory("up")
+    );
+    const clearedState = terminalReducer(navigatedState, clearInput());
+
+    expect(clearedState.input).toBe("");
+    expect(clearedState.historyIndex).toBe(-1);
+    expect(clearedState.items).toEqual(navigatedState.items);
+  });
+
+  it("ignores whitespace-only submissions", () => {
+    const state = reduce(setInput("   "), submitInput());
+
+    expect(state.input).toBe("   ");
+    expect(state.history).toEqual([]);
+    expect(state.items).toEqual([
+      { id: 0, kind: "text", text: TERMINAL_WELCOME_MESSAGE },
+    ]);
+  });
+
+  it("does nothing when resolving a command with no pending work", () => {
+    const initialState = createInitialTerminalState();
+
+    expect(
+      terminalReducer(
+        initialState,
+        resolvePendingCommand([{ kind: "text", text: "done" }])
+      )
+    ).toBe(initialState);
+  });
+
+  it("ignores malformed action payloads", () => {
+    const initialState = createInitialTerminalState();
+
+    expect(
+      terminalReducer(initialState, {
+        type: TERMINAL_ACTION_TYPES.SET_INPUT,
+        payload: 123,
+      })
+    ).toBe(initialState);
+    expect(
+      terminalReducer(initialState, {
+        type: TERMINAL_ACTION_TYPES.NAVIGATE_HISTORY,
+        payload: "sideways",
+      })
+    ).toBe(initialState);
+    expect(
+      terminalReducer(initialState, {
+        type: TERMINAL_ACTION_TYPES.RESOLVE_PENDING_COMMAND,
+        payload: { kind: "text", text: "done" },
+      })
+    ).toBe(initialState);
+  });
+
+  it("returns the current state for unknown actions", () => {
+    const state = reduce(setInput("help"), submitInput());
+
+    expect(terminalReducer(state, { type: "terminal/unknown" })).toBe(state);
   });
 
   it("resets transcript, history, and pending state for clear", () => {
