@@ -10,12 +10,13 @@
     <meta name="description" content="A simple way for you to get ahead" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self';"
+      content="default-src 'self'; script-src 'self' http://localhost:8097; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self' ws://localhost:8097 wss://localhost:8097;"
     />
     <title>Headway</title>
   </head>
   <body>
     <div id="root"></div>
+    <script src="http://localhost:8097"></script>
     <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>

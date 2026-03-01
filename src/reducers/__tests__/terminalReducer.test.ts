@@ -1,7 +1,10 @@
 import {
-  TERMINAL_COMMAND_PALETTE_COMMANDS,
+  TERMINAL_COMMAND_SIGNATURES,
+  TERMINAL_HELP_ROWS,
   TERMINAL_JOBS_HEADING,
   TERMINAL_JOB_ITEMS,
+  TERMINAL_PENDING_WARNING,
+  TERMINAL_PENDING_WARNING_DETAIL,
   TERMINAL_WELCOME_MESSAGE,
 } from "../../constants";
 import { describe, expect, it } from "vitest";
@@ -33,7 +36,7 @@ describe("terminalReducer", () => {
     });
   });
 
-  it("submits help and appends a command palette", () => {
+  it("submits help and appends a help transcript item", () => {
     const state = reduce(setInput("help"), submitInput());
 
     expect(state.input).toBe("");
@@ -43,11 +46,27 @@ describe("terminalReducer", () => {
       { id: 1, kind: "command", text: "help" },
       {
         id: 2,
-        kind: "palette",
-        commands: TERMINAL_COMMAND_PALETTE_COMMANDS,
+        kind: "help",
+        rows: TERMINAL_HELP_ROWS,
       },
     ]);
     expect(state.pendingCommand).toBeNull();
+  });
+
+  it("appends structured usage errors for invalid command input", () => {
+    const state = reduce(setInput("status foo Ready"), submitInput());
+
+    expect(state.items).toEqual([
+      { id: 0, kind: "text", text: TERMINAL_WELCOME_MESSAGE },
+      { id: 1, kind: "command", text: "status foo Ready" },
+      {
+        id: 2,
+        kind: "status",
+        level: "error",
+        message: "usage:",
+        signature: TERMINAL_COMMAND_SIGNATURES.status,
+      },
+    ]);
   });
 
   it("submits jobs and appends a heading plus list", () => {
@@ -59,6 +78,7 @@ describe("terminalReducer", () => {
       { id: 2, kind: "heading", text: TERMINAL_JOBS_HEADING },
       { id: 3, kind: "list", items: TERMINAL_JOB_ITEMS },
     ]);
+    expect(state.pendingCommand).toBeNull();
   });
 
   it("tracks pending deploy commands and resolves them later", () => {
@@ -91,7 +111,7 @@ describe("terminalReducer", () => {
         id: 3,
         kind: "status",
         level: "success",
-        text: "Deployment completed",
+        message: "Deployment completed",
       },
       {
         id: 4,
@@ -124,6 +144,35 @@ describe("terminalReducer", () => {
     state = terminalReducer(state, navigateHistory("down"));
     expect(state.input).toBe("");
     expect(state.historyIndex).toBe(-1);
+  });
+
+  it("shows a warning with detail when another command is already running", () => {
+    const state = reduce(
+      setInput("deploy staging"),
+      submitInput(),
+      setInput("deploy production"),
+      submitInput()
+    );
+
+    expect(state.pendingCommand).toEqual({
+      kind: "deploy",
+      commandText: "deploy staging",
+      target: "staging",
+      loadingItemId: 2,
+    });
+    expect(state.items).toEqual([
+      { id: 0, kind: "text", text: TERMINAL_WELCOME_MESSAGE },
+      { id: 1, kind: "command", text: "deploy staging" },
+      { id: 2, kind: "loading", text: "Deploying to staging..." },
+      { id: 3, kind: "command", text: "deploy production" },
+      {
+        id: 4,
+        kind: "status",
+        level: "warning",
+        message: TERMINAL_PENDING_WARNING,
+        detail: TERMINAL_PENDING_WARNING_DETAIL,
+      },
+    ]);
   });
 
   it("clears only the input field when clearInput is dispatched", () => {

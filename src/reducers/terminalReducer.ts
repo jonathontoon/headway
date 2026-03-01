@@ -2,6 +2,7 @@ import type { UnknownAction } from "@reduxjs/toolkit";
 import {
   TERMINAL_ACTION_TYPES,
   TERMINAL_PENDING_WARNING,
+  TERMINAL_PENDING_WARNING_DETAIL,
   TERMINAL_WELCOME_MESSAGE,
 } from "../constants";
 import { executeCommand } from "../lib/terminal/commands";
@@ -137,7 +138,8 @@ const startPendingCommand = (
       {
         kind: "status",
         level: "warning",
-        text: TERMINAL_PENDING_WARNING,
+        message: TERMINAL_PENDING_WARNING,
+        detail: TERMINAL_PENDING_WARNING_DETAIL,
       },
     ]);
   }

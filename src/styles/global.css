@@ -110,6 +110,8 @@ body {
   --color-terminal-prioZ: #a1a1aa;
   --color-terminal-subtle: #18181b;
   --color-terminal-hover: #27272a;
+  --color-terminal-border: #27272a;
+  --color-terminal-chrome: #111113;
 }
 
 @keyframes terminal-blink {

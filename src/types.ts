@@ -1,6 +1,7 @@
 import type {
   ChangeEvent,
   KeyboardEvent,
+  ReactNode,
   Ref,
 } from "react";
 import { TERMINAL_ACTION_TYPES } from "./constants";
@@ -9,19 +10,45 @@ export type TerminalStatusLevel = "error" | "warning" | "success";
 export type HistoryDirection = "up" | "down";
 export type PendingCommandKind = "deploy";
 
-export interface TerminalPaletteCommand {
-  name: string;
+export type TerminalCommandSignatureArgument =
+  | { kind: "choice"; options: readonly string[] }
+  | { kind: "value"; name: string };
+
+export interface TerminalCommandSignature {
+  command: string;
+  arguments?: readonly TerminalCommandSignatureArgument[];
+}
+
+export interface TerminalHelpRow {
+  signature: TerminalCommandSignature;
   description: string;
+}
+
+export interface TerminalGridRow {
+  label: string;
+  value: string;
+}
+
+export interface TerminalGridDisplayRow {
+  label: ReactNode;
+  value: ReactNode;
 }
 
 export type TerminalTranscriptItemContent =
   | { kind: "command"; text: string }
   | { kind: "text"; text: string }
-  | { kind: "status"; level: TerminalStatusLevel; text: string }
+  | {
+      kind: "status";
+      level: TerminalStatusLevel;
+      message: string;
+      detail?: string;
+      signature?: TerminalCommandSignature;
+    }
   | { kind: "heading"; text: string }
   | { kind: "list"; items: readonly string[] }
   | { kind: "loading"; text: string }
-  | { kind: "palette"; commands: readonly TerminalPaletteCommand[] };
+  | { kind: "help"; rows: readonly TerminalHelpRow[] }
+  | { kind: "grid"; rows: readonly TerminalGridRow[] };
 
 export type TerminalTranscriptItem = {
   id: number;
@@ -109,7 +136,9 @@ export interface TerminalTextProps {
 
 export interface TerminalStatusProps {
   level: TerminalStatusLevel;
-  text: string;
+  message: string;
+  detail?: string;
+  signature?: TerminalCommandSignature;
 }
 
 export interface TerminalHeadingProps {
@@ -124,6 +153,14 @@ export interface TerminalLoadingProps {
   text: string;
 }
 
-export interface TerminalCommandPaletteProps {
-  commands: readonly TerminalPaletteCommand[];
+export interface TerminalCommandSignatureProps {
+  signature: TerminalCommandSignature;
+}
+
+export interface TerminalHelpGridProps {
+  rows: readonly TerminalHelpRow[];
+}
+
+export interface TerminalGridProps {
+  rows: readonly TerminalGridDisplayRow[];
 }

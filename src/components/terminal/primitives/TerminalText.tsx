@@ -1,7 +1,7 @@
 import type { TerminalTextProps } from "../../../types";
 
 const TerminalText = ({ text }: TerminalTextProps) => (
-  <div className="break-words whitespace-pre-wrap text-terminal-text">
+  <div className="wrap-break-word whitespace-pre-wrap text-terminal-text">
     {text}
   </div>
 );

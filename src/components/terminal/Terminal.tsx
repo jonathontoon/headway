@@ -84,22 +84,23 @@ const Terminal = () => {
   };
 
   return (
-    <div
-      ref={scrollRef}
-      className="h-full overflow-y-auto p-4 flex flex-col gap-4
-        [&::-webkit-scrollbar]:w-2
-        [&::-webkit-scrollbar-track]:bg-transparent
-        [&::-webkit-scrollbar-thumb]:bg-zinc-500
-        [&::-webkit-scrollbar-thumb]:rounded-sm
-        [&::-webkit-scrollbar-thumb:hover]:bg-zinc-400"
-    >
-      <TerminalHistory items={items} />
-      <Prompt
-        ref={inputRef}
-        value={input}
-        onChange={handleInputChange}
-        onKeyDown={handleInputKeyDown}
-      />
+    <div className="h-full flex flex-col">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto p-4 flex flex-col gap-4
+          [&::-webkit-scrollbar]:w-1
+          [&::-webkit-scrollbar-track]:bg-transparent
+          [&::-webkit-scrollbar-thumb]:bg-zinc-600
+          [&::-webkit-scrollbar-thumb:hover]:bg-zinc-500"
+      >
+        <TerminalHistory items={items} />
+        <Prompt
+          ref={inputRef}
+          value={input}
+          onChange={handleInputChange}
+          onKeyDown={handleInputKeyDown}
+        />
+      </div>
     </div>
   );
 };

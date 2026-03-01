@@ -1,9 +1,11 @@
 import {
-  TERMINAL_COMMAND_PALETTE_COMMANDS,
+  TERMINAL_COMMAND_SIGNATURES,
+  TERMINAL_HELP_ROWS,
   TERMINAL_JOBS_HEADING,
   TERMINAL_JOB_ITEMS,
   TERMINAL_LOG_MESSAGES,
   TERMINAL_LOGS_HEADING,
+  TERMINAL_UNKNOWN_COMMAND_DETAIL,
 } from "../../../constants";
 import { describe, expect, it } from "vitest";
 import {
@@ -17,8 +19,8 @@ describe("executeCommand", () => {
       mode: "immediate",
       items: [
         {
-          kind: "palette",
-          commands: TERMINAL_COMMAND_PALETTE_COMMANDS,
+          kind: "help",
+          rows: TERMINAL_HELP_ROWS,
         },
       ],
     });
@@ -34,7 +36,7 @@ describe("executeCommand", () => {
   it("renders a success status message", () => {
     expect(executeCommand("status success Ready")).toEqual({
       mode: "immediate",
-      items: [{ kind: "status", level: "success", text: "Ready" }],
+      items: [{ kind: "status", level: "success", message: "Ready" }],
     });
   });
 
@@ -45,7 +47,22 @@ describe("executeCommand", () => {
         {
           kind: "status",
           level: "error",
-          text: "usage: status <success|warning|error> <message>",
+          message: "usage:",
+          signature: TERMINAL_COMMAND_SIGNATURES.status,
+        },
+      ],
+    });
+  });
+
+  it("adds a help hint for unknown commands", () => {
+    expect(executeCommand("unknown-command")).toEqual({
+      mode: "immediate",
+      items: [
+        {
+          kind: "status",
+          level: "error",
+          message: "'unknown-command' was not recognized.",
+          detail: TERMINAL_UNKNOWN_COMMAND_DETAIL,
         },
       ],
     });
@@ -92,6 +109,26 @@ describe("executeCommand", () => {
     });
   });
 
+  it("creates deploy completion items with a single-line success status", () => {
+    expect(
+      createPendingCommandCompletionItems({
+        kind: "deploy",
+        commandText: "deploy staging",
+        target: "staging",
+      })
+    ).toEqual([
+      {
+        kind: "status",
+        level: "success",
+        message: "Deployment completed",
+      },
+      {
+        kind: "text",
+        text: "staging is live and smoke checks passed.",
+      },
+    ]);
+  });
+
   it("rejects unsupported deploy targets", () => {
     expect(executeCommand("deploy qa")).toEqual({
       mode: "immediate",
@@ -99,7 +136,8 @@ describe("executeCommand", () => {
         {
           kind: "status",
           level: "error",
-          text: "usage: deploy <staging|production>",
+          message: "usage:",
+          signature: TERMINAL_COMMAND_SIGNATURES.deploy,
         },
       ],
     });
