@@ -1,5 +1,6 @@
 import {
   useLayoutEffect,
+  useCallback,
   useRef,
   useState,
   type ChangeEvent,
@@ -45,20 +46,23 @@ const Prompt = (props: PromptProps) => {
     end: value.length,
   });
 
-  const syncSelection = (input: HTMLInputElement | null = inputRef.current) => {
-    const nextSelection = readSelection(input, value.length);
+  const syncSelection = useCallback(
+    (input: HTMLInputElement | null = inputRef.current) => {
+      const nextSelection = readSelection(input, value.length);
 
-    setSelection((currentSelection) => {
-      if (
-        currentSelection.start === nextSelection.start &&
-        currentSelection.end === nextSelection.end
-      ) {
-        return currentSelection;
-      }
+      setSelection((currentSelection) => {
+        if (
+          currentSelection.start === nextSelection.start &&
+          currentSelection.end === nextSelection.end
+        ) {
+          return currentSelection;
+        }
 
-      return nextSelection;
-    });
-  };
+        return nextSelection;
+      });
+    },
+    [value]
+  );
 
   useLayoutEffect(() => {
     if (readOnly) {
@@ -66,7 +70,7 @@ const Prompt = (props: PromptProps) => {
     }
 
     syncSelection();
-  }, [readOnly, value]);
+  }, [readOnly, value, syncSelection]);
 
   if (readOnly) {
     return (

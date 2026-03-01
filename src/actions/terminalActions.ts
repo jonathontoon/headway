@@ -14,7 +14,9 @@ export const clearInput = (): TerminalAction => ({
   type: TERMINAL_ACTION_TYPES.CLEAR_INPUT,
 });
 
-export const navigateHistory = (direction: HistoryDirection): TerminalAction => ({
+export const navigateHistory = (
+  direction: HistoryDirection
+): TerminalAction => ({
   type: TERMINAL_ACTION_TYPES.NAVIGATE_HISTORY,
   payload: direction,
 });

@@ -59,7 +59,9 @@ describe("Terminal", () => {
     expect(screen.getByText(TERMINAL_JOBS_HEADING)).toBeInTheDocument();
     expect(screen.getByText(TERMINAL_JOB_ITEMS[0])).toBeInTheDocument();
 
-    fireEvent.change(input, { target: { value: "status warning Build queued" } });
+    fireEvent.change(input, {
+      target: { value: "status warning Build queued" },
+    });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
     expect(screen.getByText("[!]")).toBeInTheDocument();
@@ -79,9 +81,9 @@ describe("Terminal", () => {
     expect(
       screen.getByText("'unknown-command' was not recognized.")
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(TERMINAL_UNKNOWN_COMMAND_DETAIL)
-    ).toHaveClass("text-terminal-muted");
+    expect(screen.getByText(TERMINAL_UNKNOWN_COMMAND_DETAIL)).toHaveClass(
+      "text-terminal-muted"
+    );
   });
 
   it("resolves deploy loading, keeps history, and still clears", async () => {

@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  type ChangeEvent,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import { TERMINAL_DEPLOY_DELAY_MS } from "../../constants";
 import {
   clearInput,
@@ -14,9 +9,7 @@ import {
 } from "../../actions/terminalActions";
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import { useAppSelector } from "../../hooks/useAppSelector";
-import {
-  createPendingCommandCompletionItems,
-} from "../../lib/terminal/commands";
+import { createPendingCommandCompletionItems } from "../../lib/terminal/commands";
 import { selectTerminalInput } from "../../selectors/selectTerminalInput";
 import { selectTerminalItems } from "../../selectors/selectTerminalItems";
 import { selectTerminalPendingCommand } from "../../selectors/selectTerminalPendingCommand";

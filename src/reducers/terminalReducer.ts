@@ -83,7 +83,10 @@ const navigate = (
   }
 
   if (direction === "up") {
-    const nextIndex = Math.min(state.historyIndex + 1, state.history.length - 1);
+    const nextIndex = Math.min(
+      state.historyIndex + 1,
+      state.history.length - 1
+    );
 
     return {
       ...state,
@@ -201,7 +204,10 @@ const resolvePending = (
   const items = state.items.filter(
     (item) => item.id !== state.pendingCommand?.loadingItemId
   );
-  const resolvedItems = createTranscriptItems(state.nextItemId, completionItems);
+  const resolvedItems = createTranscriptItems(
+    state.nextItemId,
+    completionItems
+  );
 
   return {
     ...state,

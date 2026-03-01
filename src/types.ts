@@ -1,9 +1,4 @@
-import type {
-  ChangeEvent,
-  KeyboardEvent,
-  ReactNode,
-  Ref,
-} from "react";
+import type { ChangeEvent, KeyboardEvent, ReactNode, Ref } from "react";
 import { TERMINAL_ACTION_TYPES } from "./constants";
 
 export type TerminalStatusLevel = "error" | "warning" | "success";

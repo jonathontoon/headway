@@ -7,7 +7,9 @@ describe("TerminalGrid", () => {
     const rows = [
       {
         label: <span className="text-terminal-text">help</span>,
-        value: <span className="text-terminal-muted">show the command palette</span>,
+        value: (
+          <span className="text-terminal-muted">show the command palette</span>
+        ),
       },
     ] as const;
 

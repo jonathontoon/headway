@@ -1,7 +1,4 @@
-import type {
-  TerminalStatusLevel,
-  TerminalStatusProps,
-} from "../../../types";
+import type { TerminalStatusLevel, TerminalStatusProps } from "../../../types";
 import TerminalCommandSignature from "./TerminalCommandSignature";
 
 const getStatusConfig = (level: TerminalStatusLevel) => {

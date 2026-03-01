@@ -6,7 +6,9 @@ import TerminalCommandSignature from "../TerminalCommandSignature";
 describe("TerminalCommandSignature", () => {
   it("renders command names and argument tokens with semantic colors", () => {
     render(
-      <TerminalCommandSignature signature={TERMINAL_COMMAND_SIGNATURES.status} />
+      <TerminalCommandSignature
+        signature={TERMINAL_COMMAND_SIGNATURES.status}
+      />
     );
 
     expect(screen.getByText("status")).toHaveClass("text-terminal-text");

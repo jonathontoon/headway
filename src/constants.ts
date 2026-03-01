@@ -1,7 +1,4 @@
-import type {
-  TerminalCommandSignature,
-  TerminalHelpRow,
-} from "./types";
+import type { TerminalCommandSignature, TerminalHelpRow } from "./types";
 
 export enum TERMINAL_ACTION_TYPES {
   SET_INPUT = "terminal/setInput",
@@ -94,4 +91,5 @@ export const TERMINAL_UNKNOWN_COMMAND_DETAIL =
   "Type 'help' for a list of available commands.";
 export const TERMINAL_INPUT_LABEL = "Terminal command";
 export const TERMINAL_OUTPUT_LABEL = "Terminal output";
-export const TERMINAL_WELCOME_MESSAGE = "React Redux terminal POC. Type \"help\".";
+export const TERMINAL_WELCOME_MESSAGE =
+  "React Redux terminal POC. Type \"help\".";
