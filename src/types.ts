@@ -5,17 +5,17 @@ export type TerminalStatusLevel = "error" | "warning" | "success";
 export type HistoryDirection = "up" | "down";
 export type PendingCommandKind = "deploy";
 
-export type TerminalCommandSignatureArgument =
+export type TerminalCommandSyntaxArgument =
   | { kind: "choice"; options: readonly string[] }
   | { kind: "value"; name: string };
 
-export interface TerminalCommandSignature {
+export interface TerminalCommandSyntax {
   command: string;
-  arguments?: readonly TerminalCommandSignatureArgument[];
+  arguments?: readonly TerminalCommandSyntaxArgument[];
 }
 
 export interface TerminalHelpRow {
-  signature: TerminalCommandSignature;
+  syntax: TerminalCommandSyntax;
   description: string;
 }
 
@@ -24,7 +24,7 @@ export interface TerminalGridRow {
   value: string;
 }
 
-export interface TerminalGridDisplayRow {
+export interface GridDisplayRow {
   label: ReactNode;
   value: ReactNode;
 }
@@ -37,7 +37,7 @@ export type TerminalTranscriptItemContent =
       level: TerminalStatusLevel;
       message: string;
       detail?: string;
-      signature?: TerminalCommandSignature;
+      syntax?: TerminalCommandSyntax;
     }
   | { kind: "heading"; text: string }
   | { kind: "unordered-list"; items: readonly string[] }
@@ -118,46 +118,46 @@ export type ReadOnlyPromptProps = {
 
 export type PromptProps = InteractivePromptProps | ReadOnlyPromptProps;
 
-export interface TerminalHistoryProps {
+export interface HistoryProps {
   items: readonly TerminalTranscriptItem[];
 }
 
-export interface TerminalLineProps {
+export interface LineProps {
   item: TerminalTranscriptItem;
 }
 
-export interface TerminalTextProps {
+export interface TextProps {
   text: string;
 }
 
-export interface TerminalStatusProps {
+export interface StatusProps {
   level: TerminalStatusLevel;
   message: string;
   detail?: string;
-  signature?: TerminalCommandSignature;
+  syntax?: TerminalCommandSyntax;
 }
 
-export interface TerminalHeadingProps {
+export interface HeadingProps {
   text: string;
 }
 
-export interface TerminalListProps {
+export interface ListProps {
   items: readonly string[];
   variant: "unordered" | "ordered";
 }
 
-export interface TerminalLoadingProps {
+export interface LoadingProps {
   text: string;
 }
 
-export interface TerminalCommandSignatureProps {
-  signature: TerminalCommandSignature;
+export interface CommandSyntaxProps {
+  syntax: TerminalCommandSyntax;
 }
 
-export interface TerminalHelpGridProps {
+export interface HelpGridProps {
   rows: readonly TerminalHelpRow[];
 }
 
-export interface TerminalGridProps {
-  rows: readonly TerminalGridDisplayRow[];
+export interface GridProps {
+  rows: readonly GridDisplayRow[];
 }

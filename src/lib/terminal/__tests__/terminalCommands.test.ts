@@ -1,5 +1,5 @@
 import {
-  TERMINAL_COMMAND_SIGNATURES,
+  TERMINAL_COMMAND_SYNTAXES,
   TERMINAL_HELP_ROWS,
   TERMINAL_JOBS_HEADING,
   TERMINAL_JOB_ITEMS,
@@ -62,7 +62,7 @@ describe("executeCommand", () => {
           kind: "status",
           level: "error",
           message: "usage:",
-          signature: TERMINAL_COMMAND_SIGNATURES.echo,
+          syntax: TERMINAL_COMMAND_SYNTAXES.echo,
         },
       ],
     });
@@ -83,7 +83,7 @@ describe("executeCommand", () => {
           kind: "status",
           level: "error",
           message: "usage:",
-          signature: TERMINAL_COMMAND_SIGNATURES.status,
+          syntax: TERMINAL_COMMAND_SYNTAXES.status,
         },
       ],
     });
@@ -117,11 +117,11 @@ describe("executeCommand", () => {
   });
 
   it.each([
-    ["help extra", TERMINAL_COMMAND_SIGNATURES.help],
-    ["logs extra", TERMINAL_COMMAND_SIGNATURES.logs],
-    ["jobs extra", TERMINAL_COMMAND_SIGNATURES.jobs],
-    ["clear extra", TERMINAL_COMMAND_SIGNATURES.clear],
-  ])("rejects unexpected arguments for %s", (command, signature) => {
+    ["help extra", TERMINAL_COMMAND_SYNTAXES.help],
+    ["logs extra", TERMINAL_COMMAND_SYNTAXES.logs],
+    ["jobs extra", TERMINAL_COMMAND_SYNTAXES.jobs],
+    ["clear extra", TERMINAL_COMMAND_SYNTAXES.clear],
+  ])("rejects unexpected arguments for %s", (command, syntax) => {
     expect(executeCommand(command)).toEqual({
       mode: "immediate",
       items: [
@@ -129,7 +129,7 @@ describe("executeCommand", () => {
           kind: "status",
           level: "error",
           message: "usage:",
-          signature,
+          syntax,
         },
       ],
     });
@@ -219,7 +219,7 @@ describe("executeCommand", () => {
           kind: "status",
           level: "error",
           message: "usage:",
-          signature: TERMINAL_COMMAND_SIGNATURES.deploy,
+          syntax: TERMINAL_COMMAND_SYNTAXES.deploy,
         },
       ],
     });
@@ -233,7 +233,7 @@ describe("executeCommand", () => {
           kind: "status",
           level: "error",
           message: "usage:",
-          signature: TERMINAL_COMMAND_SIGNATURES.steps,
+          syntax: TERMINAL_COMMAND_SYNTAXES.steps,
         },
       ],
     });

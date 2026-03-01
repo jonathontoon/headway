@@ -1,4 +1,4 @@
-import type { TerminalCommandSignature, TerminalHelpRow } from "./types";
+import type { TerminalCommandSyntax, TerminalHelpRow } from "./types";
 
 export enum TERMINAL_ACTION_TYPES {
   SET_INPUT = "terminal/setInput",
@@ -10,7 +10,7 @@ export enum TERMINAL_ACTION_TYPES {
 
 export const TERMINAL_DEPLOY_TARGETS = ["staging", "production"] as const;
 
-export const TERMINAL_COMMAND_SIGNATURES = {
+export const TERMINAL_COMMAND_SYNTAXES = {
   help: {
     command: "help",
   },
@@ -41,39 +41,39 @@ export const TERMINAL_COMMAND_SIGNATURES = {
   clear: {
     command: "clear",
   },
-} as const satisfies Record<string, TerminalCommandSignature>;
+} as const satisfies Record<string, TerminalCommandSyntax>;
 
 export const TERMINAL_HELP_ROWS = [
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.help,
+    syntax: TERMINAL_COMMAND_SYNTAXES.help,
     description: "show the command palette",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.echo,
+    syntax: TERMINAL_COMMAND_SYNTAXES.echo,
     description: "print plain text",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.status,
+    syntax: TERMINAL_COMMAND_SYNTAXES.status,
     description: "show a status line",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.logs,
+    syntax: TERMINAL_COMMAND_SYNTAXES.logs,
     description: "show recent build logs",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.jobs,
+    syntax: TERMINAL_COMMAND_SYNTAXES.jobs,
     description: "show queued jobs",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.steps,
+    syntax: TERMINAL_COMMAND_SYNTAXES.steps,
     description: "show deployment steps",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.deploy,
+    syntax: TERMINAL_COMMAND_SYNTAXES.deploy,
     description: "simulate a deployment",
   },
   {
-    signature: TERMINAL_COMMAND_SIGNATURES.clear,
+    syntax: TERMINAL_COMMAND_SYNTAXES.clear,
     description: "reset the terminal",
   },
 ] as const satisfies readonly TerminalHelpRow[];

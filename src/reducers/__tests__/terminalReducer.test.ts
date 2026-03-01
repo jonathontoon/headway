@@ -1,6 +1,6 @@
 import {
   TERMINAL_ACTION_TYPES,
-  TERMINAL_COMMAND_SIGNATURES,
+  TERMINAL_COMMAND_SYNTAXES,
   TERMINAL_HELP_ROWS,
   TERMINAL_JOBS_HEADING,
   TERMINAL_JOB_ITEMS,
@@ -67,7 +67,7 @@ describe("terminalReducer", () => {
         kind: "status",
         level: "error",
         message: "usage:",
-        signature: TERMINAL_COMMAND_SIGNATURES.status,
+        syntax: TERMINAL_COMMAND_SYNTAXES.status,
       },
     ]);
   });

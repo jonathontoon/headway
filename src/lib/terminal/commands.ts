@@ -1,5 +1,5 @@
 import {
-  TERMINAL_COMMAND_SIGNATURES,
+  TERMINAL_COMMAND_SYNTAXES,
   TERMINAL_HELP_ROWS,
   TERMINAL_DEPLOY_TARGETS,
   TERMINAL_JOBS_HEADING,
@@ -14,7 +14,7 @@ import type {
   CommandExecutionResult,
   PendingCommand,
   PendingCommandDescriptor,
-  TerminalCommandSignature,
+  TerminalCommandSyntax,
   TerminalStatusLevel,
   TerminalTranscriptItemContent,
 } from "../../types";
@@ -28,13 +28,13 @@ const createStatusItem = (
   level: TerminalStatusLevel,
   message: string,
   detail?: string,
-  signature?: TerminalCommandSignature
+  syntax?: TerminalCommandSyntax
 ): TerminalTranscriptItemContent => ({
   kind: "status",
   level,
   message,
   ...(detail ? { detail } : {}),
-  ...(signature ? { signature } : {}),
+  ...(syntax ? { syntax } : {}),
 });
 
 const createImmediateResult = (
@@ -51,10 +51,10 @@ const createErrorResult = (
   createImmediateResult([createStatusItem("error", message, detail)]);
 
 const createUsageErrorResult = (
-  signature: TerminalCommandSignature
+  syntax: TerminalCommandSyntax
 ): CommandExecutionResult =>
   createImmediateResult([
-    createStatusItem("error", "usage:", undefined, signature),
+    createStatusItem("error", "usage:", undefined, syntax),
   ]);
 
 const isDeployTarget = (
@@ -89,12 +89,12 @@ export const executeCommand = (raw: string): CommandExecutionResult => {
               rows: TERMINAL_HELP_ROWS,
             },
           ])
-        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.help);
+        : createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.help);
     case "echo": {
       const text = rest.join(" ").trim();
       return text
         ? createImmediateResult([createTextItem(text)])
-        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.echo);
+        : createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.echo);
     }
     case "status": {
       const [level, ...messageParts] = rest;
@@ -105,7 +105,7 @@ export const executeCommand = (raw: string): CommandExecutionResult => {
         !message ||
         (level !== "success" && level !== "warning" && level !== "error")
       ) {
-        return createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.status);
+        return createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.status);
       }
 
       return createImmediateResult([createStatusItem(level, message)]);
@@ -116,25 +116,25 @@ export const executeCommand = (raw: string): CommandExecutionResult => {
             { kind: "heading", text: TERMINAL_LOGS_HEADING },
             ...TERMINAL_LOG_MESSAGES.map((message) => createTextItem(message)),
           ])
-        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.logs);
+        : createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.logs);
     case "jobs":
       return rest.length === 0
         ? createImmediateResult([
             { kind: "heading", text: TERMINAL_JOBS_HEADING },
             { kind: "unordered-list", items: TERMINAL_JOB_ITEMS },
           ])
-        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.jobs);
+        : createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.jobs);
     case "steps":
       return rest.length === 0
         ? createImmediateResult([
             { kind: "heading", text: TERMINAL_STEPS_HEADING },
             { kind: "ordered-list", items: TERMINAL_STEP_ITEMS },
           ])
-        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.steps);
+        : createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.steps);
     case "deploy": {
       const [target, ...extra] = rest;
       if (!target || extra.length > 0 || !isDeployTarget(target)) {
-        return createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.deploy);
+        return createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.deploy);
       }
 
       const pendingCommand: PendingCommandDescriptor = {
@@ -156,7 +156,7 @@ export const executeCommand = (raw: string): CommandExecutionResult => {
     case "clear":
       return rest.length === 0
         ? { mode: "reset" }
-        : createUsageErrorResult(TERMINAL_COMMAND_SIGNATURES.clear);
+        : createUsageErrorResult(TERMINAL_COMMAND_SYNTAXES.clear);
     default:
       return createErrorResult(
         `'${name}' was not recognized.`,
