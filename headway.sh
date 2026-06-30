@@ -348,6 +348,113 @@ line_at() {
 }
 
 # ---------------------------------------------------------------------------
+# Listing / views
+# ---------------------------------------------------------------------------
+
+# task_matches_filter <filter> <raw-line>
+# Must be called with P_PROJECTS/P_TAGS already populated by parse_line for
+# the same line. +Project and @tag filters match a whole token (so +Apo
+# does not match +Apollo); anything else is a substring search over the
+# raw line (full-text search, matching project/tag/desc text alike).
+task_matches_filter() {
+	_tmf_filter="$1"
+	_tmf_line="$2"
+	case "$_tmf_filter" in
+	+?*)
+		case " $P_PROJECTS " in
+		*" $_tmf_filter "*) return 0 ;;
+		*) return 1 ;;
+		esac
+		;;
+	@?*)
+		case " $P_TAGS " in
+		*" $_tmf_filter "*) return 0 ;;
+		*) return 1 ;;
+		esac
+		;;
+	*)
+		case "$_tmf_line" in
+		*"$_tmf_filter"*) return 0 ;;
+		*) return 1 ;;
+		esac
+		;;
+	esac
+}
+
+# collect_view_rows <which> [filter]
+# Prints one "sortkey<TAB>id<TAB>raw-line" row per matching task. <which> is
+# one of: list, inbox, today, upcoming, someday, logbook.
+collect_view_rows() {
+	_cvr_which="$1"
+	_cvr_filter="${2:-}"
+	_cvr_today=$(today)
+	_cvr_tab=$(printf '\t')
+	_cvr_id=0
+	while IFS= read -r _cvr_raw || [ -n "$_cvr_raw" ]; do
+		_cvr_id=$((_cvr_id + 1))
+		[ -n "$_cvr_raw" ] || continue
+		parse_line "$_cvr_raw"
+
+		case "$_cvr_which" in
+		logbook) [ "$P_DONE" = "true" ] || continue ;;
+		*) [ "$P_DONE" = "false" ] || continue ;;
+		esac
+
+		case "$_cvr_which" in
+		inbox)
+			[ -z "$P_PROJECTS" ] || continue
+			;;
+		today)
+			[ -n "$P_DUE" ] || continue
+			expr "$P_DUE" '<=' "$_cvr_today" >/dev/null || continue
+			;;
+		upcoming)
+			[ -n "$P_DUE" ] || continue
+			expr "$P_DUE" '>' "$_cvr_today" >/dev/null || continue
+			;;
+		someday)
+			[ -z "$P_DUE" ] || continue
+			;;
+		esac
+
+		if [ -n "$_cvr_filter" ]; then
+			task_matches_filter "$_cvr_filter" "$_cvr_raw" || continue
+		fi
+
+		case "$_cvr_which" in
+		today | upcoming) _cvr_sortkey="$P_DUE" ;;
+		logbook) _cvr_sortkey="${P_COMPLETION_DATE:-0000-00-00}" ;;
+		*) _cvr_sortkey=$(printf '%05d' "$_cvr_id") ;;
+		esac
+
+		printf '%s%s%s%s%s\n' "$_cvr_sortkey" "$_cvr_tab" "$_cvr_id" "$_cvr_tab" "$_cvr_raw"
+	done <"$TODO_FILE"
+}
+
+# render_view <which> [filter]
+# Prints "<id>: <line>" for each task in view <which>, sorted ascending by
+# sortkey (today/upcoming: due date; logbook: completion date, descending;
+# everything else: file order).
+render_view() {
+	_rv_which="$1"
+	_rv_filter="${2:-}"
+	[ -f "$TODO_FILE" ] || return 0
+
+	_rv_rows=$(collect_view_rows "$_rv_which" "$_rv_filter")
+	[ -n "$_rv_rows" ] || return 0
+
+	_rv_tab=$(printf '\t')
+	case "$_rv_which" in
+	logbook) _rv_sorted=$(printf '%s\n' "$_rv_rows" | sort -t "$_rv_tab" -k1,1 -r) ;;
+	*) _rv_sorted=$(printf '%s\n' "$_rv_rows" | sort -t "$_rv_tab" -k1,1) ;;
+	esac
+
+	printf '%s\n' "$_rv_sorted" | while IFS="$_rv_tab" read -r _ _rv_id _rv_line; do
+		printf '%s: %s\n' "$_rv_id" "$_rv_line"
+	done
+}
+
+# ---------------------------------------------------------------------------
 # Usage
 # ---------------------------------------------------------------------------
 
@@ -436,12 +543,18 @@ cmd_move() { die "not implemented: move"; }
 cmd_priority() { die "not implemented: priority"; }
 cmd_tag() { die "not implemented: tag"; }
 cmd_rm() { die "not implemented: rm"; }
-cmd_list() { die "not implemented: list"; }
-cmd_inbox() { die "not implemented: inbox"; }
-cmd_today() { die "not implemented: today"; }
-cmd_upcoming() { die "not implemented: upcoming"; }
-cmd_someday() { die "not implemented: someday"; }
-cmd_logbook() { die "not implemented: logbook"; }
+# cmd_list [+Project|@tag|"keyword"]
+cmd_list() { render_view "list" "${1:-}"; }
+# cmd_inbox [+Project|@tag|"keyword"] - incomplete tasks with no project
+cmd_inbox() { render_view "inbox" "${1:-}"; }
+# cmd_today [+Project|@tag|"keyword"] - due today, plus anything overdue
+cmd_today() { render_view "today" "${1:-}"; }
+# cmd_upcoming [+Project|@tag|"keyword"] - future-dated tasks
+cmd_upcoming() { render_view "upcoming" "${1:-}"; }
+# cmd_someday [+Project|@tag|"keyword"] - tasks with no due date
+cmd_someday() { render_view "someday" "${1:-}"; }
+# cmd_logbook [+Project|@tag|"keyword"] - completed tasks, most recent first
+cmd_logbook() { render_view "logbook" "${1:-}"; }
 cmd_projects() { die "not implemented: projects"; }
 cmd_project() { die "not implemented: project"; }
 cmd_archive() { die "not implemented: archive"; }
