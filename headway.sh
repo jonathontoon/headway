@@ -45,7 +45,7 @@ expand_tilde() {
 		printf '%s\n' "$HOME"
 		;;
 	"~/"*)
-		printf '%s\n' "$HOME/${1#~/}"
+		printf '%s\n' "$HOME/${1#\~/}"
 		;;
 	*)
 		printf '%s\n' "$1"
@@ -189,13 +189,43 @@ resolve_date_shorthand() {
 # Precedence (highest wins): environment variables > config file >
 # built-in defaults. The config file is a local file the user controls
 # (same trust model as ~/.bashrc), so it is dot-sourced directly rather
-# than defensively parsed.
+# than defensively parsed. Because sourcing it runs its assignments
+# unconditionally, an already-exported env var is snapshotted beforehand
+# and restored afterward - otherwise the file would always win instead
+# of the environment.
 load_config() {
 	config_path="${HEADWAY_CONFIG:-$HOME/.config/headway/config}"
+
+	_lc_had_todo=${TODO_FILE+x}
+	_lc_env_todo=${TODO_FILE-}
+	_lc_had_done=${DONE_FILE+x}
+	_lc_env_done=${DONE_FILE-}
+	_lc_had_editor=${EDITOR+x}
+	_lc_env_editor=${EDITOR-}
+	_lc_had_color=${COLOR+x}
+	_lc_env_color=${COLOR-}
+	_lc_had_dfmt=${DATE_FORMAT+x}
+	_lc_env_dfmt=${DATE_FORMAT-}
+	_lc_had_ids=${SHOW_IDS+x}
+	_lc_env_ids=${SHOW_IDS-}
+	_lc_had_arch=${AUTO_ARCHIVE+x}
+	_lc_env_arch=${AUTO_ARCHIVE-}
+	_lc_had_conf=${CONFIRM_DELETE+x}
+	_lc_env_conf=${CONFIRM_DELETE-}
+
 	if [ -f "$config_path" ]; then
 		# shellcheck disable=SC1090
 		. "$config_path"
 	fi
+
+	if [ -n "$_lc_had_todo" ]; then TODO_FILE="$_lc_env_todo"; fi
+	if [ -n "$_lc_had_done" ]; then DONE_FILE="$_lc_env_done"; fi
+	if [ -n "$_lc_had_editor" ]; then EDITOR="$_lc_env_editor"; fi
+	if [ -n "$_lc_had_color" ]; then COLOR="$_lc_env_color"; fi
+	if [ -n "$_lc_had_dfmt" ]; then DATE_FORMAT="$_lc_env_dfmt"; fi
+	if [ -n "$_lc_had_ids" ]; then SHOW_IDS="$_lc_env_ids"; fi
+	if [ -n "$_lc_had_arch" ]; then AUTO_ARCHIVE="$_lc_env_arch"; fi
+	if [ -n "$_lc_had_conf" ]; then CONFIRM_DELETE="$_lc_env_conf"; fi
 
 	: "${TODO_FILE:=$TODO_FILE_DEFAULT}"
 	: "${DONE_FILE:=$DONE_FILE_DEFAULT}"
