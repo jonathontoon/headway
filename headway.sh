@@ -611,12 +611,131 @@ cmd_undo() {
 	replace_line_at "$id" "$new_line"
 	printf 'undone %s: %s\n' "$id" "$new_line"
 }
-cmd_edit() { die "not implemented: edit"; }
-cmd_due() { die "not implemented: due"; }
-cmd_move() { die "not implemented: move"; }
-cmd_priority() { die "not implemented: priority"; }
-cmd_tag() { die "not implemented: tag"; }
-cmd_rm() { die "not implemented: rm"; }
+# cmd_edit <id>
+# Opens the task's raw line in $EDITOR via a scratch tempfile, then writes
+# back whatever the editor leaves behind. An empty result aborts the edit
+# (the task is left unchanged) rather than deleting the task.
+cmd_edit() {
+	[ "$#" -ge 1 ] || die 'usage: hw edit <id>'
+	id=$(resolve_id "$1") || exit 1
+	raw=$(line_at "$id")
+	tmp=$(mktemp) || die "mktemp failed"
+	printf '%s\n' "$raw" >"$tmp"
+	if ! $EDITOR "$tmp"; then
+		rm -f "$tmp"
+		die "editor exited non-zero, task $id unchanged"
+	fi
+	new=$(cat "$tmp")
+	rm -f "$tmp"
+	[ -n "$new" ] || die "empty edit aborted, task $id unchanged"
+	replace_line_at "$id" "$new"
+	printf 'edited %s: %s\n' "$id" "$new"
+}
+
+# cmd_due <id> <DATE>
+# DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
+cmd_due() {
+	[ "$#" -ge 2 ] || die 'usage: hw due <id> <date>'
+	id=$(resolve_id "$1") || exit 1
+	new_due=$(resolve_date_shorthand "$2") || exit 1
+	parse_line "$(line_at "$id")"
+	P_DUE="$new_due"
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	printf 'due %s: %s\n' "$id" "$new_line"
+}
+
+# cmd_move <id> +Project
+# A task belongs to at most one project at a time; move replaces whatever
+# project(s) it had with the given one.
+cmd_move() {
+	[ "$#" -ge 2 ] || die 'usage: hw move <id> +Project'
+	id=$(resolve_id "$1") || exit 1
+	project="$2"
+	case "$project" in
+	+?*) ;;
+	*) die "invalid project: $project (must start with +)" ;;
+	esac
+	parse_line "$(line_at "$id")"
+	P_PROJECTS="$project"
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	printf 'moved %s: %s\n' "$id" "$new_line"
+}
+
+# cmd_priority <id> <A-Z|none>
+# Targets the (A) slot for active tasks, or the pri: extension for
+# already-completed ones, since a done line has no (A) position.
+cmd_priority() {
+	[ "$#" -ge 2 ] || die "usage: hw priority <id> <A-Z|none>"
+	id=$(resolve_id "$1") || exit 1
+	val="$2"
+	case "$val" in
+	none) val="" ;;
+	[A-Z]) ;;
+	*) die "invalid priority: $val (must be A-Z or 'none')" ;;
+	esac
+	parse_line "$(line_at "$id")"
+	if [ "$P_DONE" = "true" ]; then
+		P_PRI_EXT="$val"
+	else
+		P_PRIORITY="$val"
+	fi
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	printf 'priority %s: %s\n' "$id" "$new_line"
+}
+
+# cmd_tag <id> @tag
+# Idempotent: adding a tag the task already has is a silent no-op, not an
+# error and not a duplicate.
+cmd_tag() {
+	[ "$#" -ge 2 ] || die 'usage: hw tag <id> @tag'
+	id=$(resolve_id "$1") || exit 1
+	tagval="$2"
+	case "$tagval" in
+	@?*) ;;
+	*) die "invalid tag: $tagval (must start with @)" ;;
+	esac
+	raw=$(line_at "$id")
+	parse_line "$raw"
+	case " $P_TAGS " in
+	*" $tagval "*)
+		printf 'task %s already has tag %s\n' "$id" "$tagval"
+		return 0
+		;;
+	esac
+	P_TAGS="${P_TAGS:+$P_TAGS }$tagval"
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	printf 'tagged %s: %s\n' "$id" "$new_line"
+}
+
+# cmd_rm <id>
+# Deletes a task permanently. Prompts for confirmation unless
+# CONFIRM_DELETE=false; declining or piping EOF to the prompt cancels
+# (the safe default), never deletes.
+cmd_rm() {
+	[ "$#" -ge 1 ] || die 'usage: hw rm <id>'
+	id=$(resolve_id "$1") || exit 1
+	raw=$(line_at "$id")
+
+	if [ "$CONFIRM_DELETE" = "true" ]; then
+		printf 'remove task %s: %s\nAre you sure? [y/N] ' "$id" "$raw" >&2
+		reply=""
+		read -r reply || reply=""
+		case "$reply" in
+		y | Y | yes | YES) ;;
+		*)
+			printf 'cancelled\n'
+			return 0
+			;;
+		esac
+	fi
+
+	awk -v id="$id" 'NR != id' "$TODO_FILE" | safe_write "$TODO_FILE"
+	printf 'removed %s: %s\n' "$id" "$raw"
+}
 # cmd_list [+Project|@tag|"keyword"]
 cmd_list() { render_view "list" "${1:-}"; }
 # cmd_inbox [+Project|@tag|"keyword"] - incomplete tasks with no project
