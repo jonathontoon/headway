@@ -774,9 +774,148 @@ cmd_project() {
 	esac
 	render_view "list" "$1"
 }
-cmd_archive() { die "not implemented: archive"; }
-cmd_stats() { die "not implemented: stats"; }
-cmd_check() { die "not implemented: check"; }
+# cmd_archive
+# Moves every completed ("x ...") line out of TODO_FILE and appends it to
+# DONE_FILE, preserving DONE_FILE's existing content. Both files are
+# rewritten atomically via safe_write.
+cmd_archive() {
+	[ -f "$TODO_FILE" ] || return 0
+	archived=$(awk '/^x /' "$TODO_FILE")
+	if [ -z "$archived" ]; then
+		printf 'no completed tasks to archive\n'
+		return 0
+	fi
+
+	remaining=$(awk '!/^x /' "$TODO_FILE")
+
+	{
+		[ -f "$DONE_FILE" ] && cat "$DONE_FILE"
+		printf '%s\n' "$archived"
+	} | safe_write "$DONE_FILE"
+
+	if [ -n "$remaining" ]; then
+		printf '%s\n' "$remaining" | safe_write "$TODO_FILE"
+	else
+		printf '' | safe_write "$TODO_FILE"
+	fi
+
+	count=$(printf '%s\n' "$archived" | awk 'END { print NR }')
+	printf 'archived %s completed task(s)\n' "$count"
+}
+
+# cmd_stats
+# Summary counts: active vs. done totals, a count per view, and a count
+# per project (across incomplete tasks).
+cmd_stats() {
+	if [ ! -f "$TODO_FILE" ]; then
+		printf 'tasks:    0 active, 0 done (0 total)\n'
+		return 0
+	fi
+
+	counts=$(awk '
+	{
+		total++
+		if (substr($0, 1, 2) == "x ") doneN++; else activeN++
+	}
+	END { printf "%d %d %d\n", total + 0, activeN + 0, doneN + 0 }
+	' "$TODO_FILE")
+	read -r total active done_count <<EOF
+$counts
+EOF
+
+	printf 'tasks:    %s active, %s done (%s total)\n' "$active" "$done_count" "$total"
+	printf 'inbox:    %s\n' "$(render_view inbox | awk 'END { print NR }')"
+	printf 'today:    %s\n' "$(render_view today | awk 'END { print NR }')"
+	printf 'upcoming: %s\n' "$(render_view upcoming | awk 'END { print NR }')"
+	printf 'someday:  %s\n' "$(render_view someday | awk 'END { print NR }')"
+
+	projects=$(cmd_projects)
+	if [ -n "$projects" ]; then
+		printf 'projects:\n'
+		printf '%s\n' "$projects" | while IFS= read -r proj; do
+			proj_count=$(render_view list "$proj" | awk 'END { print NR }')
+			printf '  %-20s %s\n' "$proj" "$proj_count"
+		done
+	fi
+}
+
+# cmd_check
+# Verifies TODO_FILE is well-formed. Prints "line <N>: <message>" to
+# stderr for every problem found; exits 0 if clean, 1 otherwise. Checks:
+# blank lines, malformed priority markers, invalid due: dates, repeat:
+# values outside daily/weekly/monthly/yearly, and completed lines missing
+# either date.
+cmd_check() {
+	[ -f "$TODO_FILE" ] || die "no such file: $TODO_FILE"
+	problems=0
+	id=0
+	while IFS= read -r raw || [ -n "$raw" ]; do
+		id=$((id + 1))
+
+		if [ -z "$raw" ]; then
+			printf 'line %s: blank line\n' "$id" >&2
+			problems=$((problems + 1))
+			continue
+		fi
+
+		case "$raw" in
+		'x '*) is_done=true ;;
+		*) is_done=false ;;
+		esac
+
+		if [ "$is_done" = "false" ]; then
+			case "$raw" in
+			'('*)
+				case "$raw" in
+				'('[A-Z]') '*) ;;
+				*)
+					printf 'line %s: malformed priority marker\n' "$id" >&2
+					problems=$((problems + 1))
+					;;
+				esac
+				;;
+			esac
+		else
+			case "$raw" in
+			'x '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' '*) ;;
+			'x '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' '*)
+				printf 'line %s: completed task missing creation date\n' "$id" >&2
+				problems=$((problems + 1))
+				;;
+			*)
+				printf 'line %s: completed task missing completion date\n' "$id" >&2
+				problems=$((problems + 1))
+				;;
+			esac
+		fi
+
+		set -f
+		for tok in $raw; do
+			case "$tok" in
+			due:*)
+				dueval="${tok#due:}"
+				if ! is_valid_date "$dueval"; then
+					printf 'line %s: invalid due date: %s\n' "$id" "$dueval" >&2
+					problems=$((problems + 1))
+				fi
+				;;
+			repeat:*)
+				repeatval="${tok#repeat:}"
+				case "$repeatval" in
+				daily | weekly | monthly | yearly) ;;
+				*)
+					printf 'line %s: invalid repeat value: %s\n' "$id" "$repeatval" >&2
+					problems=$((problems + 1))
+					;;
+				esac
+				;;
+			esac
+		done
+		set +f
+	done <"$TODO_FILE"
+
+	[ "$problems" -eq 0 ]
+}
 
 # ---------------------------------------------------------------------------
 # Dispatch
