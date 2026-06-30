@@ -11,18 +11,15 @@ Your tasks are a plain text file. Every tool you already love can read it. `head
 ## Table of Contents
 
 - [Why headway?](#why-headway)
-- [Core Concepts](#core-concepts)
 - [The File Format](#the-file-format)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Views](#views)
 - [Command Reference](#command-reference)
 - [Configuration](#configuration)
 - [Uninstall](#uninstall)
 - [Interoperability](#interoperability)
-- [Architecture](#architecture)
 - [Philosophy](#philosophy)
-- [Roadmap](#roadmap)
+- [Architecture](#architecture)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -36,38 +33,6 @@ Most todo apps make a trade-off you shouldn't have to accept:
 - **Plain-text tools** give you portability but ask you to think in flags and syntax.
 
 `headway` refuses the trade-off. It stores everything in a valid, portable `todo.txt` file — parseable by any editor, scriptable with `grep`, syncable with `git` — while giving you a CLI experience organised around a simple mental model: **Projects, a clean inbox, and dates that do the scheduling for you**.
-
----
-
-## Core Concepts
-
-`headway` keeps the organisational surface area small. Three things, and that's it.
-
-### Projects
-
-Groups of related tasks working toward a single outcome. Uses todo.txt's native `+Project` syntax.
-
-```
-+LaunchBlog   +HomeReno   +Q3Planning
-```
-
-### Tags
-
-Freeform labels for filtering and cross-cutting concerns. Uses todo.txt's native `@context` syntax.
-
-```
-@waiting   @calls   @deepwork   @quick
-```
-
-### Due dates
-
-When a task needs to be done. Tasks without a due date are implicitly *someday* — captured, safe, and out of the way until you're ready to give them a date and bring them into view.
-
-```
-due:YYYY-MM-DD
-```
-
-Convenience shorthands like `today` or `+3d` are accepted as input but always resolved to a real `YYYY-MM-DD` date before being written to the file — `headway` never writes a relative keyword to disk, so the file stays valid for every other todo.txt tool that reads it.
 
 ---
 
@@ -164,30 +129,6 @@ hw done 3
 
 # Review everything without a project
 hw inbox
-```
-
----
-
-## Views
-
-Five views cover the full lifecycle of a task. Due dates drive the schedule — no separate scheduling step needed.
-
-```
-hw inbox       Tasks with no project assigned
-hw today       Due today, plus anything overdue
-hw upcoming    Future-dated tasks, in chronological order
-hw someday     Tasks with no due date — implicitly parked
-hw logbook     Completed tasks, most recent first
-```
-
-There's no explicit "someday" label to apply. If a task has no due date, it lives in `hw someday` until you give it one. That's the whole system.
-
-All views support optional filtering:
-
-```bash
-hw today +LaunchBlog     # today view, filtered to a project
-hw upcoming @waiting     # upcoming, filtered by tag
-hw someday +HomeReno     # parked tasks in a project
 ```
 
 ---
@@ -323,6 +264,22 @@ The `repeat:` extension is ignored gracefully by tools that don't understand it.
 
 ---
 
+## Philosophy
+
+Headway is inspired by [permacomputing](https://permacomputing.net/): frugality (POSIX `sh` only, no runtime to install or update), longevity over novelty (targeting `dash` and BusyBox `ash` — the long-lived floor, not the latest shell feature), plain-text and open formats (todo.txt, readable by any tool that will ever exist), offline-first operation (no network calls, nothing breaks when a server goes away), and self-reliance (one script, small enough for a single person to read, understand, and maintain indefinitely).
+
+A few principles that guide every decision in `headway`:
+
+**Your data is yours.** The source of truth is always `~/todo.txt` — a file you can read, edit, `grep`, back up, or delete without asking anyone's permission.
+
+**Capture first, organise second.** `hw add "thing"` puts a task in your inbox with zero friction. Adding a project or due date is optional and happens when it matters.
+
+**Due dates, not scheduling steps.** You shouldn't have to tell your task manager both *when* you want to think about something *and* when it's actually due. Give it a date. That's enough.
+
+**The terminal is the interface.** No Electron, no background daemon, no subscription. `headway` is a shell script that does one thing well.
+
+---
+
 ## Architecture
 
 A concise technical specification of how `headway` is built — useful if you're contributing, packaging it for a new platform, or curious why certain commands are implemented the way they are.
@@ -355,34 +312,6 @@ CI runs the test suite against `dash` and BusyBox `ash` in an Alpine container o
 POSIX sh has no compilation step and no CPU instruction-set requirement, so there's no meaningful lower bound on hardware. `headway` runs anywhere `/bin/sh` exists: macOS, any Linux distribution regardless of libc (glibc or musl), the BSDs, Alpine and other minimal containers, and embedded systems like routers, NAS boxes, and any Raspberry Pi model on any OS bitness.
 
 For comparison, the original [todo.txt CLI](https://github.com/todotxt/todo.txt-cli) requires Bash 4+ and GNU `awk`/`sed`, and its own documentation directs Windows users to install Cygwin specifically to get a compatible shell. `headway` runs natively wherever a POSIX shell already exists — no compatibility layer required.
-
----
-
-## Philosophy
-
-Headway is inspired by [permacomputing](https://permacomputing.net/): frugality (POSIX `sh` only, no runtime to install or update), longevity over novelty (targeting `dash` and BusyBox `ash` — the long-lived floor, not the latest shell feature), plain-text and open formats (todo.txt, readable by any tool that will ever exist), offline-first operation (no network calls, nothing breaks when a server goes away), and self-reliance (one script, small enough for a single person to read, understand, and maintain indefinitely).
-
-A few principles that guide every decision in `headway`:
-
-**Your data is yours.** The source of truth is always `~/todo.txt` — a file you can read, edit, `grep`, back up, or delete without asking anyone's permission.
-
-**Capture first, organise second.** `hw add "thing"` puts a task in your inbox with zero friction. Adding a project or due date is optional and happens when it matters.
-
-**Due dates, not scheduling steps.** You shouldn't have to tell your task manager both *when* you want to think about something *and* when it's actually due. Give it a date. That's enough.
-
-**The terminal is the interface.** No Electron, no background daemon, no subscription. `headway` is a shell script that does one thing well.
-
----
-
-## Roadmap
-
-- [ ] `hw add` interactive mode with prompted fields
-- [ ] `hw review` — a weekly review walkthrough (GTD-style)
-- [ ] Repeating task support
-- [ ] `hw sync` with pluggable sync scripts
-- [ ] Shell completions (zsh, bash, fish)
-- [ ] `hw export` to JSON / Markdown / CSV
-- [ ] Man page
 
 ---
 
