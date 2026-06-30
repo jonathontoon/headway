@@ -94,8 +94,10 @@ detect_date_flavor() {
 		DATE_FLAVOR="gnu"
 	elif date -v+1d "+%Y-%m-%d" >/dev/null 2>&1; then
 		DATE_FLAVOR="bsd"
+	elif date -u -d "@0" "+%Y-%m-%d" >/dev/null 2>&1; then
+		DATE_FLAVOR="busybox"
 	else
-		die "unsupported date(1) implementation: cannot detect GNU or BSD flavor"
+		die "unsupported date(1) implementation: cannot detect GNU, BSD, or BusyBox flavor"
 	fi
 }
 
@@ -113,6 +115,11 @@ date_add_days() {
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$base + $offset day" "+%Y-%m-%d" ;;
 	bsd) date -j -v"${offset}"d -f "%Y-%m-%d" "$base" "+%Y-%m-%d" ;;
+	busybox)
+		_dad_epoch=$(date -u -d "$base" "+%s") || die "invalid date: $base"
+		_dad_epoch=$((_dad_epoch + offset * 86400))
+		date -u -d "@$_dad_epoch" "+%Y-%m-%d"
+		;;
 	esac
 }
 
@@ -125,6 +132,23 @@ date_add_months() {
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$base + $offset month" "+%Y-%m-%d" ;;
 	bsd) date -j -v"${offset}"m -f "%Y-%m-%d" "$base" "+%Y-%m-%d" ;;
+	busybox)
+		_dam_y=${base%%-*}
+		_dam_rest=${base#*-}
+		_dam_m=${_dam_rest%%-*}
+		_dam_d=${_dam_rest#*-}
+		_dam_y=${_dam_y#0}
+		_dam_m=${_dam_m#0}
+		_dam_total=$(((_dam_y * 12 + (_dam_m - 1)) + offset))
+		_dam_nm0=$((_dam_total % 12))
+		_dam_ny=$((_dam_total / 12))
+		if [ "$_dam_nm0" -lt 0 ]; then
+			_dam_nm0=$((_dam_nm0 + 12))
+			_dam_ny=$((_dam_ny - 1))
+		fi
+		_dam_nm=$((_dam_nm0 + 1))
+		date -u -d "$(printf '%04d-%02d-%02d' "$_dam_ny" "$_dam_nm" "${_dam_d#0}")" "+%Y-%m-%d"
+		;;
 	esac
 }
 
@@ -135,6 +159,14 @@ date_add_years() {
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$base + $offset year" "+%Y-%m-%d" ;;
 	bsd) date -j -v"${offset}"y -f "%Y-%m-%d" "$base" "+%Y-%m-%d" ;;
+	busybox)
+		_day_y=${base%%-*}
+		_day_rest=${base#*-}
+		_day_m=${_day_rest%%-*}
+		_day_d=${_day_rest#*-}
+		_day_ny=$((${_day_y#0} + offset))
+		date -u -d "$(printf '%04d-%02d-%02d' "$_day_ny" "${_day_m#0}" "${_day_d#0}")" "+%Y-%m-%d"
+		;;
 	esac
 }
 
@@ -148,6 +180,7 @@ is_valid_date() {
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$1" >/dev/null 2>&1 ;;
 	bsd) date -j -f "%Y-%m-%d" "$1" >/dev/null 2>&1 ;;
+	busybox) date -u -d "$1" >/dev/null 2>&1 ;;
 	esac
 }
 
