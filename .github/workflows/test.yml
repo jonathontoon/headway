@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: alpine:3.20
+    strategy:
+      matrix:
+        shell: [dash, ash]
+    steps:
+      - name: Install dash
+        run: apk add --no-cache git dash
+
+      - uses: actions/checkout@v4
+
+      - name: Run test suite under ${{ matrix.shell }}
+        run: ${{ matrix.shell }} tests/run.sh
+
+  correctness-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test suite under bash
+        run: bash tests/run.sh
+
+      - name: Run test suite under sh
+        run: sh tests/run.sh
