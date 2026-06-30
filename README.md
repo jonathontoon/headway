@@ -2,7 +2,7 @@
 
 > **headway** *(n.)* forward movement or progress toward achieving a goal.
 
-A minimal CLI task manager built for exactly that: a calm, structured way to move tasks forward, with the portability of the [todo.txt](http://todotxt.org) format.
+A minimal CLI task manager that gives you a calm, structured way to move tasks forward, with the portability of the [todo.txt](http://todotxt.org) format.
 
 Your tasks are a plain text file. Every tool you already love can read it. `headway` just makes it feel effortless.
 
@@ -19,7 +19,6 @@ Your tasks are a plain text file. Every tool you already love can read it. `head
 - [Command Reference](#command-reference)
 - [Configuration](#configuration)
 - [Uninstall](#uninstall)
-- [Syncing](#syncing)
 - [Interoperability](#interoperability)
 - [Architecture](#architecture)
 - [Philosophy](#philosophy)
@@ -311,28 +310,6 @@ Uninstalling never touches your data — `~/todo.txt`, `~/done.txt`, and `~/.con
 
 ---
 
-## Syncing
-
-Because your data is a plain text file, syncing is whatever you want it to be.
-
-```bash
-# Git
-cd ~
-git add todo.txt done.txt && git commit -m "tasks" && git push
-
-# iCloud / Dropbox / Syncthing
-TODO_FILE=~/Library/Mobile\ Documents/com~apple~CloudDocs/todo.txt
-```
-
-A lightweight `hw sync` command is planned that wraps a user-defined sync script:
-
-```bash
-# ~/.config/headway/sync.sh
-git -C ~ add todo.txt && git -C ~ commit -m "sync" && git -C ~ push
-```
-
----
-
 ## Interoperability
 
 Because `headway` writes valid `todo.txt`, your file works with the whole ecosystem:
@@ -379,17 +356,11 @@ POSIX sh has no compilation step and no CPU instruction-set requirement, so ther
 
 For comparison, the original [todo.txt CLI](https://github.com/todotxt/todo.txt-cli) requires Bash 4+ and GNU `awk`/`sed`, and its own documentation directs Windows users to install Cygwin specifically to get a compatible shell. `headway` runs natively wherever a POSIX shell already exists — no compatibility layer required.
 
-### Non-goals for v0
-
-- **No native Windows support.** `cmd.exe` and PowerShell aren't POSIX shells; Windows users run `headway` via WSL, Git Bash, or Cygwin, same as any other POSIX sh tool.
-- **No daemon, background process, or hidden state.** The only persistent state is the todo.txt file itself.
-- **No plugin system.** Extensibility, if it comes, will look like todo.txt-cli's add-on model — separate executable scripts — rather than an internal API.
-
 ---
 
 ## Philosophy
 
-To make headway is to remove the friction between a task and progress on it — that's the whole job of this tool, and the principle behind everything else here.
+Headway is inspired by [permacomputing](https://permacomputing.net/): frugality (POSIX `sh` only, no runtime to install or update), longevity over novelty (targeting `dash` and BusyBox `ash` — the long-lived floor, not the latest shell feature), plain-text and open formats (todo.txt, readable by any tool that will ever exist), offline-first operation (no network calls, nothing breaks when a server goes away), and self-reliance (one script, small enough for a single person to read, understand, and maintain indefinitely).
 
 A few principles that guide every decision in `headway`:
 
@@ -400,8 +371,6 @@ A few principles that guide every decision in `headway`:
 **Due dates, not scheduling steps.** You shouldn't have to tell your task manager both *when* you want to think about something *and* when it's actually due. Give it a date. That's enough.
 
 **The terminal is the interface.** No Electron, no background daemon, no subscription. `headway` is a shell script that does one thing well.
-
-These principles overlap closely with [permacomputing](https://permacomputing.net/): frugality (POSIX `sh` only, no runtime to install or update), longevity over novelty (targeting `dash` and BusyBox `ash` — the long-lived floor, not the latest shell feature), plain-text and open formats (todo.txt, readable by any tool that will ever exist), offline-first operation (no network calls, nothing breaks when a server goes away), and self-reliance (one script, small enough for a single person to read, understand, and maintain indefinitely).
 
 ---
 
