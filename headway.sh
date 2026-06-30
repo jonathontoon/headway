@@ -211,6 +211,143 @@ load_config() {
 }
 
 # ---------------------------------------------------------------------------
+# Todo-line parsing / formatting
+# ---------------------------------------------------------------------------
+
+# US is the internal field delimiter used to pass parsed fields between the
+# awk tokenizer and the shell. It is the ASCII unit separator (0x1F), which
+# never legitimately appears in task text, and is never written to disk.
+US=$(printf '\037')
+
+# parse_line <raw todo.txt line>
+# Sets globals: P_DONE, P_COMPLETION_DATE, P_PRIORITY, P_CREATION_DATE,
+# P_DESC, P_PROJECTS, P_TAGS, P_DUE, P_REPEAT, P_PRI_EXT.
+#
+# The fixed-position prefix (done marker, priority, dates) and the
+# free-form trailing tokens (+Project, @tag, due:, repeat:, pri:) are all
+# classified in a single embedded awk pass, since awk's pattern matching
+# and field splitting handle variable-length token soup far more reliably
+# than shell-only string surgery.
+parse_line() {
+	_pl_line="$1"
+	_pl_out=$(printf '%s\n' "$_pl_line" | awk '
+	{
+		line = $0
+		done = "false"
+		compdate = ""
+		pri = ""
+		credate = ""
+		rest = line
+
+		if (substr(rest, 1, 2) == "x ") {
+			done = "true"
+			rest = substr(rest, 3)
+		}
+
+		if (done == "false" && match(rest, /^\([A-Z]\) /)) {
+			pri = substr(rest, 2, 1)
+			rest = substr(rest, RLENGTH + 1)
+		}
+
+		if (done == "true") {
+			if (match(rest, /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] /)) {
+				compdate = substr(rest, 1, 10)
+				rest = substr(rest, 12)
+				credate = substr(rest, 1, 10)
+				rest = substr(rest, 12)
+			} else if (match(rest, /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] /)) {
+				compdate = substr(rest, 1, 10)
+				rest = substr(rest, 12)
+			}
+		} else {
+			if (match(rest, /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] /)) {
+				credate = substr(rest, 1, 10)
+				rest = substr(rest, 12)
+			}
+		}
+
+		desc = ""; projects = ""; tags = ""; due = ""; repeat = ""; prival = ""
+		n = split(rest, toks, " ")
+		for (i = 1; i <= n; i++) {
+			t = toks[i]
+			if (t == "") continue
+			if (substr(t, 1, 1) == "+" && length(t) > 1) {
+				projects = (projects == "" ? t : projects " " t)
+			} else if (substr(t, 1, 1) == "@" && length(t) > 1) {
+				tags = (tags == "" ? t : tags " " t)
+			} else if (substr(t, 1, 4) == "due:") {
+				due = substr(t, 5)
+			} else if (substr(t, 1, 7) == "repeat:") {
+				repeat = substr(t, 8)
+			} else if (substr(t, 1, 4) == "pri:") {
+				prival = substr(t, 5)
+			} else {
+				desc = (desc == "" ? t : desc " " t)
+			}
+		}
+
+		us = "\037"
+		print done us compdate us pri us credate us desc us projects us tags us due us repeat us prival
+	}')
+
+	IFS="$US" read -r P_DONE P_COMPLETION_DATE P_PRIORITY P_CREATION_DATE \
+		P_DESC P_PROJECTS P_TAGS P_DUE P_REPEAT P_PRI_EXT <<EOF
+$_pl_out
+EOF
+}
+
+# format_line
+# Reassembles the P_* globals (as set by parse_line, or populated directly)
+# into a single canonical todo.txt line. Always emits fields in the same
+# order, so output stays diff-stable regardless of input field order.
+format_line() {
+	_fl_out=""
+
+	if [ "$P_DONE" = "true" ]; then
+		_fl_out="x"
+		[ -n "$P_COMPLETION_DATE" ] && _fl_out="$_fl_out $P_COMPLETION_DATE"
+		[ -n "$P_CREATION_DATE" ] && _fl_out="$_fl_out $P_CREATION_DATE"
+	else
+		[ -n "$P_PRIORITY" ] && _fl_out="($P_PRIORITY)"
+		if [ -n "$P_CREATION_DATE" ]; then
+			_fl_out="${_fl_out:+$_fl_out }$P_CREATION_DATE"
+		fi
+	fi
+
+	[ -n "$P_DESC" ] && _fl_out="${_fl_out:+$_fl_out }$P_DESC"
+	[ -n "$P_PROJECTS" ] && _fl_out="${_fl_out:+$_fl_out }$P_PROJECTS"
+	[ -n "$P_DUE" ] && _fl_out="${_fl_out:+$_fl_out }due:$P_DUE"
+	[ -n "$P_TAGS" ] && _fl_out="${_fl_out:+$_fl_out }$P_TAGS"
+	[ -n "$P_REPEAT" ] && _fl_out="${_fl_out:+$_fl_out }repeat:$P_REPEAT"
+	if [ "$P_DONE" = "true" ] && [ -n "$P_PRI_EXT" ]; then
+		_fl_out="${_fl_out:+$_fl_out }pri:$P_PRI_EXT"
+	fi
+
+	printf '%s\n' "$_fl_out"
+}
+
+# resolve_id <id>
+# Validates that <id> is a positive integer within the current line count
+# of TODO_FILE. Task IDs are simply 1-indexed line numbers - they are NOT
+# stable across edits (a delete/archive above an id shifts everything
+# below it), matching the original todo.txt-cli convention.
+resolve_id() {
+	id="$1"
+	case "$id" in
+	'' | *[!0-9]*) die "invalid task id: $id" ;;
+	esac
+	total=$(awk 'END { print NR }' "$TODO_FILE")
+	[ "$id" -ge 1 ] && [ "$id" -le "$total" ] || die "no such task: $id"
+	printf '%s\n' "$id"
+}
+
+# line_at <id>
+# Prints the raw line at 1-indexed line number <id> in TODO_FILE.
+line_at() {
+	sed -n "$1"p "$TODO_FILE"
+}
+
+# ---------------------------------------------------------------------------
 # Usage
 # ---------------------------------------------------------------------------
 
