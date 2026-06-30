@@ -347,6 +347,17 @@ line_at() {
 	sed -n "$1"p "$TODO_FILE"
 }
 
+# replace_line_at <id> <new-line>
+# Atomically rewrites TODO_FILE with line number <id> replaced by
+# <new-line>, leaving every other line untouched.
+replace_line_at() {
+	_rla_id="$1"
+	_rla_new="$2"
+	awk -v id="$_rla_id" -v newline="$_rla_new" '
+	{ if (NR == id) print newline; else print $0 }
+	' "$TODO_FILE" | safe_write "$TODO_FILE"
+}
+
 # ---------------------------------------------------------------------------
 # Listing / views
 # ---------------------------------------------------------------------------
@@ -535,8 +546,71 @@ cmd_add() {
 	id=$(awk 'END { print NR }' "$TODO_FILE")
 	printf 'added %s: %s\n' "$id" "$new_line"
 }
-cmd_done() { die "not implemented: done"; }
-cmd_undo() { die "not implemented: undo"; }
+# cmd_done <id>
+# Marks a task done: priority (if any) moves to a trailing pri: extension,
+# and the completion date is stamped alongside the original creation date.
+# If the task carries repeat:daily|weekly|monthly|yearly, a new occurrence
+# is appended with the due date advanced by one interval from the
+# completed task's due date (today's date if it had none).
+cmd_done() {
+	[ "$#" -ge 1 ] || die 'usage: hw done <id>'
+	id=$(resolve_id "$1") || exit 1
+	raw=$(line_at "$id")
+	parse_line "$raw"
+	[ "$P_DONE" = "false" ] || die "task $id is already done"
+
+	orig_priority="$P_PRIORITY"
+	orig_due="$P_DUE"
+	orig_repeat="$P_REPEAT"
+
+	P_DONE=true
+	P_COMPLETION_DATE=$(today)
+	P_PRI_EXT="$orig_priority"
+	P_PRIORITY=""
+	completed_line=$(format_line)
+	replace_line_at "$id" "$completed_line"
+	printf 'completed %s: %s\n' "$id" "$completed_line"
+
+	next_due=""
+	case "$orig_repeat" in
+	daily) next_due=$(date_add_days "${orig_due:-$(today)}" 1) ;;
+	weekly) next_due=$(date_add_days "${orig_due:-$(today)}" 7) ;;
+	monthly) next_due=$(date_add_months "${orig_due:-$(today)}" 1) ;;
+	yearly) next_due=$(date_add_years "${orig_due:-$(today)}" 1) ;;
+	esac
+
+	if [ -n "$next_due" ]; then
+		P_DONE=false
+		P_COMPLETION_DATE=""
+		P_PRIORITY="$orig_priority"
+		P_PRI_EXT=""
+		P_CREATION_DATE=$(today)
+		P_DUE="$next_due"
+		next_line=$(format_line)
+		printf '%s\n' "$next_line" >>"$TODO_FILE"
+		next_id=$(awk 'END { print NR }' "$TODO_FILE")
+		printf 'added %s: %s\n' "$next_id" "$next_line"
+	fi
+}
+
+# cmd_undo <id>
+# Reverses cmd_done: restores the priority marker from pri: (if any) and
+# clears the completion date. Byte-identical to the pre-done line.
+cmd_undo() {
+	[ "$#" -ge 1 ] || die 'usage: hw undo <id>'
+	id=$(resolve_id "$1") || exit 1
+	raw=$(line_at "$id")
+	parse_line "$raw"
+	[ "$P_DONE" = "true" ] || die "task $id is not done"
+
+	P_DONE=false
+	P_PRIORITY="$P_PRI_EXT"
+	P_PRI_EXT=""
+	P_COMPLETION_DATE=""
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	printf 'undone %s: %s\n' "$id" "$new_line"
+}
 cmd_edit() { die "not implemented: edit"; }
 cmd_due() { die "not implemented: due"; }
 cmd_move() { die "not implemented: move"; }
