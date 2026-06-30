@@ -57,15 +57,16 @@ fi
 # fallthrough in detect_date_flavor lands on "busybox" when neither earlier
 # probe matches.
 
+REAL_DATE=$(command -v date)
 FAKE_DATE_DIR="$SANDBOX/fakebin"
 mkdir -p "$FAKE_DATE_DIR"
-cat >"$FAKE_DATE_DIR/date" <<'EOF'
+cat >"$FAKE_DATE_DIR/date" <<EOF
 #!/bin/sh
-case "$*" in
+case "\$*" in
 "-d 1 day "*) exit 1 ;;
 "-v+1d "*) exit 1 ;;
 esac
-exec /usr/bin/date "$@"
+exec "$REAL_DATE" "\$@"
 EOF
 chmod +x "$FAKE_DATE_DIR/date"
 
