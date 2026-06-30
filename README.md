@@ -1,8 +1,8 @@
 # headway
 
-> Organised thinking, in plain text.
+> **headway** *(n.)* forward movement or progress toward achieving a goal.
 
-A minimal CLI task manager that brings the calm, structured feel of [Things](https://culturedcode.com/things/) to the portability and openness of the [todo.txt](http://todotxt.org) format.
+A minimal CLI task manager built for exactly that: a calm, structured way to move tasks forward, with the portability of the [todo.txt](http://todotxt.org) format.
 
 Your tasks are a plain text file. Every tool you already love can read it. `headway` just makes it feel effortless.
 
@@ -33,10 +33,10 @@ Your tasks are a plain text file. Every tool you already love can read it. `head
 
 Most todo apps make a trade-off you shouldn't have to accept:
 
-- **GUI apps** (Things, Todoist) give you beautiful structure but lock your data in a proprietary silo.
-- **Plain-text tools** (todo.txt, taskwarrior) give you portability but ask you to think in flags and syntax.
+- **GUI apps** give you beautiful structure but lock your data in a proprietary silo.
+- **Plain-text tools** give you portability but ask you to think in flags and syntax.
 
-`headway` refuses the trade-off. It stores everything in a valid, portable `todo.txt` file — parseable by any editor, scriptable with `grep`, syncable with `git` — while giving you a CLI experience organised around the mental model that makes Things so satisfying: **Projects, a clean inbox, and dates that do the scheduling for you**.
+`headway` refuses the trade-off. It stores everything in a valid, portable `todo.txt` file — parseable by any editor, scriptable with `grep`, syncable with `git` — while giving you a CLI experience organised around a simple mental model: **Projects, a clean inbox, and dates that do the scheduling for you**.
 
 ---
 
@@ -108,6 +108,10 @@ Running `hw undo` restores the priority to its original `(A)` position.
 ```
 
 When you complete a recurring task, `headway` creates the next occurrence automatically, advancing the due date by the repeat interval.
+
+### Format compatibility
+
+`headway` only ever *adds* `key:value` extensions to a task line — it never removes or rewrites fields it doesn't recognise. A file written by a newer version of `headway` stays fully readable by an older version (unrecognised extensions are simply ignored), and by any other todo.txt tool. Your `todo.txt` is never at risk of being made unreadable by an upgrade.
 
 ---
 
@@ -385,6 +389,8 @@ For comparison, the original [todo.txt CLI](https://github.com/todotxt/todo.txt-
 
 ## Philosophy
 
+To make headway is to remove the friction between a task and progress on it — that's the whole job of this tool, and the principle behind everything else here.
+
 A few principles that guide every decision in `headway`:
 
 **Your data is yours.** The source of truth is always `~/todo.txt` — a file you can read, edit, `grep`, back up, or delete without asking anyone's permission.
@@ -394,6 +400,8 @@ A few principles that guide every decision in `headway`:
 **Due dates, not scheduling steps.** You shouldn't have to tell your task manager both *when* you want to think about something *and* when it's actually due. Give it a date. That's enough.
 
 **The terminal is the interface.** No Electron, no background daemon, no subscription. `headway` is a shell script that does one thing well.
+
+These principles overlap closely with [permacomputing](https://permacomputing.net/): frugality (POSIX `sh` only, no runtime to install or update), longevity over novelty (targeting `dash` and BusyBox `ash` — the long-lived floor, not the latest shell feature), plain-text and open formats (todo.txt, readable by any tool that will ever exist), offline-first operation (no network calls, nothing breaks when a server goes away), and self-reliance (one script, small enough for a single person to read, understand, and maintain indefinitely).
 
 ---
 
@@ -405,7 +413,6 @@ A few principles that guide every decision in `headway`:
 - [ ] `hw sync` with pluggable sync scripts
 - [ ] Shell completions (zsh, bash, fish)
 - [ ] `hw export` to JSON / Markdown / CSV
-- [ ] Optional fuzzy finder integration (`fzf`)
 - [ ] Man page
 
 ---
