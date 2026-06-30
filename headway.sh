@@ -400,7 +400,34 @@ EOF
 # Commands (stubs - implemented incrementally)
 # ---------------------------------------------------------------------------
 
-cmd_add() { die "not implemented: add"; }
+# cmd_add <text> [+Project] [due:DATE] [@tag] [repeat:FREQ]
+# Resolves any due: shorthand to a real YYYY-MM-DD before writing, sets
+# the creation date to today, and appends the new canonical line to
+# TODO_FILE. Project/tag/due/repeat tokens may appear anywhere in <text>;
+# everything else becomes the description.
+cmd_add() {
+	[ "$#" -ge 1 ] || die 'usage: hw add "text [+Project] [due:DATE] [@tag]"'
+	parse_line "$*"
+	P_DONE=false
+	P_PRIORITY=""
+	P_PRI_EXT=""
+	P_CREATION_DATE=$(today)
+	if [ -n "$P_DUE" ]; then
+		# explicit "|| exit 1" rather than relying on implicit set -e
+		# propagation: -e is silently disabled for an entire command
+		# (including nested command substitutions) whenever that
+		# command is itself the LHS of &&/||/if/while in an ancestor
+		# context, so callers further up the stack cannot be trusted
+		# to preserve it.
+		P_DUE=$(resolve_date_shorthand "$P_DUE") || exit 1
+	fi
+	[ -n "$P_DESC" ] || die "task description cannot be empty"
+
+	new_line=$(format_line)
+	printf '%s\n' "$new_line" >>"$TODO_FILE"
+	id=$(awk 'END { print NR }' "$TODO_FILE")
+	printf 'added %s: %s\n' "$id" "$new_line"
+}
 cmd_done() { die "not implemented: done"; }
 cmd_undo() { die "not implemented: undo"; }
 cmd_edit() { die "not implemented: edit"; }
