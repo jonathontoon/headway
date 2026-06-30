@@ -748,8 +748,32 @@ cmd_upcoming() { render_view "upcoming" "${1:-}"; }
 cmd_someday() { render_view "someday" "${1:-}"; }
 # cmd_logbook [+Project|@tag|"keyword"] - completed tasks, most recent first
 cmd_logbook() { render_view "logbook" "${1:-}"; }
-cmd_projects() { die "not implemented: projects"; }
-cmd_project() { die "not implemented: project"; }
+# cmd_projects
+# Lists the distinct +Project tokens carried by incomplete tasks, one per
+# line, sorted alphabetically.
+cmd_projects() {
+	[ -f "$TODO_FILE" ] || return 0
+	awk '
+	{
+		if (substr($0, 1, 2) == "x ") next
+		n = split($0, toks, " ")
+		for (i = 1; i <= n; i++) {
+			t = toks[i]
+			if (substr(t, 1, 1) == "+" && length(t) > 1) print t
+		}
+	}' "$TODO_FILE" | sort -u
+}
+
+# cmd_project +Project
+# Thin wrapper over the list view, filtered to a single project.
+cmd_project() {
+	[ "$#" -ge 1 ] || die 'usage: hw project +Project'
+	case "$1" in
+	+?*) ;;
+	*) die "invalid project: $1 (must start with +)" ;;
+	esac
+	render_view "list" "$1"
+}
 cmd_archive() { die "not implemented: archive"; }
 cmd_stats() { die "not implemented: stats"; }
 cmd_check() { die "not implemented: check"; }
