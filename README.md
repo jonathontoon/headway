@@ -161,6 +161,31 @@ echo 'alias hw="~/headway.sh"' >> ~/.zshrc
 
 ---
 
+## Uninstall
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew uninstall headway
+```
+
+### From source
+
+```bash
+make uninstall        # removes /usr/local/bin/hw
+```
+
+### Manual
+
+```bash
+rm headway.sh
+# then remove the alias line you added to ~/.zshrc
+```
+
+Uninstalling never touches your data — `~/todo.txt`, `~/done.txt`, and `~/.config/headway/config` are left in place. Delete them yourself if you want a clean slate.
+
+---
+
 ## Quick Start
 
 ```bash
