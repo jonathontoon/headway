@@ -8,6 +8,27 @@ Your tasks are a plain text file. Every tool you already love can read it. `head
 
 ---
 
+## Table of Contents
+
+- [Why headway?](#why-headway)
+- [Core Concepts](#core-concepts)
+- [The File Format](#the-file-format)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Views](#views)
+- [Command Reference](#command-reference)
+- [Configuration](#configuration)
+- [Uninstall](#uninstall)
+- [Syncing](#syncing)
+- [Interoperability](#interoperability)
+- [Architecture](#architecture)
+- [Philosophy](#philosophy)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
 ## Why headway?
 
 Most todo apps make a trade-off you shouldn't have to accept:
@@ -90,47 +111,6 @@ When you complete a recurring task, `headway` creates the next occurrence automa
 
 ---
 
-## Architecture
-
-A concise technical specification of how `headway` is built — useful if you're contributing, packaging it for a new platform, or curious why certain commands are implemented the way they are.
-
-### Implementation
-
-`headway` is written in **POSIX `sh`** — not Bash. It targets the strictest, most minimal shells in common use: `dash` (the default `/bin/sh` on Debian and Ubuntu) and BusyBox `ash` (the default on Alpine and most embedded Linux). It avoids every shell feature outside the POSIX specification — no arrays, no `[[ ]]`, no `local`, no `+=`, no here-strings, no C-style `for` loops. Because POSIX sh is a strict subset of Bash, zsh, and ksh, the same script runs unmodified on all of them. Targeting the floor gets the ceiling for free.
-
-### Dependencies
-
-Beyond the shell itself, `headway` calls only `grep`, `sed`, `awk`, `sort`, `date`, and `mktemp` — tools present by default on every UNIX-like system. There's no package manager, no language runtime, no build step, and no compiled binary. `headway.sh` is the entire program.
-
-### Portability hazards and how they're handled
-
-The shell is rarely where portability bugs come from; the *behaviour* of the standard tools it calls is. `headway` is written to avoid every known divergence between GNU, BSD, and BusyBox implementations of those tools.
-
-| Risk | Divergence | How `headway` avoids it |
-|---|---|---|
-| In-place editing | GNU `sed -i 's/x/y/' file` vs BSD `sed -i '' 's/x/y/' file` | `sed -i` is never used. Every mutation writes to a temp file via `mktemp`, then `mv`s it over the original. |
-| Date arithmetic | GNU `date -d "+1 day"` vs BSD `date -v+1d` | The installed `date` flavour is detected once at runtime and branched on; date math never assumes either form. |
-| `awk` features | GNU `awk` ships extensions (`gensub`, richer `printf`) that BusyBox `awk` doesn't implement | All `awk` usage stays within the POSIX-specified feature set, verified directly against BusyBox `awk`. |
-| Regex flavour | GNU `grep -P` (Perl regex) has no equivalent in BSD or BusyBox `grep` | Only POSIX basic/extended regular expressions (`grep -E`) are used — never `-P`. |
-
-### Tested against
-
-CI runs the test suite against `dash` and BusyBox `ash` in an Alpine container on every commit — the two strictest shells in common use. Passing there is the floor; Bash, zsh, and ksh are exercised as a correctness check, not the target.
-
-### Supported environments
-
-POSIX sh has no compilation step and no CPU instruction-set requirement, so there's no meaningful lower bound on hardware. `headway` runs anywhere `/bin/sh` exists: macOS, any Linux distribution regardless of libc (glibc or musl), the BSDs, Alpine and other minimal containers, and embedded systems like routers, NAS boxes, and any Raspberry Pi model on any OS bitness.
-
-For comparison, the original [todo.txt CLI](https://github.com/todotxt/todo.txt-cli) requires Bash 4+ and GNU `awk`/`sed`, and its own documentation directs Windows users to install Cygwin specifically to get a compatible shell. `headway` runs natively wherever a POSIX shell already exists — no compatibility layer required.
-
-### Non-goals for v0
-
-- **No native Windows support.** `cmd.exe` and PowerShell aren't POSIX shells; Windows users run `headway` via WSL, Git Bash, or Cygwin, same as any other POSIX sh tool.
-- **No daemon, background process, or hidden state.** The only persistent state is the todo.txt file itself.
-- **No plugin system.** Extensibility, if it comes, will look like todo.txt-cli's add-on model — separate executable scripts — rather than an internal API.
-
----
-
 ## Installation
 
 ### Homebrew (macOS / Linux)
@@ -144,7 +124,7 @@ brew install headway
 Requires a POSIX `sh` and the standard tools listed in [Architecture](#architecture) — already present on virtually every system.
 
 ```bash
-git clone https://github.com/yourname/headway.git
+git clone https://github.com/jonathontoon/headway.git
 cd headway
 make install          # installs to /usr/local/bin/hw
 ```
@@ -154,35 +134,10 @@ make install          # installs to /usr/local/bin/hw
 Download `headway.sh`, make it executable, and alias it:
 
 ```bash
-curl -O https://raw.githubusercontent.com/yourname/headway/main/headway.sh
+curl -O https://raw.githubusercontent.com/jonathontoon/headway/main/headway.sh
 chmod +x headway.sh
 echo 'alias hw="~/headway.sh"' >> ~/.zshrc
 ```
-
----
-
-## Uninstall
-
-### Homebrew (macOS / Linux)
-
-```bash
-brew uninstall headway
-```
-
-### From source
-
-```bash
-make uninstall        # removes /usr/local/bin/hw
-```
-
-### Manual
-
-```bash
-rm headway.sh
-# then remove the alias line you added to ~/.zshrc
-```
-
-Uninstalling never touches your data — `~/todo.txt`, `~/done.txt`, and `~/.config/headway/config` are left in place. Delete them yourself if you want a clean slate.
 
 ---
 
@@ -235,6 +190,19 @@ hw someday +HomeReno     # parked tasks in a project
 ---
 
 ## Command Reference
+
+### Views
+
+```bash
+hw inbox              # tasks with no project assigned
+hw today              # due today, plus anything overdue
+hw upcoming           # future-dated tasks, in chronological order
+hw someday            # tasks with no due date
+hw logbook            # completed tasks, most recent first
+
+hw today +LaunchBlog  # any view, filtered by project
+hw upcoming @waiting  # any view, filtered by tag
+```
 
 ### Adding tasks
 
@@ -314,6 +282,31 @@ Environment variables override config file values.
 
 ---
 
+## Uninstall
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew uninstall headway
+```
+
+### From source
+
+```bash
+make uninstall        # removes /usr/local/bin/hw
+```
+
+### Manual
+
+```bash
+rm headway.sh
+# then remove the alias line you added to ~/.zshrc
+```
+
+Uninstalling never touches your data — `~/todo.txt`, `~/done.txt`, and `~/.config/headway/config` are left in place. Delete them yourself if you want a clean slate.
+
+---
+
 ## Syncing
 
 Because your data is a plain text file, syncing is whatever you want it to be.
@@ -349,6 +342,47 @@ The `repeat:` extension is ignored gracefully by tools that don't understand it.
 
 ---
 
+## Architecture
+
+A concise technical specification of how `headway` is built — useful if you're contributing, packaging it for a new platform, or curious why certain commands are implemented the way they are.
+
+### Implementation
+
+`headway` is written in **POSIX `sh`** — not Bash. It targets the strictest, most minimal shells in common use: `dash` (the default `/bin/sh` on Debian and Ubuntu) and BusyBox `ash` (the default on Alpine and most embedded Linux). It avoids every shell feature outside the POSIX specification — no arrays, no `[[ ]]`, no `local`, no `+=`, no here-strings, no C-style `for` loops. Because POSIX sh is a strict subset of Bash, zsh, and ksh, the same script runs unmodified on all of them. Targeting the floor gets the ceiling for free.
+
+### Dependencies
+
+Beyond the shell itself, `headway` calls only `grep`, `sed`, `awk`, `sort`, `date`, and `mktemp` — tools present by default on every UNIX-like system. There's no package manager, no language runtime, no build step, and no compiled binary. `headway.sh` is the entire program.
+
+### Portability hazards and how they're handled
+
+The shell is rarely where portability bugs come from; the *behaviour* of the standard tools it calls is. `headway` is written to avoid every known divergence between GNU, BSD, and BusyBox implementations of those tools.
+
+| Risk | Divergence | How `headway` avoids it |
+|---|---|---|
+| In-place editing | GNU `sed -i 's/x/y/' file` vs BSD `sed -i '' 's/x/y/' file` | `sed -i` is never used. Every mutation writes to a temp file via `mktemp`, then `mv`s it over the original. |
+| Date arithmetic | GNU `date -d "+1 day"` vs BSD `date -v+1d` | The installed `date` flavour is detected once at runtime and branched on; date math never assumes either form. |
+| `awk` features | GNU `awk` ships extensions (`gensub`, richer `printf`) that BusyBox `awk` doesn't implement | All `awk` usage stays within the POSIX-specified feature set, verified directly against BusyBox `awk`. |
+| Regex flavour | GNU `grep -P` (Perl regex) has no equivalent in BSD or BusyBox `grep` | Only POSIX basic/extended regular expressions (`grep -E`) are used — never `-P`. |
+
+### Tested against
+
+CI runs the test suite against `dash` and BusyBox `ash` in an Alpine container on every commit — the two strictest shells in common use. Passing there is the floor; Bash, zsh, and ksh are exercised as a correctness check, not the target.
+
+### Supported environments
+
+POSIX sh has no compilation step and no CPU instruction-set requirement, so there's no meaningful lower bound on hardware. `headway` runs anywhere `/bin/sh` exists: macOS, any Linux distribution regardless of libc (glibc or musl), the BSDs, Alpine and other minimal containers, and embedded systems like routers, NAS boxes, and any Raspberry Pi model on any OS bitness.
+
+For comparison, the original [todo.txt CLI](https://github.com/todotxt/todo.txt-cli) requires Bash 4+ and GNU `awk`/`sed`, and its own documentation directs Windows users to install Cygwin specifically to get a compatible shell. `headway` runs natively wherever a POSIX shell already exists — no compatibility layer required.
+
+### Non-goals for v0
+
+- **No native Windows support.** `cmd.exe` and PowerShell aren't POSIX shells; Windows users run `headway` via WSL, Git Bash, or Cygwin, same as any other POSIX sh tool.
+- **No daemon, background process, or hidden state.** The only persistent state is the todo.txt file itself.
+- **No plugin system.** Extensibility, if it comes, will look like todo.txt-cli's add-on model — separate executable scripts — rather than an internal API.
+
+---
+
 ## Philosophy
 
 A few principles that guide every decision in `headway`:
@@ -381,7 +415,7 @@ A few principles that guide every decision in `headway`:
 `headway` is a single shell script. Read it — it's meant to be readable.
 
 ```bash
-git clone https://github.com/yourname/headway.git
+git clone https://github.com/jonathontoon/headway.git
 cd headway
 ./headway.sh add "Fix the thing"   # run locally
 make test                          # run the test suite
