@@ -254,10 +254,28 @@ COLOR=auto                   # auto: colour only when outputting to a terminal
 DATE_FORMAT=%Y-%m-%d         # ISO 8601 — unambiguous and sorts correctly
 SHOW_IDS=true                # show task numbers in all views
 
+# Theme (raw ANSI SGR codes; only applied when COLOR is active)
+THEME_PRIORITY=1;33           # (A) priority marker             — default: bold yellow
+THEME_PROJECT=36              # +Project tokens                 — default: cyan
+THEME_TAG=35                  # @tag tokens                     — default: magenta
+THEME_DUE=1;31                # due:DATE                        — default: bold red
+THEME_DATE=2                  # creation/completion dates       — default: dim
+THEME_DESC=                   # task description                — default: unstyled
+THEME_REPEAT=34               # repeat:INTERVAL                 — default: blue
+THEME_DONE=2                  # whole line, once done           — default: dim
+
 # Behaviour
 AUTO_ARCHIVE=false           # if true, headway done moves tasks to done.txt immediately
 CONFIRM_DELETE=true          # prompt before headway rm — recommended
 ```
+
+Theme values are raw SGR parameter codes — the part between `\033[` and
+`m` — so codes can be combined with `;` (e.g. `1;33` is bold + yellow).
+Leaving a `THEME_*` var unset uses the built-in default shown above;
+setting one to an empty string (`THEME_DESC=`) disables styling for just
+that field, without needing `COLOR=false` globally. Colorization is
+display-only — it never touches what's written to `todo.txt`/`done.txt`,
+so switching colors around never touches your task data.
 
 Environment variables override config file values.
 

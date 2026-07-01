@@ -22,6 +22,17 @@ SHOW_IDS_DEFAULT="true"
 AUTO_ARCHIVE_DEFAULT="false"
 CONFIRM_DELETE_DEFAULT="true"
 
+# Theme: bare SGR parameter codes (no \033[ / m wrapper) applied when
+# COLOR is active. THEME_DESC is intentionally empty (unstyled).
+THEME_PRIORITY_DEFAULT="1;33"
+THEME_PROJECT_DEFAULT="36"
+THEME_TAG_DEFAULT="35"
+THEME_DUE_DEFAULT="1;31"
+THEME_DATE_DEFAULT="2"
+THEME_DESC_DEFAULT=""
+THEME_REPEAT_DEFAULT="34"
+THEME_DONE_DEFAULT="2"
+
 # ---------------------------------------------------------------------------
 # Generic helpers
 # ---------------------------------------------------------------------------
@@ -57,10 +68,22 @@ expand_tilde() {
 # Returns success (0) if colored output should be used, based on the
 # COLOR config value ("auto"/"true"/"false") and whether stdout is a tty.
 use_color() {
-	case "$COLOR" in
+	case "${COLOR:-auto}" in
 	true) return 0 ;;
 	false) return 1 ;;
 	*) [ -t 1 ] ;;
+	esac
+}
+
+# use_color_err
+# Same as use_color(), but for output written to stderr (fd 2) - stdout
+# and stderr can be redirected independently, so each needs its own tty
+# check when COLOR=auto.
+use_color_err() {
+	case "${COLOR:-auto}" in
+	true) return 0 ;;
+	false) return 1 ;;
+	*) [ -t 2 ] ;;
 	esac
 }
 
@@ -259,6 +282,22 @@ load_config() {
 	_lc_env_arch=${AUTO_ARCHIVE-}
 	_lc_had_conf=${CONFIRM_DELETE+x}
 	_lc_env_conf=${CONFIRM_DELETE-}
+	_lc_had_tpri=${THEME_PRIORITY+x}
+	_lc_env_tpri=${THEME_PRIORITY-}
+	_lc_had_tproj=${THEME_PROJECT+x}
+	_lc_env_tproj=${THEME_PROJECT-}
+	_lc_had_ttag=${THEME_TAG+x}
+	_lc_env_ttag=${THEME_TAG-}
+	_lc_had_tdue=${THEME_DUE+x}
+	_lc_env_tdue=${THEME_DUE-}
+	_lc_had_tdate=${THEME_DATE+x}
+	_lc_env_tdate=${THEME_DATE-}
+	_lc_had_tdesc=${THEME_DESC+x}
+	_lc_env_tdesc=${THEME_DESC-}
+	_lc_had_trep=${THEME_REPEAT+x}
+	_lc_env_trep=${THEME_REPEAT-}
+	_lc_had_tdone=${THEME_DONE+x}
+	_lc_env_tdone=${THEME_DONE-}
 
 	if [ -f "$config_path" ]; then
 		# shellcheck disable=SC1090
@@ -273,6 +312,14 @@ load_config() {
 	if [ -n "$_lc_had_ids" ]; then SHOW_IDS="$_lc_env_ids"; fi
 	if [ -n "$_lc_had_arch" ]; then AUTO_ARCHIVE="$_lc_env_arch"; fi
 	if [ -n "$_lc_had_conf" ]; then CONFIRM_DELETE="$_lc_env_conf"; fi
+	if [ -n "$_lc_had_tpri" ]; then THEME_PRIORITY="$_lc_env_tpri"; fi
+	if [ -n "$_lc_had_tproj" ]; then THEME_PROJECT="$_lc_env_tproj"; fi
+	if [ -n "$_lc_had_ttag" ]; then THEME_TAG="$_lc_env_ttag"; fi
+	if [ -n "$_lc_had_tdue" ]; then THEME_DUE="$_lc_env_tdue"; fi
+	if [ -n "$_lc_had_tdate" ]; then THEME_DATE="$_lc_env_tdate"; fi
+	if [ -n "$_lc_had_tdesc" ]; then THEME_DESC="$_lc_env_tdesc"; fi
+	if [ -n "$_lc_had_trep" ]; then THEME_REPEAT="$_lc_env_trep"; fi
+	if [ -n "$_lc_had_tdone" ]; then THEME_DONE="$_lc_env_tdone"; fi
 
 	: "${TODO_FILE:=$TODO_FILE_DEFAULT}"
 	: "${DONE_FILE:=$DONE_FILE_DEFAULT}"
@@ -282,6 +329,16 @@ load_config() {
 	: "${SHOW_IDS:=$SHOW_IDS_DEFAULT}"
 	: "${AUTO_ARCHIVE:=$AUTO_ARCHIVE_DEFAULT}"
 	: "${CONFIRM_DELETE:=$CONFIRM_DELETE_DEFAULT}"
+	# THEME_DESC's default is intentionally empty ("" = unstyled) - this
+	# still fills it in when unset, it just has nothing visible to set.
+	: "${THEME_PRIORITY:=$THEME_PRIORITY_DEFAULT}"
+	: "${THEME_PROJECT:=$THEME_PROJECT_DEFAULT}"
+	: "${THEME_TAG:=$THEME_TAG_DEFAULT}"
+	: "${THEME_DUE:=$THEME_DUE_DEFAULT}"
+	: "${THEME_DATE:=$THEME_DATE_DEFAULT}"
+	: "${THEME_DESC:=$THEME_DESC_DEFAULT}"
+	: "${THEME_REPEAT:=$THEME_REPEAT_DEFAULT}"
+	: "${THEME_DONE:=$THEME_DONE_DEFAULT}"
 
 	TODO_FILE=$(expand_tilde "$TODO_FILE")
 	DONE_FILE=$(expand_tilde "$DONE_FILE")
@@ -401,6 +458,70 @@ format_line() {
 	fi
 
 	printf '%s\n' "$_fl_out"
+}
+
+# sgr_wrap <sgr-code> <text>
+# Wraps <text> in the given ANSI SGR escape (and a reset), or prints it
+# unwrapped if <sgr-code> is empty (e.g. THEME_DESC's default).
+sgr_wrap() {
+	_sw_code="$1"
+	_sw_text="$2"
+	if [ -n "$_sw_code" ]; then
+		printf '\033[%sm%s\033[0m' "$_sw_code" "$_sw_text"
+	else
+		printf '%s' "$_sw_text"
+	fi
+}
+
+# colorize_line <raw-line>
+# Returns a display-only colorized rendering of a todo.txt line, built
+# from the same P_* fields parse_line/format_line use. Never writes
+# anything to disk - callers gate this behind use_color()/use_color_err()
+# and only use the result for what's printed to the terminal. Completed
+# tasks are dimmed as a whole (matching the todo.txt convention of
+# receding done items as a group) rather than colored field-by-field.
+colorize_line() {
+	parse_line "$1"
+
+	if [ "$P_DONE" = "true" ]; then
+		_cl_plain=$(format_line)
+		sgr_wrap "$THEME_DONE" "$_cl_plain"
+		printf '\n'
+		return 0
+	fi
+
+	_cl_out=""
+	[ -n "$P_PRIORITY" ] && _cl_out="$(sgr_wrap "$THEME_PRIORITY" "($P_PRIORITY)")"
+	if [ -n "$P_CREATION_DATE" ]; then
+		_cl_out="${_cl_out:+$_cl_out }$(sgr_wrap "$THEME_DATE" "$P_CREATION_DATE")"
+	fi
+	[ -n "$P_DESC" ] && _cl_out="${_cl_out:+$_cl_out }$(sgr_wrap "$THEME_DESC" "$P_DESC")"
+
+	if [ -n "$P_PROJECTS" ]; then
+		_cl_projects=""
+		for tok in $P_PROJECTS; do
+			_cl_projects="${_cl_projects:+$_cl_projects }$(sgr_wrap "$THEME_PROJECT" "$tok")"
+		done
+		_cl_out="${_cl_out:+$_cl_out }$_cl_projects"
+	fi
+
+	if [ -n "$P_DUE" ]; then
+		_cl_out="${_cl_out:+$_cl_out }$(sgr_wrap "$THEME_DUE" "due:$P_DUE")"
+	fi
+
+	if [ -n "$P_TAGS" ]; then
+		_cl_tags=""
+		for tok in $P_TAGS; do
+			_cl_tags="${_cl_tags:+$_cl_tags }$(sgr_wrap "$THEME_TAG" "$tok")"
+		done
+		_cl_out="${_cl_out:+$_cl_out }$_cl_tags"
+	fi
+
+	if [ -n "$P_REPEAT" ]; then
+		_cl_out="${_cl_out:+$_cl_out }$(sgr_wrap "$THEME_REPEAT" "repeat:$P_REPEAT")"
+	fi
+
+	printf '%s\n' "$_cl_out"
 }
 
 # resolve_id <id>
@@ -537,7 +658,13 @@ render_view() {
 	*) _rv_sorted=$(printf '%s\n' "$_rv_rows" | sort -t "$_rv_tab" -k1,1) ;;
 	esac
 
+	_rv_use_color=false
+	use_color && _rv_use_color=true
+
 	printf '%s\n' "$_rv_sorted" | while IFS="$_rv_tab" read -r _ _rv_id _rv_line; do
+		if [ "$_rv_use_color" = "true" ]; then
+			_rv_line=$(colorize_line "$_rv_line")
+		fi
 		printf '%s: %s\n' "$_rv_id" "$_rv_line"
 	done
 }
@@ -625,7 +752,9 @@ cmd_add() {
 	new_line=$(format_line)
 	printf '%s\n' "$new_line" >>"$TODO_FILE"
 	id=$(awk 'END { print NR }' "$TODO_FILE")
-	printf 'added %s: %s\n' "$id" "$new_line"
+	_display_line="$new_line"
+	use_color && _display_line=$(colorize_line "$new_line")
+	printf 'added %s: %s\n' "$id" "$_display_line"
 }
 # cmd_done <id>
 # Marks a task done: priority (if any) moves to a trailing pri: extension,
@@ -650,7 +779,9 @@ cmd_done() {
 	P_PRIORITY=""
 	completed_line=$(format_line)
 	replace_line_at "$id" "$completed_line"
-	printf 'completed %s: %s\n' "$id" "$completed_line"
+	_display_line="$completed_line"
+	use_color && _display_line=$(colorize_line "$completed_line")
+	printf 'completed %s: %s\n' "$id" "$_display_line"
 
 	next_due=""
 	case "$orig_repeat" in
@@ -670,7 +801,9 @@ cmd_done() {
 		next_line=$(format_line)
 		printf '%s\n' "$next_line" >>"$TODO_FILE"
 		next_id=$(awk 'END { print NR }' "$TODO_FILE")
-		printf 'added %s: %s\n' "$next_id" "$next_line"
+		_display_line="$next_line"
+		use_color && _display_line=$(colorize_line "$next_line")
+		printf 'added %s: %s\n' "$next_id" "$_display_line"
 	fi
 }
 
@@ -690,7 +823,9 @@ cmd_undo() {
 	P_COMPLETION_DATE=""
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	printf 'undone %s: %s\n' "$id" "$new_line"
+	_display_line="$new_line"
+	use_color && _display_line=$(colorize_line "$new_line")
+	printf 'undone %s: %s\n' "$id" "$_display_line"
 }
 # cmd_edit <id>
 # Opens the task's raw line in $EDITOR via a scratch tempfile, then writes
@@ -710,7 +845,9 @@ cmd_edit() {
 	rm -f "$tmp"
 	[ -n "$new" ] || die "empty edit aborted, task $id unchanged"
 	replace_line_at "$id" "$new"
-	printf 'edited %s: %s\n' "$id" "$new"
+	_display_line="$new"
+	use_color && _display_line=$(colorize_line "$new")
+	printf 'edited %s: %s\n' "$id" "$_display_line"
 }
 
 # cmd_due <id> <DATE>
@@ -723,7 +860,9 @@ cmd_due() {
 	P_DUE="$new_due"
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	printf 'due %s: %s\n' "$id" "$new_line"
+	_display_line="$new_line"
+	use_color && _display_line=$(colorize_line "$new_line")
+	printf 'due %s: %s\n' "$id" "$_display_line"
 }
 
 # cmd_move <id> +Project
@@ -741,7 +880,9 @@ cmd_move() {
 	P_PROJECTS="$project"
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	printf 'moved %s: %s\n' "$id" "$new_line"
+	_display_line="$new_line"
+	use_color && _display_line=$(colorize_line "$new_line")
+	printf 'moved %s: %s\n' "$id" "$_display_line"
 }
 
 # cmd_priority <id> <A-Z|none>
@@ -764,7 +905,9 @@ cmd_priority() {
 	fi
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	printf 'priority %s: %s\n' "$id" "$new_line"
+	_display_line="$new_line"
+	use_color && _display_line=$(colorize_line "$new_line")
+	printf 'priority %s: %s\n' "$id" "$_display_line"
 }
 
 # cmd_tag <id> @tag
@@ -789,7 +932,9 @@ cmd_tag() {
 	P_TAGS="${P_TAGS:+$P_TAGS }$tagval"
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	printf 'tagged %s: %s\n' "$id" "$new_line"
+	_display_line="$new_line"
+	use_color && _display_line=$(colorize_line "$new_line")
+	printf 'tagged %s: %s\n' "$id" "$_display_line"
 }
 
 # cmd_rm <id>
@@ -802,7 +947,9 @@ cmd_rm() {
 	raw=$(line_at "$id")
 
 	if [ "$CONFIRM_DELETE" = "true" ]; then
-		printf 'remove task %s: %s\nAre you sure? [y/N] ' "$id" "$raw" >&2
+		_prompt_line="$raw"
+		use_color_err && _prompt_line=$(colorize_line "$raw")
+		printf 'remove task %s: %s\nAre you sure? [y/N] ' "$id" "$_prompt_line" >&2
 		reply=""
 		read -r reply || reply=""
 		case "$reply" in
@@ -815,7 +962,9 @@ cmd_rm() {
 	fi
 
 	awk -v id="$id" 'NR != id' "$TODO_FILE" | safe_write "$TODO_FILE"
-	printf 'removed %s: %s\n' "$id" "$raw"
+	_display_line="$raw"
+	use_color && _display_line=$(colorize_line "$raw")
+	printf 'removed %s: %s\n' "$id" "$_display_line"
 }
 # cmd_list [+Project|@tag|"keyword"]
 cmd_list() { render_view "list" "${1:-}"; }
@@ -1067,6 +1216,64 @@ shell_summary() {
 	fi
 }
 
+# tokenize_line <line>
+# Splits <line> into $US-joined words the way a shell command line would
+# be split - but WITHOUT evaluating it as shell code. Single/double quotes
+# group words and are stripped; their contents are copied verbatim. $VAR,
+# `cmd`, $(cmd), and globs are never expanded - a todo-item REPL has no
+# legitimate use for shell expansion, so not expanding it is the fix, not
+# a limitation. Prints the joined tokens and returns 0, or prints nothing
+# and returns 1 if a quote is left unterminated. Walks the string one
+# character at a time via parameter expansion (no per-character fork).
+tokenize_line() {
+	_tl_rest="$1"
+	_tl_tab=$(printf '\t')
+	_tl_tokens=""
+	_tl_cur=""
+	_tl_in_tok=false
+	_tl_quote=""
+
+	while [ -n "$_tl_rest" ]; do
+		_tl_c="${_tl_rest%"${_tl_rest#?}"}"
+		_tl_rest="${_tl_rest#?}"
+
+		if [ -n "$_tl_quote" ]; then
+			if [ "$_tl_c" = "$_tl_quote" ]; then
+				_tl_quote=""
+			else
+				_tl_cur="$_tl_cur$_tl_c"
+			fi
+			continue
+		fi
+
+		case "$_tl_c" in
+		"'" | '"')
+			_tl_quote="$_tl_c"
+			_tl_in_tok=true
+			;;
+		" " | "$_tl_tab")
+			if [ "$_tl_in_tok" = "true" ]; then
+				_tl_tokens="${_tl_tokens:+$_tl_tokens$US}$_tl_cur"
+				_tl_cur=""
+				_tl_in_tok=false
+			fi
+			;;
+		*)
+			_tl_cur="$_tl_cur$_tl_c"
+			_tl_in_tok=true
+			;;
+		esac
+	done
+
+	[ -z "$_tl_quote" ] || return 1
+
+	if [ "$_tl_in_tok" = "true" ]; then
+		_tl_tokens="${_tl_tokens:+$_tl_tokens$US}$_tl_cur"
+	fi
+
+	printf '%s' "$_tl_tokens"
+}
+
 # cmd_shell
 # Starts an interactive session: repeatedly prompts for a line, splits it
 # into arguments the same way a shell command line would be, and runs it
@@ -1093,15 +1300,20 @@ cmd_shell() {
 		'') continue ;;
 		esac
 
-		# Re-tokenize the line the way a real shell would split a command
-		# line, so quoted multi-word text (e.g. add "buy milk" +Errands)
-		# survives. Input is always the interactive operator at the
-		# controlling terminal (or a trusted local pipe in tests), never
-		# untrusted remote data.
-		if ! eval "set -- $line" 2>/dev/null; then
-			err "parse error: $line"
+		# Tokenize the line so quoted multi-word text (e.g. add "buy
+		# milk" +Errands) survives, without evaluating it as shell code -
+		# see tokenize_line's comment for why that distinction matters.
+		if ! _sh_tokens=$(tokenize_line "$line"); then
+			err "unterminated quote: $line"
 			continue
 		fi
+
+		_sh_old_ifs="$IFS"
+		IFS="$US"
+		set -f
+		set -- $_sh_tokens
+		set +f
+		IFS="$_sh_old_ifs"
 
 		[ "$#" -eq 0 ] && continue
 
@@ -1115,10 +1327,19 @@ cmd_shell() {
 
 		# Run each command in a subshell: a failing command calls die(),
 		# which does `exit 1` - in a subshell that only ends the subshell,
-		# not the whole interactive session.
-		if ! (dispatch_cmd "$@"); then
-			:
-		fi
+		# not the whole interactive session. The subshell must be run as a
+		# plain, untested statement (not the operand of `!`/`if`/`&&`): in
+		# dash and bash, errexit is ignored for the *entire* execution of a
+		# command in one of those tested positions, including everything
+		# that runs inside a subshell there - so a failing command partway
+		# through dispatch_cmd would silently be skipped over instead of
+		# stopping it, even with an explicit `set -eu` inside the parens.
+		# Toggling the outer `-e` off just for this one statement is what
+		# lets the subshell's own `set -eu` behave normally internally
+		# while still letting the REPL loop survive its overall failure.
+		set +e
+		(set -eu; dispatch_cmd "$@")
+		set -e
 	done
 }
 
