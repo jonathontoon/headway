@@ -1032,6 +1032,10 @@ dispatch_cmd() {
 # cross-session history (see README). `exit`/`quit` ends the session; EOF
 # (Ctrl-D) does the same.
 cmd_shell() {
+	if [ -t 0 ]; then
+		printf 'headway %s - type "help" for commands, "exit" to leave.\n' "$HEADWAY_VERSION" >&2
+	fi
+
 	while :; do
 		if [ -t 0 ]; then
 			printf 'headway $ ' >&2
