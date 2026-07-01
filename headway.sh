@@ -574,6 +574,9 @@ Maintenance:
   archive                                   move completed tasks to DONE_FILE
   stats                                     summary counts
   check                                     verify TODO_FILE is well-formed
+
+Interactive:
+  shell                                     start an interactive session
 EOF
 }
 
@@ -984,19 +987,13 @@ cmd_check() {
 # Dispatch
 # ---------------------------------------------------------------------------
 
-main() {
+# dispatch_cmd <command> [arguments...]
+# The single source of truth for mapping a command name to its cmd_*
+# function. Shared by main() (one-shot invocation) and cmd_shell() (the
+# interactive loop) so the two never drift out of sync.
+dispatch_cmd() {
 	cmd="${1:-}"
 	[ "$#" -gt 0 ] && shift
-
-	case "$cmd" in
-	"" | -h | --help | help)
-		usage
-		return 0
-		;;
-	esac
-
-	load_config
-	detect_date_flavor
 
 	case "$cmd" in
 	add | a) cmd_add "$@" ;;
@@ -1019,12 +1016,80 @@ main() {
 	archive) cmd_archive "$@" ;;
 	stats) cmd_stats "$@" ;;
 	check) cmd_check "$@" ;;
+	shell | repl) cmd_shell ;;
 	*)
 		err "unknown command: $cmd"
 		usage
 		return 1
 		;;
 	esac
+}
+
+# cmd_shell
+# Starts an interactive session: repeatedly prompts for a line, splits it
+# into arguments the same way a shell command line would be, and runs it
+# through dispatch_cmd. Runs under plain POSIX `read` - no readline, no
+# cross-session history (see README). `exit`/`quit` ends the session; EOF
+# (Ctrl-D) does the same.
+cmd_shell() {
+	while :; do
+		if [ -t 0 ]; then
+			printf 'hw> ' >&2
+		fi
+
+		if ! IFS= read -r line; then
+			[ -t 0 ] && printf '\n' >&2
+			break
+		fi
+
+		case "$line" in
+		'') continue ;;
+		esac
+
+		# Re-tokenize the line the way a real shell would split a command
+		# line, so quoted multi-word text (e.g. add "buy milk" +Errands)
+		# survives. Input is always the interactive operator at the
+		# controlling terminal (or a trusted local pipe in tests), never
+		# untrusted remote data.
+		if ! eval "set -- $line" 2>/dev/null; then
+			err "parse error: $line"
+			continue
+		fi
+
+		[ "$#" -eq 0 ] && continue
+
+		case "$1" in
+		exit | quit) break ;;
+		help | '?')
+			usage
+			continue
+			;;
+		esac
+
+		# Run each command in a subshell: a failing command calls die(),
+		# which does `exit 1` - in a subshell that only ends the subshell,
+		# not the whole interactive session.
+		if ! (dispatch_cmd "$@"); then
+			:
+		fi
+	done
+}
+
+main() {
+	cmd="${1:-}"
+	[ "$#" -gt 0 ] && shift
+
+	case "$cmd" in
+	"" | -h | --help | help)
+		usage
+		return 0
+		;;
+	esac
+
+	load_config
+	detect_date_flavor
+
+	dispatch_cmd "$cmd" "$@"
 }
 
 # Allow this script to be sourced as a library (e.g. by tests that want to

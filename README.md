@@ -198,6 +198,29 @@ hw stats               # summary: counts by view and project
 hw check               # verify todo.txt is well-formed
 ```
 
+### Interactive
+
+```bash
+hw shell               # start an interactive session
+```
+
+Runs a REPL: prompts for a command, runs it, and repeats until you type
+`exit`/`quit` or send EOF (Ctrl-D). Each line is split the same way a shell
+command line is, so quoting works as expected:
+
+```
+$ hw shell
+hw> add "Write project brief +Apollo due:2026-07-10"
+added 4: 2026-07-01 Write project brief +Apollo due:2026-07-10
+hw> list +Apollo
+4: 2026-07-01 Write project brief +Apollo due:2026-07-10
+hw> exit
+```
+
+`hw shell` stays pure POSIX `sh`, so there's no readline-style line editing
+or history across sessions - only what your terminal gives you for free. If
+you want that, wrap it with a tool like `rlwrap`: `rlwrap hw shell`.
+
 ---
 
 ## Configuration
