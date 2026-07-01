@@ -719,7 +719,7 @@ Maintenance:
   check                                     verify TODO_FILE is well-formed
 
 Interactive:
-  shell                                     start an interactive session
+  shell                                     start an interactive session (default when no command is given)
 EOF
 }
 
@@ -1191,7 +1191,7 @@ dispatch_cmd() {
 	archive) cmd_archive "$@" ;;
 	stats) cmd_stats "$@" ;;
 	check) cmd_check "$@" ;;
-	shell | repl) cmd_shell ;;
+	"" | shell | repl) cmd_shell ;;
 	*)
 		err "unknown command: $cmd"
 		usage
@@ -1711,7 +1711,7 @@ main() {
 	[ "$#" -gt 0 ] && shift
 
 	case "$cmd" in
-	"" | -h | --help | help)
+	-h | --help | help)
 		usage
 		return 0
 		;;

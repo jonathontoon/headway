@@ -112,10 +112,11 @@ echo 'alias hw="~/headway.sh"' >> ~/.zshrc
 
 ## Quick Start
 
-Run `headway shell` and you're in a session — type commands, no prefix needed:
+Run `headway` (or `hw`) with no arguments and you're in a session — type
+commands, no prefix needed:
 
 ```
-$ headway shell
+$ headway
 Good morning! headway 0.1.0 - type "help" for commands, "exit" to leave.
 No open tasks - you are all caught up.
 headway $ add "Book flights to Lisbon"
@@ -144,7 +145,8 @@ alias). See [Command Reference](#command-reference) for both forms.
 ### Interactive
 
 ```bash
-headway shell           # start an interactive session
+headway                 # start an interactive session (the default)
+headway shell           # same thing, spelled out explicitly
 ```
 
 Runs a REPL: prompts for a command, runs it, and repeats until you type

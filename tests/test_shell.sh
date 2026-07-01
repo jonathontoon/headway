@@ -155,5 +155,29 @@ out=$(printf 'add "Book flights"\nedit 1 2026-06-30 Book flights @Travel +Holida
 assert_match "edited 1: 2026-06-30 Book flights @Travel \+Holiday" "$out" "shell: edit with inline text replaces the line"
 assert_match "1: 2026-06-30 Book flights @Travel \+Holiday" "$out" "shell: list reflects the inline edit"
 
+# --- `main` with no arguments drops straight into the shell ------------------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+load_config
+detect_date_flavor
+
+out=$(printf 'add "Buy milk +Errands due:2026-07-10"\nlist\nexit\n' | main)
+code=$?
+assert_exit_code "0" "$code" "main: no-args exit code 0 after 'exit'"
+assert_match "added 1: .*Buy milk \+Errands due:2026-07-10" "$out" "main: no-args add ran inside the session"
+assert_match "1: .*Buy milk \+Errands" "$out" "main: no-args list ran in the same session"
+
+# --- `main -h` / `--help` / `help` still print usage, unaffected -------------
+
+for flag in -h --help help; do
+	out=$(main "$flag")
+	code=$?
+	assert_exit_code "0" "$code" "main $flag: exit code 0"
+	assert_match "Usage: headway <command> \[arguments\]" "$out" "main $flag: prints usage"
+done
+
 teardown_sandbox
 report_and_exit
