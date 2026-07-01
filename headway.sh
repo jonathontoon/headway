@@ -694,6 +694,7 @@ Completing:
 
 Editing:
   edit <id>                                 open task in \$EDITOR
+  edit <id> <text>                          replace task line directly
   due <id> <DATE>                           set/update due date
   move <id> +Project                        move to a project
   priority <id> <A-Z|none>                  set or clear priority
@@ -827,22 +828,32 @@ cmd_undo() {
 	use_color && _display_line=$(colorize_line "$new_line")
 	printf 'undone %s: %s\n' "$id" "$_display_line"
 }
-# cmd_edit <id>
-# Opens the task's raw line in $EDITOR via a scratch tempfile, then writes
-# back whatever the editor leaves behind. An empty result aborts the edit
-# (the task is left unchanged) rather than deleting the task.
+# cmd_edit <id> [text]
+# With [text], replaces the task's line with it directly (verbatim, same
+# as the $EDITOR path below - no due-date shorthand resolution or field
+# re-formatting). Without it, opens the task's raw line in $EDITOR via a
+# scratch tempfile, then writes back whatever the editor leaves behind.
+# Either way, an empty result aborts the edit (the task is left
+# unchanged) rather than deleting the task.
 cmd_edit() {
-	[ "$#" -ge 1 ] || die 'usage: headway edit <id>'
+	[ "$#" -ge 1 ] || die 'usage: headway edit <id> [text]'
 	id=$(resolve_id "$1") || exit 1
-	raw=$(line_at "$id")
-	tmp=$(mktemp) || die "mktemp failed"
-	printf '%s\n' "$raw" >"$tmp"
-	if ! $EDITOR "$tmp"; then
+	shift
+
+	if [ "$#" -ge 1 ]; then
+		new="$*"
+	else
+		raw=$(line_at "$id")
+		tmp=$(mktemp) || die "mktemp failed"
+		printf '%s\n' "$raw" >"$tmp"
+		if ! $EDITOR "$tmp"; then
+			rm -f "$tmp"
+			die "editor exited non-zero, task $id unchanged"
+		fi
+		new=$(cat "$tmp")
 		rm -f "$tmp"
-		die "editor exited non-zero, task $id unchanged"
 	fi
-	new=$(cat "$tmp")
-	rm -f "$tmp"
+
 	[ -n "$new" ] || die "empty edit aborted, task $id unchanged"
 	replace_line_at "$id" "$new"
 	_display_line="$new"

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `edit <id> <text>` now replaces the task line directly; `edit <id>` alone still opens `$EDITOR`.
+
 ## [0.1.0] - 2026-06-30
 
 ### Added

@@ -103,5 +103,16 @@ assert_exit_code "1" "$code" "edit: empty result aborts with non-zero exit"
 unchanged=$(line_at "$last_id")
 assert_eq "$after_edit" "$unchanged" "edit: empty result leaves task unchanged"
 
+# --- edit: inline replacement text bypasses $EDITOR entirely ----------------
+# EDITOR points at a nonexistent path, so if it were ever invoked the
+# command would fail (exit 127 -> die) instead of succeeding.
+
+EDITOR="$(pwd)/tests/fixtures/does-not-exist.sh"
+code=0
+cmd_edit "$last_id" 2026-06-30 Book flights @Travel +Holiday >/dev/null || code=$?
+assert_exit_code "0" "$code" "edit: inline text succeeds without invoking \$EDITOR"
+inline_result=$(line_at "$last_id")
+assert_eq "2026-06-30 Book flights @Travel +Holiday" "$inline_result" "edit: inline text replaces the line verbatim"
+
 teardown_sandbox
 report_and_exit
