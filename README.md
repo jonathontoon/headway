@@ -315,6 +315,8 @@ A few principles that guide every decision in `headway`:
 
 **The terminal is the interface.** No Electron, no background daemon, no subscription. `headway` is a shell script that does one thing well.
 
+**The floor is further back than you'd think.** `headway`'s `date(1)` flavor detection (see [Portability hazards](#portability-hazards-and-how-theyre-handled)) is deliberately conservative rather than assuming the newest tool on your `$PATH`. In practice that means it runs unmodified on FreeBSD as old as 3.0 (1998) and every Mac OS X release since 10.0 (2001), and on any Linux distribution old enough to have paired GNU `date -d` with a standalone `mktemp` binary — roughly the late 1990s onward. Longevity isn't just a stated value here; it's a property you can point at a specific old machine and check.
+
 ---
 
 ## Architecture
