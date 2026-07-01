@@ -203,6 +203,7 @@ headway undo <id>           # unmark, restoring (A) priority if present
 
 ```bash
 headway edit <id>           # open task in $EDITOR
+headway edit <id> <text>    # replace task line directly, no editor
 headway due <id> YYYY-MM-DD # set or update due date
 headway due <id> today      # convenience shorthand — writes today's actual date
 headway move <id> +Project  # move to a project

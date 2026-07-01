@@ -141,5 +141,19 @@ out=$(printf 'add "should not save"\nexit\n' | cmd_shell 2>&1) || true
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c 'added')" "shell: a failed write reports no false success"
 assert_eq "false" "$([ -e "$TODO_FILE" ] && echo true || echo false)" "shell: a failed write creates no file"
 
+# --- edit <id> <text> replaces the line directly, without opening $EDITOR ----
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+EDITOR="$(pwd)/tests/fixtures/does-not-exist.sh"
+load_config
+detect_date_flavor
+
+out=$(printf 'add "Book flights"\nedit 1 2026-06-30 Book flights @Travel +Holiday\nlist\nexit\n' | cmd_shell 2>&1)
+assert_match "edited 1: 2026-06-30 Book flights @Travel \+Holiday" "$out" "shell: edit with inline text replaces the line"
+assert_match "1: 2026-06-30 Book flights @Travel \+Holiday" "$out" "shell: list reflects the inline edit"
+
 teardown_sandbox
 report_and_exit
