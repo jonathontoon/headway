@@ -1034,7 +1034,7 @@ dispatch_cmd() {
 cmd_shell() {
 	while :; do
 		if [ -t 0 ]; then
-			printf 'hw> ' >&2
+			printf 'headway $ ' >&2
 		fi
 
 		if ! IFS= read -r line; then

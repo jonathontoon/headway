@@ -210,11 +210,11 @@ command line is, so quoting works as expected:
 
 ```
 $ hw shell
-hw> add "Write project brief +Apollo due:2026-07-10"
+headway $ add "Write project brief +Apollo due:2026-07-10"
 added 4: 2026-07-01 Write project brief +Apollo due:2026-07-10
-hw> list +Apollo
+headway $ list +Apollo
 4: 2026-07-01 Write project brief +Apollo due:2026-07-10
-hw> exit
+headway $ exit
 ```
 
 `hw shell` stays pure POSIX `sh`, so there's no readline-style line editing
