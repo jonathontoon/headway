@@ -108,6 +108,20 @@ today() {
 	date "+%Y-%m-%d"
 }
 
+# greeting
+# Prints "Good morning"/"Good afternoon"/"Good evening" based on the local
+# hour. Flavor-independent, same as today().
+greeting() {
+	hour=$(date "+%H")
+	if [ "$hour" -lt 12 ]; then
+		printf 'Good morning'
+	elif [ "$hour" -lt 18 ]; then
+		printf 'Good afternoon'
+	else
+		printf 'Good evening'
+	fi
+}
+
 # date_add_days <YYYY-MM-DD> <signed-offset>
 date_add_days() {
 	base="$1"
@@ -1033,7 +1047,7 @@ dispatch_cmd() {
 # (Ctrl-D) does the same.
 cmd_shell() {
 	if [ -t 0 ]; then
-		printf 'headway %s - type "help" for commands, "exit" to leave.\n' "$HEADWAY_VERSION" >&2
+		printf '%s! headway %s - type "help" for commands, "exit" to leave.\n' "$(greeting)" "$HEADWAY_VERSION" >&2
 	fi
 
 	while :; do
