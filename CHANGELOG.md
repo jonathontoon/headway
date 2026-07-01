@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Real line editing in `headway shell`: arrow-key cursor movement, Home/End, Backspace/Delete, and Up/Down/PgUp/PgDn history recall, all built in pure POSIX `sh`. History persists across sessions (`~/.config/headway/history`, or `$HEADWAY_HISTORY`).
+
 ### Changed
 
 - `edit <id> <text>` now replaces the task line directly; `edit <id>` alone still opens `$EDITOR`.

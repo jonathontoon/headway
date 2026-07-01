@@ -162,10 +162,18 @@ headway $ list +Apollo
 headway $ exit
 ```
 
-`headway shell` stays pure POSIX `sh`, so there's no readline-style line
-editing or history across sessions - only what your terminal gives you for
-free. If you want that, wrap it with a tool like `rlwrap`:
-`rlwrap headway shell`.
+`headway shell` has real line editing on a real terminal, all built in
+pure POSIX `sh` - no `bash`, no `readline`, no external dependency:
+Left/Right/Home/End move the cursor, Backspace/Delete edit in place, and
+Up/Down recall previous commands. History is saved to a file
+(`~/.config/headway/history` by default, or `$HEADWAY_HISTORY`) and
+persists across sessions. Page Up/Down jump 10 history entries at a time
+rather than doing terminal scrollback, since raw mode intercepts those
+keys before your terminal emulator would otherwise handle them. Ctrl-C
+aborts whatever you're typing without ending the session; Ctrl-D on an
+empty prompt ends it, same as `exit`. Piped/non-interactive input (e.g.
+`headway shell < script.txt`) always falls back to plain line-at-a-time
+reading, unaffected by any of this.
 
 Every command documented below also works as a one-shot invocation —
 `headway <command> ...` (or the shorter `hw <command> ...` alias) — for
@@ -241,6 +249,8 @@ headway check               # verify todo.txt is well-formed
 ## Configuration
 
 `headway` reads from `~/.config/headway/config` (or `$HEADWAY_CONFIG`).
+The interactive shell's history file lives alongside it by default
+(`~/.config/headway/history`), overridable via `$HEADWAY_HISTORY`.
 
 ```bash
 # ~/.config/headway/config
