@@ -32,7 +32,7 @@ Most todo apps make a trade-off you shouldn't have to accept:
 - **GUI apps** give you beautiful structure but lock your data in a proprietary silo.
 - **Plain-text tools** give you portability but ask you to think in flags and syntax.
 
-`headway` refuses the trade-off. It stores everything in a valid, portable `todo.txt` file — parseable by any editor, scriptable with `grep`, syncable with `git` — while giving you a CLI experience organised around a simple mental model: **Projects, a clean inbox, and dates that do the scheduling for you**.
+`headway` refuses the trade-off. It stores everything in a valid, portable `todo.txt` file: parseable by any editor, scriptable with `grep`, syncable with `git`. And it gives you a CLI experience organised around a simple mental model: **Projects, a clean inbox, and dates that do the scheduling for you**.
 
 ---
 
@@ -165,7 +165,7 @@ headway $ exit
 ```
 
 `headway shell` has real line editing on a real terminal, all built in
-pure POSIX `sh` - no `bash`, no `readline`, no external dependency:
+pure POSIX `sh` — no `bash`, no `readline`, no external dependency:
 Left/Right/Home/End move the cursor, Backspace/Delete edit in place, and
 Up/Down recall previous commands. History is saved to a file
 (`~/.config/headway/history` by default, or `$HEADWAY_HISTORY`) and
@@ -288,7 +288,7 @@ Leaving a `THEME_*` var unset uses the built-in default shown above;
 setting one to an empty string (`THEME_DESC=`) disables styling for just
 that field, without needing `COLOR=false` globally. Colorization is
 display-only — it never touches what's written to `todo.txt`/`done.txt`,
-so switching colors around never touches your task data.
+so switching colours around never touches your task data.
 
 Environment variables override config file values.
 
