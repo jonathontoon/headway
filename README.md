@@ -211,6 +211,7 @@ command line is, so quoting works as expected:
 ```
 $ hw shell
 Good morning! headway 0.1.0 - type "help" for commands, "exit" to leave.
+3 open tasks, 1 task due today.
 headway $ add "Write project brief +Apollo due:2026-07-10"
 added 4: 2026-07-01 Write project brief +Apollo due:2026-07-10
 headway $ list +Apollo

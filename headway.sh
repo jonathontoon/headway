@@ -1039,6 +1039,33 @@ dispatch_cmd() {
 	esac
 }
 
+# shell_summary
+# Prints a one-line count of open tasks and how many are due today (which,
+# per render_view's "today" rules, includes anything overdue), for the
+# interactive shell's welcome banner.
+shell_summary() {
+	[ -f "$TODO_FILE" ] || return 0
+
+	active=$(awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE")
+	if [ "$active" -eq 0 ]; then
+		printf 'No open tasks - you are all caught up.\n'
+		return 0
+	fi
+
+	due_today=$(render_view today | awk 'END { print NR + 0 }')
+
+	task_word="tasks"
+	[ "$active" -eq 1 ] && task_word="task"
+
+	if [ "$due_today" -gt 0 ]; then
+		due_word="tasks"
+		[ "$due_today" -eq 1 ] && due_word="task"
+		printf '%s open %s, %s %s due today.\n' "$active" "$task_word" "$due_today" "$due_word"
+	else
+		printf '%s open %s.\n' "$active" "$task_word"
+	fi
+}
+
 # cmd_shell
 # Starts an interactive session: repeatedly prompts for a line, splits it
 # into arguments the same way a shell command line would be, and runs it
@@ -1048,6 +1075,7 @@ dispatch_cmd() {
 cmd_shell() {
 	if [ -t 0 ]; then
 		printf '%s! headway %s - type "help" for commands, "exit" to leave.\n' "$(greeting)" "$HEADWAY_VERSION" >&2
+		shell_summary >&2
 	fi
 
 	while :; do
