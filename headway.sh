@@ -1216,6 +1216,64 @@ shell_summary() {
 	fi
 }
 
+# tokenize_line <line>
+# Splits <line> into $US-joined words the way a shell command line would
+# be split - but WITHOUT evaluating it as shell code. Single/double quotes
+# group words and are stripped; their contents are copied verbatim. $VAR,
+# `cmd`, $(cmd), and globs are never expanded - a todo-item REPL has no
+# legitimate use for shell expansion, so not expanding it is the fix, not
+# a limitation. Prints the joined tokens and returns 0, or prints nothing
+# and returns 1 if a quote is left unterminated. Walks the string one
+# character at a time via parameter expansion (no per-character fork).
+tokenize_line() {
+	_tl_rest="$1"
+	_tl_tab=$(printf '\t')
+	_tl_tokens=""
+	_tl_cur=""
+	_tl_in_tok=false
+	_tl_quote=""
+
+	while [ -n "$_tl_rest" ]; do
+		_tl_c="${_tl_rest%"${_tl_rest#?}"}"
+		_tl_rest="${_tl_rest#?}"
+
+		if [ -n "$_tl_quote" ]; then
+			if [ "$_tl_c" = "$_tl_quote" ]; then
+				_tl_quote=""
+			else
+				_tl_cur="$_tl_cur$_tl_c"
+			fi
+			continue
+		fi
+
+		case "$_tl_c" in
+		"'" | '"')
+			_tl_quote="$_tl_c"
+			_tl_in_tok=true
+			;;
+		" " | "$_tl_tab")
+			if [ "$_tl_in_tok" = "true" ]; then
+				_tl_tokens="${_tl_tokens:+$_tl_tokens$US}$_tl_cur"
+				_tl_cur=""
+				_tl_in_tok=false
+			fi
+			;;
+		*)
+			_tl_cur="$_tl_cur$_tl_c"
+			_tl_in_tok=true
+			;;
+		esac
+	done
+
+	[ -z "$_tl_quote" ] || return 1
+
+	if [ "$_tl_in_tok" = "true" ]; then
+		_tl_tokens="${_tl_tokens:+$_tl_tokens$US}$_tl_cur"
+	fi
+
+	printf '%s' "$_tl_tokens"
+}
+
 # cmd_shell
 # Starts an interactive session: repeatedly prompts for a line, splits it
 # into arguments the same way a shell command line would be, and runs it
@@ -1242,15 +1300,20 @@ cmd_shell() {
 		'') continue ;;
 		esac
 
-		# Re-tokenize the line the way a real shell would split a command
-		# line, so quoted multi-word text (e.g. add "buy milk" +Errands)
-		# survives. Input is always the interactive operator at the
-		# controlling terminal (or a trusted local pipe in tests), never
-		# untrusted remote data.
-		if ! eval "set -- $line" 2>/dev/null; then
-			err "parse error: $line"
+		# Tokenize the line so quoted multi-word text (e.g. add "buy
+		# milk" +Errands) survives, without evaluating it as shell code -
+		# see tokenize_line's comment for why that distinction matters.
+		if ! _sh_tokens=$(tokenize_line "$line"); then
+			err "unterminated quote: $line"
 			continue
 		fi
+
+		_sh_old_ifs="$IFS"
+		IFS="$US"
+		set -f
+		set -- $_sh_tokens
+		set +f
+		IFS="$_sh_old_ifs"
 
 		[ "$#" -eq 0 ] && continue
 
@@ -1264,10 +1327,19 @@ cmd_shell() {
 
 		# Run each command in a subshell: a failing command calls die(),
 		# which does `exit 1` - in a subshell that only ends the subshell,
-		# not the whole interactive session.
-		if ! (dispatch_cmd "$@"); then
-			:
-		fi
+		# not the whole interactive session. The subshell must be run as a
+		# plain, untested statement (not the operand of `!`/`if`/`&&`): in
+		# dash and bash, errexit is ignored for the *entire* execution of a
+		# command in one of those tested positions, including everything
+		# that runs inside a subshell there - so a failing command partway
+		# through dispatch_cmd would silently be skipped over instead of
+		# stopping it, even with an explicit `set -eu` inside the parens.
+		# Toggling the outer `-e` off just for this one statement is what
+		# lets the subshell's own `set -eu` behave normally internally
+		# while still letting the REPL loop survive its overall failure.
+		set +e
+		(set -eu; dispatch_cmd "$@")
+		set -e
 	done
 }
 
