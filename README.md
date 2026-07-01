@@ -63,7 +63,7 @@ Follows the todo.txt standard. Completion date is prepended automatically, and a
 x 2026-07-04 2026-06-29 Write landing page copy +LaunchBlog pri:A
 ```
 
-Running `hw undo` restores the priority to its original `(A)` position.
+Running `headway undo` restores the priority to its original `(A)` position.
 
 ### Recurring tasks
 
@@ -94,7 +94,7 @@ Requires a POSIX `sh` and the standard tools listed in [Architecture](#architect
 ```bash
 git clone https://github.com/jonathontoon/headway.git
 cd headway
-make install          # installs to /usr/local/bin/hw
+make install          # installs to /usr/local/bin/headway (plus a shorter hw alias)
 ```
 
 ### Manual
@@ -104,6 +104,7 @@ Download `headway.sh`, make it executable, and alias it:
 ```bash
 curl -O https://raw.githubusercontent.com/jonathontoon/headway/main/headway.sh
 chmod +x headway.sh
+echo 'alias headway="~/headway.sh"' >> ~/.zshrc
 echo 'alias hw="~/headway.sh"' >> ~/.zshrc
 ```
 
@@ -111,91 +112,127 @@ echo 'alias hw="~/headway.sh"' >> ~/.zshrc
 
 ## Quick Start
 
-```bash
-# Add a task to your inbox
-hw add "Book flights to Lisbon"
+Run `headway shell` and you're in a session — type commands, no prefix needed:
 
-# Add a task with a project and deadline
-hw add "Write project brief +Apollo due:2026-07-10"
-
-# Something due today
-hw add "Call the accountant due:2026-06-30 @calls"
-
-# See what's on for today
-hw today
-
-# Mark task 3 as done
-hw done 3
-
-# Review everything without a project
-hw inbox
 ```
+$ headway shell
+Good morning! headway 0.1.0 - type "help" for commands, "exit" to leave.
+No open tasks - you are all caught up.
+headway $ add "Book flights to Lisbon"
+added 1: 2026-06-30 Book flights to Lisbon
+headway $ add "Write project brief +Apollo due:2026-07-10"
+added 2: 2026-06-30 Write project brief +Apollo due:2026-07-10
+headway $ add "Call the accountant due:2026-06-30 @calls"
+added 3: 2026-06-30 Call the accountant due:2026-06-30 @calls
+headway $ today
+3: 2026-06-30 Call the accountant due:2026-06-30 @calls
+headway $ done 3
+completed 3: x 2026-06-30 2026-06-30 Call the accountant due:2026-06-30 @calls
+headway $ inbox
+1: 2026-06-30 Book flights to Lisbon
+headway $ exit
+```
+
+Every command also works as a one-shot invocation for scripts and cron jobs
+— `headway add "..."`, `headway today`, and so on (or the shorter `hw`
+alias). See [Command Reference](#command-reference) for both forms.
 
 ---
 
 ## Command Reference
 
+### Interactive
+
+```bash
+headway shell           # start an interactive session
+```
+
+Runs a REPL: prompts for a command, runs it, and repeats until you type
+`exit`/`quit` or send EOF (Ctrl-D). Each line is split the same way a shell
+command line is, so quoting works as expected:
+
+```
+$ headway shell
+Good morning! headway 0.1.0 - type "help" for commands, "exit" to leave.
+3 open tasks, 1 task due today.
+headway $ add "Write project brief +Apollo due:2026-07-10"
+added 4: 2026-07-01 Write project brief +Apollo due:2026-07-10
+headway $ list +Apollo
+4: 2026-07-01 Write project brief +Apollo due:2026-07-10
+headway $ exit
+```
+
+`headway shell` stays pure POSIX `sh`, so there's no readline-style line
+editing or history across sessions - only what your terminal gives you for
+free. If you want that, wrap it with a tool like `rlwrap`:
+`rlwrap headway shell`.
+
+Every command documented below also works as a one-shot invocation —
+`headway <command> ...` (or the shorter `hw <command> ...` alias) — for
+scripts and cron jobs. Inside the shell, drop the prefix and type the
+command directly.
+
 ### Views
 
 ```bash
-hw inbox              # tasks with no project assigned
-hw today              # due today, plus anything overdue
-hw upcoming           # future-dated tasks, in chronological order
-hw someday            # tasks with no due date
-hw logbook            # completed tasks, most recent first
+headway inbox              # tasks with no project assigned
+headway today              # due today, plus anything overdue
+headway upcoming           # future-dated tasks, in chronological order
+headway someday            # tasks with no due date
+headway logbook            # completed tasks, most recent first
 
-hw today +LaunchBlog  # any view, filtered by project
-hw upcoming @waiting  # any view, filtered by tag
+headway today +LaunchBlog  # any view, filtered by project
+headway upcoming @waiting  # any view, filtered by tag
 ```
 
 ### Adding tasks
 
 ```bash
-hw add "task description [+Project] [due:DATE] [@tag]"
-hw a  "..."            # shorthand
+headway add "task description [+Project] [due:DATE] [@tag]"
+headway a  "..."            # shorthand
 ```
 
 ### Completing tasks
 
 ```bash
-hw done <id>           # mark done, preserving priority as pri:A
-hw undo <id>           # unmark, restoring (A) priority if present
+headway done <id>           # mark done, preserving priority as pri:A
+headway undo <id>           # unmark, restoring (A) priority if present
 ```
 
 ### Editing tasks
 
 ```bash
-hw edit <id>           # open task in $EDITOR
-hw due <id> YYYY-MM-DD # set or update due date
-hw due <id> today      # convenience shorthand — writes today's actual date
-hw move <id> +Project  # move to a project
-hw priority <id> A     # set priority A–Z (or 'none')
-hw tag <id> @tagname   # add a tag
-hw rm <id>             # delete task permanently
+headway edit <id>           # open task in $EDITOR
+headway due <id> YYYY-MM-DD # set or update due date
+headway due <id> today      # convenience shorthand — writes today's actual date
+headway move <id> +Project  # move to a project
+headway priority <id> A     # set priority A–Z (or 'none')
+headway tag <id> @tagname   # add a tag
+headway rm <id>             # delete task permanently
 ```
 
 ### Listing and filtering
 
 ```bash
-hw list                  # list all incomplete tasks
-hw list +LaunchBlog      # filter by project
-hw list @deepwork        # filter by tag
-hw list "keyword"        # full-text search
+headway list                  # list all incomplete tasks
+headway list +LaunchBlog      # filter by project
+headway list @deepwork        # filter by tag
+headway list "keyword"        # full-text search
 ```
 
 ### Projects
 
 ```bash
-hw projects            # list all projects
-hw project +LaunchBlog # show tasks in a project
+headway projects            # list all projects
+headway project +LaunchBlog # show tasks in a project
 ```
 
 ### Maintenance
 
 ```bash
-hw archive             # move completed tasks to done.txt
-hw stats               # summary: counts by view and project
-hw check               # verify todo.txt is well-formed
+headway archive             # move completed tasks to done.txt
+headway stats               # summary: counts by view and project
+headway check               # verify todo.txt is well-formed
 ```
 
 ---
@@ -218,8 +255,8 @@ DATE_FORMAT=%Y-%m-%d         # ISO 8601 — unambiguous and sorts correctly
 SHOW_IDS=true                # show task numbers in all views
 
 # Behaviour
-AUTO_ARCHIVE=false           # if true, hw done moves tasks to done.txt immediately
-CONFIRM_DELETE=true          # prompt before hw rm — recommended
+AUTO_ARCHIVE=false           # if true, headway done moves tasks to done.txt immediately
+CONFIRM_DELETE=true          # prompt before headway rm — recommended
 ```
 
 Environment variables override config file values.
@@ -237,14 +274,14 @@ brew uninstall headway
 ### From source
 
 ```bash
-make uninstall        # removes /usr/local/bin/hw
+make uninstall        # removes /usr/local/bin/headway and the hw alias
 ```
 
 ### Manual
 
 ```bash
 rm headway.sh
-# then remove the alias line you added to ~/.zshrc
+# then remove the alias lines you added to ~/.zshrc
 ```
 
 Uninstalling never touches your data — `~/todo.txt`, `~/done.txt`, and `~/.config/headway/config` are left in place. Delete them yourself if you want a clean slate.
@@ -272,11 +309,13 @@ A few principles that guide every decision in `headway`:
 
 **Your data is yours.** The source of truth is always `~/todo.txt` — a file you can read, edit, `grep`, back up, or delete without asking anyone's permission.
 
-**Capture first, organise second.** `hw add "thing"` puts a task in your inbox with zero friction. Adding a project or due date is optional and happens when it matters.
+**Capture first, organise second.** `headway add "thing"` puts a task in your inbox with zero friction. Adding a project or due date is optional and happens when it matters.
 
 **Due dates, not scheduling steps.** You shouldn't have to tell your task manager both *when* you want to think about something *and* when it's actually due. Give it a date. That's enough.
 
 **The terminal is the interface.** No Electron, no background daemon, no subscription. `headway` is a shell script that does one thing well.
+
+**The floor is further back than you'd think.** `headway`'s `date(1)` flavor detection (see [Portability hazards](#portability-hazards-and-how-theyre-handled)) is deliberately conservative rather than assuming the newest tool on your `$PATH`. In practice that means it runs unmodified on FreeBSD as old as 3.0 (1998) and every Mac OS X release since 10.0 (2001), and on any Linux distribution old enough to have paired GNU `date -d` with a standalone `mktemp` binary — roughly the late 1990s onward. Longevity isn't just a stated value here; it's a property you can point at a specific old machine and check.
 
 ---
 
