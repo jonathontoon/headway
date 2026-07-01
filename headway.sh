@@ -27,7 +27,7 @@ CONFIRM_DELETE_DEFAULT="true"
 # ---------------------------------------------------------------------------
 
 err() {
-	printf 'hw: %s\n' "$1" >&2
+	printf 'headway: %s\n' "$1" >&2
 }
 
 die() {
@@ -550,7 +550,8 @@ usage() {
 	cat <<EOF
 headway $HEADWAY_VERSION - organised thinking, in plain text.
 
-Usage: hw <command> [arguments]
+Usage: headway <command> [arguments]
+       hw <command> [arguments]       (shorter alias, same binary)
 
 Task IDs are the task's current line number in TODO_FILE. They are NOT
 stable across edits - deleting or archiving a task shifts the IDs of
@@ -604,7 +605,7 @@ EOF
 # TODO_FILE. Project/tag/due/repeat tokens may appear anywhere in <text>;
 # everything else becomes the description.
 cmd_add() {
-	[ "$#" -ge 1 ] || die 'usage: hw add "text [+Project] [due:DATE] [@tag]"'
+	[ "$#" -ge 1 ] || die 'usage: headway add "text [+Project] [due:DATE] [@tag]"'
 	parse_line "$*"
 	P_DONE=false
 	P_PRIORITY=""
@@ -633,7 +634,7 @@ cmd_add() {
 # is appended with the due date advanced by one interval from the
 # completed task's due date (today's date if it had none).
 cmd_done() {
-	[ "$#" -ge 1 ] || die 'usage: hw done <id>'
+	[ "$#" -ge 1 ] || die 'usage: headway done <id>'
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 	parse_line "$raw"
@@ -677,7 +678,7 @@ cmd_done() {
 # Reverses cmd_done: restores the priority marker from pri: (if any) and
 # clears the completion date. Byte-identical to the pre-done line.
 cmd_undo() {
-	[ "$#" -ge 1 ] || die 'usage: hw undo <id>'
+	[ "$#" -ge 1 ] || die 'usage: headway undo <id>'
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 	parse_line "$raw"
@@ -696,7 +697,7 @@ cmd_undo() {
 # back whatever the editor leaves behind. An empty result aborts the edit
 # (the task is left unchanged) rather than deleting the task.
 cmd_edit() {
-	[ "$#" -ge 1 ] || die 'usage: hw edit <id>'
+	[ "$#" -ge 1 ] || die 'usage: headway edit <id>'
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 	tmp=$(mktemp) || die "mktemp failed"
@@ -715,7 +716,7 @@ cmd_edit() {
 # cmd_due <id> <DATE>
 # DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
 cmd_due() {
-	[ "$#" -ge 2 ] || die 'usage: hw due <id> <date>'
+	[ "$#" -ge 2 ] || die 'usage: headway due <id> <date>'
 	id=$(resolve_id "$1") || exit 1
 	new_due=$(resolve_date_shorthand "$2") || exit 1
 	parse_line "$(line_at "$id")"
@@ -729,7 +730,7 @@ cmd_due() {
 # A task belongs to at most one project at a time; move replaces whatever
 # project(s) it had with the given one.
 cmd_move() {
-	[ "$#" -ge 2 ] || die 'usage: hw move <id> +Project'
+	[ "$#" -ge 2 ] || die 'usage: headway move <id> +Project'
 	id=$(resolve_id "$1") || exit 1
 	project="$2"
 	case "$project" in
@@ -747,7 +748,7 @@ cmd_move() {
 # Targets the (A) slot for active tasks, or the pri: extension for
 # already-completed ones, since a done line has no (A) position.
 cmd_priority() {
-	[ "$#" -ge 2 ] || die "usage: hw priority <id> <A-Z|none>"
+	[ "$#" -ge 2 ] || die "usage: headway priority <id> <A-Z|none>"
 	id=$(resolve_id "$1") || exit 1
 	val="$2"
 	case "$val" in
@@ -770,7 +771,7 @@ cmd_priority() {
 # Idempotent: adding a tag the task already has is a silent no-op, not an
 # error and not a duplicate.
 cmd_tag() {
-	[ "$#" -ge 2 ] || die 'usage: hw tag <id> @tag'
+	[ "$#" -ge 2 ] || die 'usage: headway tag <id> @tag'
 	id=$(resolve_id "$1") || exit 1
 	tagval="$2"
 	case "$tagval" in
@@ -796,7 +797,7 @@ cmd_tag() {
 # CONFIRM_DELETE=false; declining or piping EOF to the prompt cancels
 # (the safe default), never deletes.
 cmd_rm() {
-	[ "$#" -ge 1 ] || die 'usage: hw rm <id>'
+	[ "$#" -ge 1 ] || die 'usage: headway rm <id>'
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 
@@ -847,7 +848,7 @@ cmd_projects() {
 # cmd_project +Project
 # Thin wrapper over the list view, filtered to a single project.
 cmd_project() {
-	[ "$#" -ge 1 ] || die 'usage: hw project +Project'
+	[ "$#" -ge 1 ] || die 'usage: headway project +Project'
 	case "$1" in
 	+?*) ;;
 	*) die "invalid project: $1 (must start with +)" ;;
