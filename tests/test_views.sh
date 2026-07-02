@@ -104,5 +104,19 @@ empty_out=$(cmd_today)
 assert_eq "" "$empty_out" "today on empty file: no output, no error"
 rm -f "$EMPTY_TODO"
 
+# --- SHOW_IDS=false hides task numbers in views -----------------------------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+SHOW_IDS=false
+load_config
+detect_date_flavor
+
+cmd_add "Hidden id task +Quiet" >/dev/null
+no_ids_out=$(cmd_list)
+assert_match "^$(today) Hidden id task \\+Quiet$" "$no_ids_out" "list: SHOW_IDS=false omits task id"
+
 teardown_sandbox
 report_and_exit

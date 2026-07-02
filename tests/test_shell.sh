@@ -51,6 +51,88 @@ assert_match "unknown command: bogus" "$out" "shell: invalid command is reported
 assert_match "added 1: .*Still works" "$out" "shell: session continues after an invalid command"
 assert_match "1: .*Still works" "$out" "shell: list after the invalid command still sees the added task"
 
+# --- welcome banner: nothing due --------------------------------------------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+COLOR=false
+SHOW_IDS=true
+load_config
+detect_date_flavor
+
+cmd_add "Write project brief +Apollo" >/dev/null
+cmd_add "Plan launch" >/dev/null
+out=$(shell_welcome_banner)
+assert_match "^headway v0\\.1\\.0" "$out" "welcome: version is first"
+assert_match "Good (morning|afternoon|evening)!" "$out" "welcome: greeting is on its own line"
+assert_match "2 open tasks, nothing due today\\." "$out" "welcome: nothing-due summary includes open count"
+assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^  [0-9][0-9]*:')" "welcome: no task list when nothing is due"
+assert_match 'Type "help" for commands, "exit" to leave\.' "$out" "welcome: hint is present"
+
+# --- welcome banner: one due group skips redundant group header --------------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+COLOR=false
+SHOW_IDS=true
+load_config
+detect_date_flavor
+
+cmd_add "Call the accountant due:today @calls" >/dev/null
+out=$(shell_welcome_banner)
+assert_match "1 task due\\." "$out" "welcome: singular due count"
+assert_match "^  1: $(today) Call the accountant due:$(today) @calls" "$out" "welcome: due task uses view row format"
+assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^  Due today$')" "welcome: one non-empty group has no header"
+assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^  Overdue$')" "welcome: absent group has no header"
+
+# --- welcome banner: SHOW_IDS=false follows view row formatting -------------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+COLOR=false
+SHOW_IDS=false
+load_config
+detect_date_flavor
+
+cmd_add "No id please due:today" >/dev/null
+out=$(shell_welcome_banner)
+assert_match "^  $(today) No id please due:$(today)$" "$out" "welcome: SHOW_IDS=false omits task id"
+assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^  1:')" "welcome: SHOW_IDS=false has no id prefix"
+
+# --- welcome banner: both due groups, caps each group at three lines ---------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+COLOR=false
+SHOW_IDS=true
+load_config
+detect_date_flavor
+
+today_d=$(today)
+yesterday_d=$(date_add_days "$today_d" -1)
+cmd_add "Overdue one due:$yesterday_d" >/dev/null
+cmd_add "Overdue two due:$yesterday_d" >/dev/null
+cmd_add "Overdue three due:$yesterday_d" >/dev/null
+cmd_add "Overdue four due:$yesterday_d" >/dev/null
+cmd_add "Today one due:today" >/dev/null
+cmd_add "Today two due:today" >/dev/null
+cmd_add "Today three due:today" >/dev/null
+cmd_add "Today four due:today" >/dev/null
+out=$(shell_welcome_banner)
+assert_match "8 tasks due\\." "$out" "welcome: due count combines overdue and due today"
+assert_match "^  Overdue$" "$out" "welcome: overdue header appears when both groups are non-empty"
+assert_match "^  Due today$" "$out" "welcome: due-today header appears when both groups are non-empty"
+assert_eq "6" "$(printf '%s\n' "$out" | grep -c '^  [0-9][0-9]*:')" "welcome: due list is capped at three rows per group"
+assert_eq "2" "$(printf '%s\n' "$out" | grep -c "^  … 1 more — see 'today'$")" "welcome: each overflowing group shows a more line"
+
 # --- quoted multi-word text is preserved as a single argument ---------------
 
 teardown_sandbox
