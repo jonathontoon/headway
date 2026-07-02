@@ -1368,19 +1368,18 @@ shell_welcome_banner() {
 		_swb_hint=$(sgr_wrap "$THEME_DATE" "$_swb_hint")
 	fi
 
-	printf '%s\n' "$_swb_version"
-	printf '%s!\n' "$(greeting)"
+	printf '%s\n\n' "$_swb_version"
 
 	if [ "$_swb_due_count" -gt 0 ]; then
 		_swb_due_text=$_swb_due_count
 		[ "$_swb_use_color" = "true" ] && _swb_due_text=$(sgr_wrap "$THEME_DUE" "$_swb_due_text")
 		_swb_due_word="tasks"
 		[ "$_swb_due_count" -eq 1 ] && _swb_due_word="task"
-		printf '%s %s due.\n' "$_swb_due_text" "$_swb_due_word"
+		printf '%s! You have %s %s due.\n' "$(greeting)" "$_swb_due_text" "$_swb_due_word"
 	else
 		_swb_task_word="tasks"
 		[ "$_swb_active" -eq 1 ] && _swb_task_word="task"
-		printf '%s open %s, nothing due today.\n' "$_swb_active" "$_swb_task_word"
+		printf '%s! You have %s open %s, nothing due today.\n' "$(greeting)" "$_swb_active" "$_swb_task_word"
 	fi
 
 	if [ "$_swb_due_count" -gt 0 ]; then
