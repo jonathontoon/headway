@@ -665,7 +665,11 @@ render_view() {
 		if [ "$_rv_use_color" = "true" ]; then
 			_rv_line=$(colorize_line "$_rv_line")
 		fi
-		printf '%s: %s\n' "$_rv_id" "$_rv_line"
+		if [ "${SHOW_IDS:-true}" = "false" ]; then
+			printf '%s\n' "$_rv_line"
+		else
+			printf '%s: %s\n' "$_rv_id" "$_rv_line"
+		fi
 	done
 }
 
@@ -1200,14 +1204,22 @@ dispatch_cmd() {
 	esac
 }
 
+# shell_open_count
+# Prints the number of open (not completed) tasks in TODO_FILE.
+shell_open_count() {
+	[ -f "$TODO_FILE" ] || return 0
+
+	awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE"
+}
+
 # shell_summary
 # Prints a one-line count of open tasks and how many are due today (which,
-# per render_view's "today" rules, includes anything overdue), for the
-# interactive shell's welcome banner.
+# per render_view's "today" rules, includes anything overdue), for callers
+# that still want the old compact summary.
 shell_summary() {
 	[ -f "$TODO_FILE" ] || return 0
 
-	active=$(awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE")
+	active=$(shell_open_count)
 	if [ "$active" -eq 0 ]; then
 		printf 'No open tasks - you are all caught up.\n'
 		return 0
@@ -1225,6 +1237,184 @@ shell_summary() {
 	else
 		printf '%s open %s.\n' "$active" "$task_word"
 	fi
+}
+
+# shell_welcome_task_line <id> <raw-line> <use-color>
+# Prints one indented task line in the same logical shape as render_view:
+# "<id>: <date> <description> [+project] [due:date] [@tag]". The optional
+# color treatment reuses existing THEME_* values and is display-only.
+shell_welcome_task_line() {
+	_swtl_id="$1"
+	_swtl_raw="$2"
+	_swtl_use_color="$3"
+
+	if [ "$_swtl_use_color" = "true" ]; then
+		_swtl_id=$(sgr_wrap "$THEME_DATE" "$_swtl_id")
+		_swtl_line=$(colorize_line "$_swtl_raw")
+	else
+		_swtl_line="$_swtl_raw"
+	fi
+
+	if [ "${SHOW_IDS:-true}" = "false" ]; then
+		printf '  %s\n' "$_swtl_line"
+	else
+		printf '  %s: %s\n' "$_swtl_id" "$_swtl_line"
+	fi
+}
+
+# shell_welcome_group <rows> <today> <group> <use-color>
+# Prints up to three overdue or due-today task lines from tab-delimited
+# collect_view_rows output. Extra rows collapse into "... N more — see
+# 'today'" to keep the startup banner short.
+shell_welcome_group() {
+	_swg_rows="$1"
+	_swg_today="$2"
+	_swg_group="$3"
+	_swg_use_color="$4"
+	_swg_tab=$(printf '\t')
+	_swg_seen=0
+
+	[ -n "$_swg_rows" ] || return 0
+
+	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _swg_due _swg_id _swg_raw; do
+		case "$_swg_group" in
+		overdue)
+			expr "$_swg_due" '<' "$_swg_today" >/dev/null || continue
+			;;
+		today)
+			[ "$_swg_due" = "$_swg_today" ] || continue
+			;;
+		esac
+
+		_swg_seen=$((_swg_seen + 1))
+		if [ "$_swg_seen" -le 3 ]; then
+			shell_welcome_task_line "$_swg_id" "$_swg_raw" "$_swg_use_color"
+		fi
+	done
+}
+
+# shell_welcome_more_count <rows> <today> <group>
+# Prints how many rows would remain after shell_welcome_group's first three.
+shell_welcome_more_count() {
+	_swm_rows="$1"
+	_swm_today="$2"
+	_swm_group="$3"
+	_swm_tab=$(printf '\t')
+
+	[ -n "$_swm_rows" ] || {
+		printf '0\n'
+		return 0
+	}
+
+	printf '%s\n' "$_swm_rows" | while IFS="$_swm_tab" read -r _swm_due _ _; do
+		case "$_swm_group" in
+		overdue)
+			expr "$_swm_due" '<' "$_swm_today" >/dev/null || continue
+			;;
+		today)
+			[ "$_swm_due" = "$_swm_today" ] || continue
+			;;
+		esac
+		printf '.\n'
+	done | awk 'END { extra = NR - 3; if (extra < 0) extra = 0; print extra }'
+}
+
+# shell_welcome_count <rows> <today> <group>
+shell_welcome_count() {
+	_swc_rows="$1"
+	_swc_today="$2"
+	_swc_group="$3"
+	_swc_tab=$(printf '\t')
+
+	[ -n "$_swc_rows" ] || {
+		printf '0\n'
+		return 0
+	}
+
+	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _swc_due _ _; do
+		case "$_swc_group" in
+		overdue)
+			expr "$_swc_due" '<' "$_swc_today" >/dev/null || continue
+			;;
+		today)
+			[ "$_swc_due" = "$_swc_today" ] || continue
+			;;
+		esac
+		printf '.\n'
+	done | awk 'END { print NR + 0 }'
+}
+
+# shell_welcome_banner
+# Prints the interactive shell welcome message before the first prompt.
+shell_welcome_banner() {
+	_swb_today=$(today)
+	_swb_active=0
+	[ -f "$TODO_FILE" ] && _swb_active=$(shell_open_count)
+	_swb_rows=""
+	if [ -f "$TODO_FILE" ]; then
+		_swb_tab=$(printf '\t')
+		_swb_rows=$(collect_view_rows today | sort -t "$_swb_tab" -k1,1)
+	fi
+	_swb_due_count=$(printf '%s\n' "$_swb_rows" | awk 'NF { n++ } END { print n + 0 }')
+	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue)
+	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today)
+	_swb_use_color=false
+	use_color_err && _swb_use_color=true
+
+	_swb_version="headway v$HEADWAY_VERSION"
+	_swb_hint='Type "help" for commands, "exit" to leave.'
+	if [ "$_swb_use_color" = "true" ]; then
+		_swb_version=$(sgr_wrap "$THEME_DATE" "$_swb_version")
+		_swb_hint=$(sgr_wrap "$THEME_DATE" "$_swb_hint")
+	fi
+
+	printf '%s\n' "$_swb_version"
+	printf '%s!\n' "$(greeting)"
+
+	if [ "$_swb_due_count" -gt 0 ]; then
+		_swb_due_text=$_swb_due_count
+		[ "$_swb_use_color" = "true" ] && _swb_due_text=$(sgr_wrap "$THEME_DUE" "$_swb_due_text")
+		_swb_due_word="tasks"
+		[ "$_swb_due_count" -eq 1 ] && _swb_due_word="task"
+		printf '%s %s due.\n' "$_swb_due_text" "$_swb_due_word"
+	else
+		_swb_task_word="tasks"
+		[ "$_swb_active" -eq 1 ] && _swb_task_word="task"
+		printf '%s open %s, nothing due today.\n' "$_swb_active" "$_swb_task_word"
+	fi
+
+	if [ "$_swb_due_count" -gt 0 ]; then
+		_swb_show_headers=false
+		if [ "$_swb_overdue_count" -gt 0 ] && [ "$_swb_today_count" -gt 0 ]; then
+			_swb_show_headers=true
+		fi
+
+		if [ "$_swb_overdue_count" -gt 0 ]; then
+			printf '\n'
+			if [ "$_swb_show_headers" = "true" ]; then
+				_swb_header="Overdue"
+				[ "$_swb_use_color" = "true" ] && _swb_header=$(sgr_wrap "$THEME_DATE" "$_swb_header")
+				printf '  %s\n' "$_swb_header"
+			fi
+			shell_welcome_group "$_swb_rows" "$_swb_today" overdue "$_swb_use_color"
+			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" overdue)
+			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
+		fi
+
+		if [ "$_swb_today_count" -gt 0 ]; then
+			printf '\n'
+			if [ "$_swb_show_headers" = "true" ]; then
+				_swb_header="Due today"
+				[ "$_swb_use_color" = "true" ] && _swb_header=$(sgr_wrap "$THEME_DATE" "$_swb_header")
+				printf '  %s\n' "$_swb_header"
+			fi
+			shell_welcome_group "$_swb_rows" "$_swb_today" today "$_swb_use_color"
+			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" today)
+			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
+		fi
+	fi
+
+	printf '\n%s\n\n' "$_swb_hint"
 }
 
 # tokenize_line <line>
@@ -1630,8 +1820,7 @@ cmd_shell() {
 		# only the current line being typed, not the whole session -
 		# matching how interactive REPLs (bash, python, etc.) behave.
 		trap '' INT
-		printf '%s! headway %s - type "help" for commands, "exit" to leave.\n' "$(greeting)" "$HEADWAY_VERSION" >&2
-		shell_summary >&2
+		shell_welcome_banner >&2
 	fi
 
 	while :; do
