@@ -46,6 +46,69 @@ die() {
 	exit 1
 }
 
+# usage_die <msg>
+# Same shape as die() but exits 2 - the POSIX/GNU convention for usage
+# errors ("you called headway wrong"), distinct from exit 1 for runtime
+# errors ("headway understood you but the request could not be honoured").
+# Scripts can branch on the two.
+usage_die() {
+	err "$1"
+	exit 2
+}
+
+# require_todo_file
+# Bails early with a friendly hint when TODO_FILE has never been created.
+# Called from id-referencing commands (done, undo, edit, due, move, priority,
+# tag, rm) where the alternative is a raw `awk: can't open file` from
+# resolve_id. Exits 1: the user pointed at a specific task that cannot
+# exist in a nonexistent file, so this is a runtime error, not empty state.
+require_todo_file() {
+	if [ ! -f "$TODO_FILE" ]; then
+		err "no tasks yet - try 'headway add \"...\"'"
+		exit 1
+	fi
+}
+
+# suggest_command <bad>
+# Prints "did you mean '<X>'?" for the closest known command by edit
+# distance, iff a good enough match exists (distance <= 2). Silent when
+# nothing is close. Uses awk (POSIX-only features) so it stays inside the
+# same portability envelope as the rest of the script.
+suggest_command() {
+	_sc_bad="$1"
+	_sc_known="add a done undo edit due move priority tag rm list inbox today upcoming someday logbook projects project archive stats check shell repl help"
+	_sc_hit=$(printf '%s\n' "$_sc_bad" | awk -v known="$_sc_known" '
+	function dist(s, t,    n, m, d, i, j, cost, mn) {
+		n = length(s); m = length(t)
+		if (n == 0) return m
+		if (m == 0) return n
+		for (i = 0; i <= n; i++) d[i,0] = i
+		for (j = 0; j <= m; j++) d[0,j] = j
+		for (i = 1; i <= n; i++) {
+			for (j = 1; j <= m; j++) {
+				cost = (substr(s,i,1) == substr(t,j,1)) ? 0 : 1
+				mn = d[i-1,j] + 1
+				if (d[i,j-1] + 1 < mn) mn = d[i,j-1] + 1
+				if (d[i-1,j-1] + cost < mn) mn = d[i-1,j-1] + cost
+				d[i,j] = mn
+			}
+		}
+		return d[n,m]
+	}
+	{
+		bad = $0
+		n = split(known, cmds, " ")
+		best = ""; best_score = 3
+		for (i = 1; i <= n; i++) {
+			s = dist(bad, cmds[i])
+			if (s < best_score) { best_score = s; best = cmds[i] }
+		}
+		if (best != "") print best
+	}')
+	[ -n "$_sc_hit" ] && err "did you mean '$_sc_hit'?"
+	return 0
+}
+
 # expand_tilde <value>
 # Expands a single leading "~" or "~/..." to $HOME. Needed because a value
 # arriving via an environment variable (rather than literally written in a
@@ -683,6 +746,10 @@ headway $HEADWAY_VERSION - organised thinking, in plain text.
 
 Usage: headway <command> [arguments]
        hw <command> [arguments]       (shorter alias, same binary)
+       headway -h | --help            (this message; also 'headway help')
+       headway -v | --version         (print version and exit)
+
+Any subcommand accepts -h / --help to print its own usage.
 
 Task IDs are the task's current line number in TODO_FILE. They are NOT
 stable across edits - deleting or archiving a task shifts the IDs of
@@ -737,7 +804,9 @@ EOF
 # TODO_FILE. Project/tag/due/repeat tokens may appear anywhere in <text>;
 # everything else becomes the description.
 cmd_add() {
-	[ "$#" -ge 1 ] || die 'usage: headway add "text [+Project] [due:DATE] [@tag]"'
+	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
 	parse_line "$*"
 	P_DONE=false
 	P_PRIORITY=""
@@ -768,7 +837,10 @@ cmd_add() {
 # is appended with the due date advanced by one interval from the
 # completed task's due date (today's date if it had none).
 cmd_done() {
-	[ "$#" -ge 1 ] || die 'usage: headway done <id>'
+	_u='usage: headway done <id>'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 	parse_line "$raw"
@@ -816,7 +888,10 @@ cmd_done() {
 # Reverses cmd_done: restores the priority marker from pri: (if any) and
 # clears the completion date. Byte-identical to the pre-done line.
 cmd_undo() {
-	[ "$#" -ge 1 ] || die 'usage: headway undo <id>'
+	_u='usage: headway undo <id>'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 	parse_line "$raw"
@@ -840,7 +915,10 @@ cmd_undo() {
 # Either way, an empty result aborts the edit (the task is left
 # unchanged) rather than deleting the task.
 cmd_edit() {
-	[ "$#" -ge 1 ] || die 'usage: headway edit <id> [text]'
+	_u='usage: headway edit <id> [text]'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	shift
 
@@ -868,7 +946,10 @@ cmd_edit() {
 # cmd_due <id> <DATE>
 # DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
 cmd_due() {
-	[ "$#" -ge 2 ] || die 'usage: headway due <id> <date>'
+	_u='usage: headway due <id> <date>'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	new_due=$(resolve_date_shorthand "$2") || exit 1
 	parse_line "$(line_at "$id")"
@@ -884,7 +965,10 @@ cmd_due() {
 # A task belongs to at most one project at a time; move replaces whatever
 # project(s) it had with the given one.
 cmd_move() {
-	[ "$#" -ge 2 ] || die 'usage: headway move <id> +Project'
+	_u='usage: headway move <id> +Project'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	project="$2"
 	case "$project" in
@@ -904,7 +988,10 @@ cmd_move() {
 # Targets the (A) slot for active tasks, or the pri: extension for
 # already-completed ones, since a done line has no (A) position.
 cmd_priority() {
-	[ "$#" -ge 2 ] || die "usage: headway priority <id> <A-Z|none>"
+	_u='usage: headway priority <id> <A-Z|none>'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	val="$2"
 	case "$val" in
@@ -929,7 +1016,10 @@ cmd_priority() {
 # Idempotent: adding a tag the task already has is a silent no-op, not an
 # error and not a duplicate.
 cmd_tag() {
-	[ "$#" -ge 2 ] || die 'usage: headway tag <id> @tag'
+	_u='usage: headway tag <id> @tag'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	tagval="$2"
 	case "$tagval" in
@@ -957,7 +1047,10 @@ cmd_tag() {
 # CONFIRM_DELETE=false; declining or piping EOF to the prompt cancels
 # (the safe default), never deletes.
 cmd_rm() {
-	[ "$#" -ge 1 ] || die 'usage: headway rm <id>'
+	_u='usage: headway rm <id>'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	raw=$(line_at "$id")
 
@@ -982,21 +1075,40 @@ cmd_rm() {
 	printf 'removed %s: %s\n' "$id" "$_display_line"
 }
 # cmd_list [+Project|@tag|"keyword"]
-cmd_list() { render_view "list" "${1:-}"; }
+cmd_list() {
+	case "${1:-}" in -h | --help) printf 'usage: headway list [+Project|@tag|"keyword"]\n'; return 0 ;; esac
+	render_view "list" "${1:-}"
+}
 # cmd_inbox [+Project|@tag|"keyword"] - incomplete tasks with no project
-cmd_inbox() { render_view "inbox" "${1:-}"; }
+cmd_inbox() {
+	case "${1:-}" in -h | --help) printf 'usage: headway inbox [+Project|@tag|"keyword"]\n'; return 0 ;; esac
+	render_view "inbox" "${1:-}"
+}
 # cmd_today [+Project|@tag|"keyword"] - due today, plus anything overdue
-cmd_today() { render_view "today" "${1:-}"; }
+cmd_today() {
+	case "${1:-}" in -h | --help) printf 'usage: headway today [+Project|@tag|"keyword"]\n'; return 0 ;; esac
+	render_view "today" "${1:-}"
+}
 # cmd_upcoming [+Project|@tag|"keyword"] - future-dated tasks
-cmd_upcoming() { render_view "upcoming" "${1:-}"; }
+cmd_upcoming() {
+	case "${1:-}" in -h | --help) printf 'usage: headway upcoming [+Project|@tag|"keyword"]\n'; return 0 ;; esac
+	render_view "upcoming" "${1:-}"
+}
 # cmd_someday [+Project|@tag|"keyword"] - tasks with no due date
-cmd_someday() { render_view "someday" "${1:-}"; }
+cmd_someday() {
+	case "${1:-}" in -h | --help) printf 'usage: headway someday [+Project|@tag|"keyword"]\n'; return 0 ;; esac
+	render_view "someday" "${1:-}"
+}
 # cmd_logbook [+Project|@tag|"keyword"] - completed tasks, most recent first
-cmd_logbook() { render_view "logbook" "${1:-}"; }
+cmd_logbook() {
+	case "${1:-}" in -h | --help) printf 'usage: headway logbook [+Project|@tag|"keyword"]\n'; return 0 ;; esac
+	render_view "logbook" "${1:-}"
+}
 # cmd_projects
 # Lists the distinct +Project tokens carried by incomplete tasks, one per
 # line, sorted alphabetically.
 cmd_projects() {
+	case "${1:-}" in -h | --help) printf 'usage: headway projects\n'; return 0 ;; esac
 	[ -f "$TODO_FILE" ] || return 0
 	awk '
 	{
@@ -1012,7 +1124,9 @@ cmd_projects() {
 # cmd_project +Project
 # Thin wrapper over the list view, filtered to a single project.
 cmd_project() {
-	[ "$#" -ge 1 ] || die 'usage: headway project +Project'
+	_u='usage: headway project +Project'
+	case "${1:-}" in -h | --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
 	case "$1" in
 	+?*) ;;
 	*) die "invalid project: $1 (must start with +)" ;;
@@ -1024,6 +1138,7 @@ cmd_project() {
 # DONE_FILE, preserving DONE_FILE's existing content. Both files are
 # rewritten atomically via safe_write.
 cmd_archive() {
+	case "${1:-}" in -h | --help) printf 'usage: headway archive\n'; return 0 ;; esac
 	[ -f "$TODO_FILE" ] || return 0
 	archived=$(awk '/^x /' "$TODO_FILE")
 	if [ -z "$archived" ]; then
@@ -1052,6 +1167,7 @@ cmd_archive() {
 # Summary counts: active vs. done totals, a count per view, and a count
 # per project (across incomplete tasks).
 cmd_stats() {
+	case "${1:-}" in -h | --help) printf 'usage: headway stats\n'; return 0 ;; esac
 	if [ ! -f "$TODO_FILE" ]; then
 		printf 'tasks:    0 active, 0 done (0 total)\n'
 		return 0
@@ -1091,6 +1207,7 @@ EOF
 # values outside daily/weekly/monthly/yearly, and completed lines missing
 # either date.
 cmd_check() {
+	case "${1:-}" in -h | --help) printf 'usage: headway check\n'; return 0 ;; esac
 	[ -f "$TODO_FILE" ] || die "no such file: $TODO_FILE"
 	problems=0
 	id=0
@@ -1198,8 +1315,9 @@ dispatch_cmd() {
 	"" | shell | repl) cmd_shell ;;
 	*)
 		err "unknown command: $cmd"
-		usage
-		return 1
+		suggest_command "$cmd"
+		err "run 'headway help' for the full command list"
+		return 2
 		;;
 	esac
 }
@@ -1901,6 +2019,10 @@ main() {
 	case "$cmd" in
 	-h | --help | help)
 		usage
+		return 0
+		;;
+	-v | -V | --version)
+		printf 'headway %s\n' "$HEADWAY_VERSION"
 		return 0
 		;;
 	esac
