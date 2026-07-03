@@ -226,15 +226,10 @@ shell_welcome_banner() {
 	printf '\n%s\n\n' "$_swb_hint"
 }
 
-# tokenize_line <line>
-# Splits <line> into $US-joined words the way a shell command line would
-# be split - but WITHOUT evaluating it as shell code. Single/double quotes
-# group words and are stripped; their contents are copied verbatim. $VAR,
-# `cmd`, $(cmd), and globs are never expanded - a todo-item REPL has no
-# legitimate use for shell expansion, so not expanding it is the fix, not
-# a limitation. Prints the joined tokens and returns 0, or prints nothing
-# and returns 1 if a quote is left unterminated. Walks the string one
-# character at a time via parameter expansion (no per-character fork).
+# cmd_shell
+# Starts an interactive session, tokenizes each line without evaluating it
+# as shell code, and dispatches the resulting command. Interactive terminals
+# get read_line_interactive; piped input falls back to plain read -r.
 cmd_shell() {
 	if [ -t 0 ]; then
 		# read_line_interactive runs inside a $(...) subshell (forked for
@@ -320,4 +315,3 @@ cmd_shell() {
 		set -e
 	done
 }
-

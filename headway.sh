@@ -17,9 +17,7 @@ TODO_FILE_DEFAULT="$HOME/todo.txt"
 DONE_FILE_DEFAULT="$HOME/done.txt"
 EDITOR_DEFAULT="vi"
 COLOR_DEFAULT="auto"
-DATE_FORMAT_DEFAULT="%Y-%m-%d"
 SHOW_IDS_DEFAULT="true"
-AUTO_ARCHIVE_DEFAULT="false"
 CONFIRM_DELETE_DEFAULT="true"
 
 # Theme: bare SGR parameter codes (no \033[ / m wrapper) applied when
@@ -32,7 +30,6 @@ THEME_DATE_DEFAULT="2"
 THEME_DESC_DEFAULT=""
 THEME_REPEAT_DEFAULT="34"
 THEME_DONE_DEFAULT="2"
-
 # ---------------------------------------------------------------------------
 # Generic helpers
 # ---------------------------------------------------------------------------
@@ -56,10 +53,17 @@ usage_die() {
 	exit 2
 }
 
+# headway_commands
+# Command names recognized by the interactive shell. Kept in one place so
+# typo suggestions and tab completion cannot drift from each other.
+headway_commands() {
+	printf '%s\n' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
+}
+
 # require_todo_file
 # Bails early with a friendly hint when TODO_FILE has never been created.
-# Called from id-referencing commands (done, undo, edit, due, move, priority,
-# tag, rm) where the alternative is a raw `awk: can't open file` from
+# Called from id-referencing commands (complete, undo, edit, due, priority,
+# tag, clear, delete, show) where the alternative is a raw awk failure from
 # resolve_id. Exits 1: the user pointed at a specific task that cannot
 # exist in a nonexistent file, so this is a runtime error, not empty state.
 require_todo_file() {
@@ -76,7 +80,7 @@ require_todo_file() {
 # same portability envelope as the rest of the script.
 suggest_command() {
 	_sc_bad="$1"
-	_sc_known="add complete undo edit due priority tag delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
+	_sc_known=$(headway_commands)
 	_sc_hit=$(printf '%s\n' "$_sc_bad" | awk -v known="$_sc_known" '
 	function dist(s, t,    n, m, d, i, j, cost, mn) {
 		n = length(s); m = length(t)
@@ -167,7 +171,6 @@ safe_write() {
 		die "failed to replace $target"
 	fi
 }
-
 # ---------------------------------------------------------------------------
 # Date flavor detection
 # ---------------------------------------------------------------------------
@@ -408,12 +411,8 @@ load_config() {
 	_lc_env_editor=${EDITOR-}
 	_lc_had_color=${COLOR+x}
 	_lc_env_color=${COLOR-}
-	_lc_had_dfmt=${DATE_FORMAT+x}
-	_lc_env_dfmt=${DATE_FORMAT-}
 	_lc_had_ids=${SHOW_IDS+x}
 	_lc_env_ids=${SHOW_IDS-}
-	_lc_had_arch=${AUTO_ARCHIVE+x}
-	_lc_env_arch=${AUTO_ARCHIVE-}
 	_lc_had_conf=${CONFIRM_DELETE+x}
 	_lc_env_conf=${CONFIRM_DELETE-}
 	_lc_had_tpri=${THEME_PRIORITY+x}
@@ -442,9 +441,7 @@ load_config() {
 	if [ -n "$_lc_had_done" ]; then DONE_FILE="$_lc_env_done"; fi
 	if [ -n "$_lc_had_editor" ]; then EDITOR="$_lc_env_editor"; fi
 	if [ -n "$_lc_had_color" ]; then COLOR="$_lc_env_color"; fi
-	if [ -n "$_lc_had_dfmt" ]; then DATE_FORMAT="$_lc_env_dfmt"; fi
 	if [ -n "$_lc_had_ids" ]; then SHOW_IDS="$_lc_env_ids"; fi
-	if [ -n "$_lc_had_arch" ]; then AUTO_ARCHIVE="$_lc_env_arch"; fi
 	if [ -n "$_lc_had_conf" ]; then CONFIRM_DELETE="$_lc_env_conf"; fi
 	if [ -n "$_lc_had_tpri" ]; then THEME_PRIORITY="$_lc_env_tpri"; fi
 	if [ -n "$_lc_had_tproj" ]; then THEME_PROJECT="$_lc_env_tproj"; fi
@@ -459,9 +456,7 @@ load_config() {
 	: "${DONE_FILE:=$DONE_FILE_DEFAULT}"
 	: "${EDITOR:=$EDITOR_DEFAULT}"
 	: "${COLOR:=$COLOR_DEFAULT}"
-	: "${DATE_FORMAT:=$DATE_FORMAT_DEFAULT}"
 	: "${SHOW_IDS:=$SHOW_IDS_DEFAULT}"
-	: "${AUTO_ARCHIVE:=$AUTO_ARCHIVE_DEFAULT}"
 	: "${CONFIRM_DELETE:=$CONFIRM_DELETE_DEFAULT}"
 	# THEME_DESC's default is intentionally empty ("" = unstyled) - this
 	# still fills it in when unset, it just has nothing visible to set.
@@ -477,7 +472,6 @@ load_config() {
 	TODO_FILE=$(expand_tilde "$TODO_FILE")
 	DONE_FILE=$(expand_tilde "$DONE_FILE")
 }
-
 # ---------------------------------------------------------------------------
 # Todo-line parsing / formatting
 # ---------------------------------------------------------------------------
@@ -1763,14 +1757,6 @@ _rli_read_byte() {
 	_rli_byte="${_rli_raw%X}"
 }
 
-# _hw_shell_commands
-# The command names the interactive shell recognises, for tab completion.
-# Space-separated so it's easy to keep in sync with dispatch_cmd's case;
-# the shell also honours help/exit itself.
-_hw_shell_commands() {
-	printf '%s' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
-}
-
 # _hw_tags_in_todo
 # Distinct @tag tokens present in TODO_FILE, sorted, one per line. Used
 # by _rli_tab for @-completion. Empty output if the file doesn't exist or
@@ -1842,7 +1828,7 @@ _rli_tab() {
 	case "$_rli_tab_src" in
 	projects) _rli_tab_cands=$(cmd_projects 2>/dev/null || true) ;;
 	tags) _rli_tab_cands=$(_hw_tags_in_todo) ;;
-	commands) _rli_tab_cands=$(_hw_shell_commands | tr ' ' '\n') ;;
+	commands) _rli_tab_cands=$(headway_commands | tr ' ' '\n') ;;
 	esac
 	[ -n "$_rli_tab_cands" ] || return 0
 
@@ -2320,15 +2306,10 @@ shell_welcome_banner() {
 	printf '\n%s\n\n' "$_swb_hint"
 }
 
-# tokenize_line <line>
-# Splits <line> into $US-joined words the way a shell command line would
-# be split - but WITHOUT evaluating it as shell code. Single/double quotes
-# group words and are stripped; their contents are copied verbatim. $VAR,
-# `cmd`, $(cmd), and globs are never expanded - a todo-item REPL has no
-# legitimate use for shell expansion, so not expanding it is the fix, not
-# a limitation. Prints the joined tokens and returns 0, or prints nothing
-# and returns 1 if a quote is left unterminated. Walks the string one
-# character at a time via parameter expansion (no per-character fork).
+# cmd_shell
+# Starts an interactive session, tokenizes each line without evaluating it
+# as shell code, and dispatches the resulting command. Interactive terminals
+# get read_line_interactive; piped input falls back to plain read -r.
 cmd_shell() {
 	if [ -t 0 ]; then
 		# read_line_interactive runs inside a $(...) subshell (forked for
@@ -2414,7 +2395,6 @@ cmd_shell() {
 		set -e
 	done
 }
-
 # ---------------------------------------------------------------------------
 # Usage
 # ---------------------------------------------------------------------------

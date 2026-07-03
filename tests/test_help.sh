@@ -77,6 +77,10 @@ assert_match "did you mean 'delete'\\?" "$out" "in-shell typo: suggests near mat
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c 'Usage: headway' || true)" \
 	"in-shell typo: no full-usage dump"
 
+out=$(printf 'cler 1\nexit\n' | $HW 2>&1)
+assert_match "unknown command: cler" "$out" "in-shell clear typo: names input"
+assert_match "did you mean 'clear'\\?" "$out" "in-shell clear typo: suggests clear"
+
 out=$(printf 'xyzzy\nexit\n' | $HW 2>&1)
 assert_match "unknown command: xyzzy" "$out" "in-shell far typo: names input"
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c 'did you mean' || true)" \

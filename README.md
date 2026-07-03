@@ -265,7 +265,6 @@ EDITOR=vi                    # vi ships on everything; set this to your preferen
 # Display
 COLOR=auto                   # auto: colour only when outputting to a terminal
                              # true: always / false: never
-DATE_FORMAT=%Y-%m-%d         # ISO 8601 — unambiguous and sorts correctly
 SHOW_IDS=true                # show task numbers in all views
 
 # Theme (raw ANSI SGR codes; only applied when COLOR is active)
@@ -279,7 +278,6 @@ THEME_REPEAT=34               # repeat:INTERVAL                 — default: blu
 THEME_DONE=2                  # whole line, once done           — default: dim
 
 # Behaviour
-AUTO_ARCHIVE=false           # if true, headway complete moves tasks to done.txt immediately
 CONFIRM_DELETE=true          # prompt before delete — recommended
 ```
 

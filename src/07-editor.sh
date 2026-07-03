@@ -176,14 +176,6 @@ _rli_read_byte() {
 	_rli_byte="${_rli_raw%X}"
 }
 
-# _hw_shell_commands
-# The command names the interactive shell recognises, for tab completion.
-# Space-separated so it's easy to keep in sync with dispatch_cmd's case;
-# the shell also honours help/exit itself.
-_hw_shell_commands() {
-	printf '%s' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
-}
-
 # _hw_tags_in_todo
 # Distinct @tag tokens present in TODO_FILE, sorted, one per line. Used
 # by _rli_tab for @-completion. Empty output if the file doesn't exist or
@@ -255,7 +247,7 @@ _rli_tab() {
 	case "$_rli_tab_src" in
 	projects) _rli_tab_cands=$(cmd_projects 2>/dev/null || true) ;;
 	tags) _rli_tab_cands=$(_hw_tags_in_todo) ;;
-	commands) _rli_tab_cands=$(_hw_shell_commands | tr ' ' '\n') ;;
+	commands) _rli_tab_cands=$(headway_commands | tr ' ' '\n') ;;
 	esac
 	[ -n "$_rli_tab_cands" ] || return 0
 

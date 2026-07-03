@@ -25,7 +25,7 @@ assert_eq "relative/path" "$(expand_tilde 'relative/path')" "expand_tilde: relat
 # --- built-in default when neither env nor file set TODO_FILE --------------
 
 result=$(
-	unset TODO_FILE DONE_FILE EDITOR COLOR DATE_FORMAT SHOW_IDS AUTO_ARCHIVE CONFIRM_DELETE
+	unset TODO_FILE DONE_FILE EDITOR COLOR SHOW_IDS CONFIRM_DELETE
 	HEADWAY_CONFIG="$SANDBOX/no-such-config"
 	load_config
 	printf '%s\n' "$TODO_FILE"

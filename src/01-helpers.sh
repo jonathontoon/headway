@@ -21,10 +21,17 @@ usage_die() {
 	exit 2
 }
 
+# headway_commands
+# Command names recognized by the interactive shell. Kept in one place so
+# typo suggestions and tab completion cannot drift from each other.
+headway_commands() {
+	printf '%s\n' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
+}
+
 # require_todo_file
 # Bails early with a friendly hint when TODO_FILE has never been created.
-# Called from id-referencing commands (done, undo, edit, due, move, priority,
-# tag, rm) where the alternative is a raw `awk: can't open file` from
+# Called from id-referencing commands (complete, undo, edit, due, priority,
+# tag, clear, delete, show) where the alternative is a raw awk failure from
 # resolve_id. Exits 1: the user pointed at a specific task that cannot
 # exist in a nonexistent file, so this is a runtime error, not empty state.
 require_todo_file() {
@@ -41,7 +48,7 @@ require_todo_file() {
 # same portability envelope as the rest of the script.
 suggest_command() {
 	_sc_bad="$1"
-	_sc_known="add complete undo edit due priority tag delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
+	_sc_known=$(headway_commands)
 	_sc_hit=$(printf '%s\n' "$_sc_bad" | awk -v known="$_sc_known" '
 	function dist(s, t,    n, m, d, i, j, cost, mn) {
 		n = length(s); m = length(t)
@@ -132,4 +139,3 @@ safe_write() {
 		die "failed to replace $target"
 	fi
 }
-
