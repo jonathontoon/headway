@@ -20,7 +20,7 @@ assert_exit_code "0" "$code" "shell: exit code 0 after 'exit'"
 assert_match "added 1: .*Buy milk \+Errands due:2026-07-10" "$out" "shell: add ran inside the session"
 assert_match "1: .*Buy milk \+Errands" "$out" "shell: list ran inside the same session"
 
-# --- 'quit' also ends the session cleanly ------------------------------------
+# --- EOF (no exit typed) also ends the session cleanly ------------------
 
 teardown_sandbox
 setup_sandbox
@@ -28,12 +28,6 @@ HEADWAY_LIB_ONLY=true
 . ./headway.sh
 load_config
 detect_date_flavor
-
-code=0
-printf 'quit\n' | cmd_shell >/dev/null || code=$?
-assert_exit_code "0" "$code" "shell: 'quit' ends the session cleanly"
-
-# --- EOF (no exit/quit typed) also ends the session cleanly ------------------
 
 code=0
 printf '' | cmd_shell >/dev/null || code=$?
@@ -252,13 +246,34 @@ assert_exit_code "0" "$code" "main: no-args exit code 0 after 'exit'"
 assert_match "added 1: .*Buy milk \+Errands due:2026-07-10" "$out" "main: no-args add ran inside the session"
 assert_match "1: .*Buy milk \+Errands" "$out" "main: no-args list ran in the same session"
 
-# --- `main -h` / `--help` / `help` still print usage, unaffected -------------
+# --- `main --help` and `main --version` still work at the outer level -------
 
-for flag in -h --help help; do
-	out=$(main "$flag")
-	code=$?
-	assert_exit_code "0" "$code" "main $flag: exit code 0"
-	assert_match "Usage: headway <command> \[arguments\]" "$out" "main $flag: prints usage"
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+
+out=$(main --help)
+code=$?
+assert_exit_code "0" "$code" "main --help: exit code 0"
+assert_match "Usage: headway" "$out" "main --help: prints usage"
+
+out=$(main --version)
+code=$?
+assert_exit_code "0" "$code" "main --version: exit code 0"
+assert_match "^headway [0-9]+\\.[0-9]+\\.[0-9]+$" "$out" "main --version: prints 'headway <semver>'"
+
+# --- outer CLI rejects any other args --------------------------------------
+
+code=0
+out=$(main --help extra 2>&1) || code=$?
+assert_exit_code "2" "$code" "main --help extra: usage error"
+assert_match "takes no command-line arguments" "$out" "main <args>: names the constraint"
+
+for bad in -h -v -V --yes add list; do
+	code=0
+	out=$(main "$bad" 2>&1) || code=$?
+	assert_exit_code "2" "$code" "main $bad: rejected with exit 2"
 done
 
 teardown_sandbox

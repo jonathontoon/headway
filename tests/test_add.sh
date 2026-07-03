@@ -48,12 +48,12 @@ assert_exit_code "1" "$code" "add: invalid due date exits non-zero"
 after_count=$(awk 'END{print NR}' "$TODO_FILE")
 assert_eq "$before_count" "$after_count" "add: invalid due date does not mutate file"
 
-# --- `a` shorthand behaves identically to `add` (dispatched via main) ------
+# --- dispatch_cmd routes `add` to cmd_add (in-shell code path) --------------
 
-main a "Quick capture +Inbox" >/dev/null
+dispatch_cmd add "Quick capture +Inbox" >/dev/null
 last_line=$(sed -n '$p' "$TODO_FILE")
-assert_match "Quick capture" "$last_line" "a: shorthand adds a task"
-assert_match "\+Inbox" "$last_line" "a: shorthand preserves project"
+assert_match "Quick capture" "$last_line" "dispatch add: appends a task"
+assert_match "\+Inbox" "$last_line" "dispatch add: preserves project"
 
 teardown_sandbox
 report_and_exit

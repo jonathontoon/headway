@@ -14,6 +14,7 @@ Your tasks are a plain text file. Every tool you already love can read it. `head
 - [The File Format](#the-file-format)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [The Shell](#the-shell)
 - [Command Reference](#command-reference)
 - [Configuration](#configuration)
 - [Uninstall](#uninstall)
@@ -94,7 +95,7 @@ Requires a POSIX `sh` and the standard tools listed in [Architecture](#architect
 ```bash
 git clone https://github.com/jonathontoon/headway.git
 cd headway
-make install          # installs to /usr/local/bin/headway (plus a shorter hw alias)
+make install          # installs to /usr/local/bin/headway
 ```
 
 ### Manual
@@ -105,20 +106,22 @@ Download `headway.sh`, make it executable, and alias it:
 curl -O https://raw.githubusercontent.com/jonathontoon/headway/main/headway.sh
 chmod +x headway.sh
 echo 'alias headway="~/headway.sh"' >> ~/.zshrc
-echo 'alias hw="~/headway.sh"' >> ~/.zshrc
 ```
 
 ---
 
 ## Quick Start
 
-Run `headway` (or `hw`) with no arguments and you're in a session — type
-commands, no prefix needed:
+`headway` is a shell. Launch it with no arguments and you're in a session — type commands at the prompt:
 
 ```
 $ headway
-Good morning! headway 0.1.0 - type "help" for commands, "exit" to leave.
-No open tasks - you are all caught up.
+headway v0.1.0
+
+Good morning! You have 2 open tasks, nothing due today.
+
+Type "help" for commands, "exit" to leave.
+
 headway $ add "Book flights to Lisbon"
 added 1: 2026-06-30 Book flights to Lisbon
 headway $ add "Write project brief +Apollo due:2026-07-10"
@@ -126,7 +129,7 @@ added 2: 2026-06-30 Write project brief +Apollo due:2026-07-10
 headway $ add "Call the accountant due:2026-06-30 @calls"
 added 3: 2026-06-30 Call the accountant due:2026-06-30 @calls
 headway $ today
-3: 2026-06-30 Call the accountant due:2026-06-30 @calls
+3: 2026-06-30 Call the accountant due:2026-06-30 @calls (today)
 headway $ complete 3
 completed 3: x 2026-06-30 2026-06-30 Call the accountant due:2026-06-30 @calls
 headway $ inbox
@@ -134,88 +137,56 @@ headway $ inbox
 headway $ exit
 ```
 
-Every command also works as a one-shot invocation for scripts and cron jobs
-— `headway add "..."`, `headway today`, and so on (or the shorter `hw`
-alias). See [Command Reference](#command-reference) for both forms.
+The shell is the only way to interact with `headway`. There is no one-shot command mode — running `headway add "..."` from the terminal is not supported. Only `headway --help` and `headway --version` are recognised at the outer level; anything else launches the shell (or, if given as an argument, is rejected with a usage error).
+
+---
+
+## The Shell
+
+Launch `headway` and you're at the `headway $` prompt. The shell has real line editing built in pure POSIX `sh` — no `bash`, no `readline`, no external dependency:
+
+- **Left/Right/Home/End** move the cursor
+- **Backspace/Delete** edit in place
+- **Up/Down** recall previous commands (persistent across sessions in `~/.config/headway/history`, overridable via `$HEADWAY_HISTORY`)
+- **Page Up/Down** jump 10 history entries at a time (raw mode intercepts them before the terminal emulator's scrollback would)
+- **Tab** completes the partial token at the cursor against command names (first token), `+Project` names, or `@tag` names — a single match fills the token and adds a trailing space; multiple matches print below the prompt
+- **Ctrl-C** aborts whatever you're typing without ending the session
+- **Ctrl-D** on an empty prompt ends the session (same as `exit`)
+
+Each line is split the same way a shell command line is, so quoting works as expected — `add "Buy milk and eggs"` treats the whole quoted string as one argument. Piped/non-interactive input (`headway < script.txt`) falls back to plain line-at-a-time reading, unaffected by the raw-mode editor.
+
+Every command accepts `--help` for its own usage line.
 
 ---
 
 ## Command Reference
 
-### Interactive
-
-```bash
-headway                 # start an interactive session (the default)
-headway shell           # same thing, spelled out explicitly
-```
-
-Runs a REPL: prompts for a command, runs it, and repeats until you type
-`exit`/`quit` or send EOF (Ctrl-D). Each line is split the same way a shell
-command line is, so quoting works as expected:
-
-```
-$ headway shell
-headway v0.1.0
-Good morning!
-1 task due.
-
-  3: 2026-07-01 Call the accountant due:2026-07-01 @calls
-
-Type "help" for commands, "exit" to leave.
-
-headway $ add "Write project brief +Apollo due:2026-07-10"
-added 4: 2026-07-01 Write project brief +Apollo due:2026-07-10
-headway $ list +Apollo
-4: 2026-07-01 Write project brief +Apollo due:2026-07-10
-headway $ exit
-```
-
-`headway shell` has real line editing on a real terminal, all built in
-pure POSIX `sh` — no `bash`, no `readline`, no external dependency:
-Left/Right/Home/End move the cursor, Backspace/Delete edit in place, and
-Up/Down recall previous commands. **Tab** completes the partial token at
-the cursor against command names (first token), `+Project` names, or
-`@tag` names — a single match fills the token and adds a trailing
-space; multiple matches print below the prompt. History is saved to a file
-(`~/.config/headway/history` by default, or `$HEADWAY_HISTORY`) and
-persists across sessions. Page Up/Down jump 10 history entries at a time
-rather than doing terminal scrollback, since raw mode intercepts those
-keys before your terminal emulator would otherwise handle them. Ctrl-C
-aborts whatever you're typing without ending the session; Ctrl-D on an
-empty prompt ends it, same as `exit`. Piped/non-interactive input (e.g.
-`headway shell < script.txt`) always falls back to plain line-at-a-time
-reading, unaffected by any of this.
-
-Every command documented below also works as a one-shot invocation —
-`headway <command> ...` (or the shorter `hw <command> ...` alias) — for
-scripts and cron jobs. Inside the shell, drop the prefix and type the
-command directly.
+All commands below are typed at the `headway $` prompt.
 
 ### Views
 
 ```bash
-headway inbox              # tasks with no project assigned
-headway today              # due today, plus anything overdue
-headway upcoming           # future-dated tasks, in chronological order
-headway someday            # tasks with no due date
-headway logbook            # completed tasks, most recent first
+inbox              # tasks with no project assigned
+today              # due today, plus anything overdue
+upcoming           # future-dated tasks, in chronological order
+someday            # tasks with no due date
+logbook            # completed tasks, most recent first
 
-headway today +LaunchBlog  # any view, filtered by project
-headway upcoming @waiting  # any view, filtered by tag
+today +LaunchBlog  # any view, filtered by project
+upcoming @waiting  # any view, filtered by tag
 ```
 
 ### Adding tasks
 
 ```bash
-headway add "task description [+Project] [due:DATE] [@tag]"
-headway a  "..."            # shorthand
+add "task description [+Project] [due:DATE] [@tag]"
 ```
 
 ### Completing tasks
 
 ```bash
-headway complete <id> [<id>...]   # mark done, preserving priority as pri:A
-headway undo <id> [<id>...]       # unmark, restoring (A) priority if present
+complete <id> [<id>...]   # mark done, preserving priority as pri:A
+undo <id> [<id>...]       # unmark, restoring (A) priority if present
 ```
 
 Both `complete` and `undo` accept multiple ids in one call. All ids are validated up front, so a bad id anywhere in the list aborts the whole batch — the file is never left half-updated.
@@ -223,49 +194,51 @@ Both `complete` and `undo` accept multiple ids in one call. All ids are validate
 ### Editing tasks
 
 ```bash
-headway edit <id>                 # open task in $EDITOR
-headway edit <id> <text>          # replace task line directly, no editor
-headway due <id> YYYY-MM-DD       # set or update due date
-headway due <id> today            # convenience shorthand — writes today's actual date
-headway due <id> none             # clear the due date
-headway priority <id> A           # set priority A–Z (or 'none')
-headway tag <id> @tagname         # add a tag
-headway tag <id> -@tagname        # remove a tag
-headway tag <id> none             # clear all tags
-headway project <id> +Project     # assign task to a project
-headway project <id> none         # clear the project
-headway show <id>                 # print a labelled detail block
-headway delete <id> [<id>...]     # delete permanently (prompts unless -y)
+edit <id>                 # open task in $EDITOR
+edit <id> <text>          # replace task line directly, no editor
+due <id> YYYY-MM-DD       # set or update due date
+due <id> today            # convenience shorthand — writes today's actual date
+due <id> none             # clear the due date
+priority <id> A           # set priority A–Z (or 'none')
+tag <id> @tagname         # add a tag
+tag <id> -@tagname        # remove a tag
+tag <id> none             # clear all tags
+project <id> +Project     # assign task to a project
+project <id> none         # clear the project
+show <id>                 # print a labelled detail block
+delete <id> [<id>...]     # delete permanently (prompts to confirm)
 ```
 
-`delete` accepts multiple ids and deletes in descending id order so renumbering doesn't invalidate later ids in the same call. Add `-y` / `--yes` at any position (or set `CONFIRM_DELETE=false` in the config) to skip the confirmation prompt.
+`delete` accepts multiple ids and deletes in descending id order so renumbering doesn't invalidate later ids in the same call. Set `CONFIRM_DELETE=false` in your config to skip the confirmation prompt.
 
 ### Listing and filtering
 
 ```bash
-headway list                  # all incomplete tasks, grouped by bucket
-headway list +LaunchBlog      # filter by project (flat, no grouping)
-headway list @deepwork        # filter by tag
-headway list "keyword"        # full-text search
+list                  # all incomplete tasks, grouped by bucket
+list +LaunchBlog      # filter by project (flat, no grouping)
+list @deepwork        # filter by tag
+list "keyword"        # full-text search
 ```
 
-`headway list` (with no filter) groups its output into **Overdue**, **Due today**, **Upcoming**, and **Someday** sections. Section headers appear only when at least two buckets are populated — a list that happens to be all-someday or all-overdue still prints flat.
+`list` (with no filter) groups its output into **Overdue**, **Due today**, **Upcoming**, and **Someday** sections. Section headers appear only when at least two buckets are populated — a list that happens to be all-someday or all-overdue still prints flat.
 
 Dates in any view carry an inline relative-date hint after `due:DATE`: `(yesterday)`, `(today)`, `(tomorrow)`, or a weekday name (`monday`..`sunday`) for dates 2–7 days out. Display-only; the `todo.txt` file is unchanged.
 
 ### Projects
 
 ```bash
-headway projects            # list all projects
-headway project +LaunchBlog # show tasks in a project
+projects            # list all projects
+project +LaunchBlog # show tasks in a project
 ```
 
 ### Maintenance
 
 ```bash
-headway archive             # move completed tasks to done.txt
-headway stats               # summary: counts by view and project
-headway check               # verify todo.txt is well-formed
+archive             # move completed tasks to done.txt
+stats               # summary: counts by view and project
+check               # verify todo.txt is well-formed
+help                # print the top-level command list
+exit                # end the shell session (also Ctrl-D)
 ```
 
 ---
@@ -301,7 +274,7 @@ THEME_DONE=2                  # whole line, once done           — default: dim
 
 # Behaviour
 AUTO_ARCHIVE=false           # if true, headway complete moves tasks to done.txt immediately
-CONFIRM_DELETE=true          # prompt before headway delete — recommended (override per-call with -y/--yes)
+CONFIRM_DELETE=true          # prompt before delete — recommended
 ```
 
 Theme values are raw SGR parameter codes — the part between `\033[` and
@@ -327,14 +300,14 @@ brew uninstall headway
 ### From source
 
 ```bash
-make uninstall        # removes /usr/local/bin/headway and the hw alias
+make uninstall        # removes /usr/local/bin/headway
 ```
 
 ### Manual
 
 ```bash
 rm headway.sh
-# then remove the alias lines you added to ~/.zshrc
+# then remove the alias line you added to ~/.zshrc
 ```
 
 Uninstalling never touches your data — `~/todo.txt`, `~/done.txt`, and `~/.config/headway/config` are left in place. Delete them yourself if you want a clean slate.
