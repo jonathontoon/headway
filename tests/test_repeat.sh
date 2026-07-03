@@ -1,5 +1,5 @@
 #!/bin/sh
-# Tests for repeat: handling inside cmd_done - completing a recurring task
+# Tests for repeat: handling inside cmd_complete: completing a recurring task
 # creates the next occurrence with the due date advanced by one interval.
 
 set -eu
@@ -16,7 +16,7 @@ detect_date_flavor
 
 cmd_add "Take out the trash due:2026-06-29 repeat:daily" >/dev/null
 before_count=$(awk 'END{print NR}' "$TODO_FILE")
-cmd_done 1 >/dev/null
+cmd_complete 1 >/dev/null
 after_count=$(awk 'END{print NR}' "$TODO_FILE")
 assert_eq "$((before_count + 1))" "$after_count" "repeat:daily: a new occurrence is appended"
 
@@ -33,7 +33,7 @@ assert_match "Take out the trash" "$next" "repeat:daily: description carried ove
 
 cmd_add "Water the plants due:2026-06-29 repeat:weekly" >/dev/null
 id=$(awk 'END{print NR}' "$TODO_FILE")
-cmd_done "$id" >/dev/null
+cmd_complete "$id" >/dev/null
 next=$(line_at $((id + 1)))
 assert_match "due:2026-07-06" "$next" "repeat:weekly: due date advanced by 7 days"
 
@@ -41,7 +41,7 @@ assert_match "due:2026-07-06" "$next" "repeat:weekly: due date advanced by 7 day
 
 cmd_add "Pay rent due:2026-06-29 repeat:monthly +Home" >/dev/null
 id=$(awk 'END{print NR}' "$TODO_FILE")
-cmd_done "$id" >/dev/null
+cmd_complete "$id" >/dev/null
 next=$(line_at $((id + 1)))
 assert_match "due:2026-07-29" "$next" "repeat:monthly: due date advanced by one month"
 assert_match "\+Home" "$next" "repeat:monthly: project carried over"
@@ -50,7 +50,7 @@ assert_match "\+Home" "$next" "repeat:monthly: project carried over"
 
 cmd_add "Renew passport due:2026-06-29 repeat:yearly" >/dev/null
 id=$(awk 'END{print NR}' "$TODO_FILE")
-cmd_done "$id" >/dev/null
+cmd_complete "$id" >/dev/null
 next=$(line_at $((id + 1)))
 assert_match "due:2027-06-29" "$next" "repeat:yearly: due date advanced by one year"
 
@@ -61,7 +61,7 @@ id=$(awk 'END{print NR}' "$TODO_FILE")
 parse_line "$(line_at "$id")"
 P_PRIORITY="B"
 replace_line_at "$id" "$(format_line)"
-cmd_done "$id" >/dev/null
+cmd_complete "$id" >/dev/null
 next=$(line_at $((id + 1)))
 assert_match "^\(B\) " "$next" "repeat: priority carried over to next occurrence"
 
@@ -70,7 +70,7 @@ assert_match "^\(B\) " "$next" "repeat: priority carried over to next occurrence
 cmd_add "One-off errand due:2026-06-29" >/dev/null
 id=$(awk 'END{print NR}' "$TODO_FILE")
 before_count=$(awk 'END{print NR}' "$TODO_FILE")
-cmd_done "$id" >/dev/null
+cmd_complete "$id" >/dev/null
 after_count=$(awk 'END{print NR}' "$TODO_FILE")
 assert_eq "$before_count" "$after_count" "non-repeating task: no new occurrence appended"
 

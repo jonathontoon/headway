@@ -32,7 +32,7 @@ assert_match "Follow up" "$apollo_out" "project: second +Apollo task present"
 
 code=0
 (cmd_project "NotAProject" >/dev/null 2>&1) || code=$?
-assert_exit_code "1" "$code" "project: rejects argument without leading +"
+assert_exit_code "2" "$code" "project: rejects argument whose shape isn't +X or <id>"
 
 teardown_sandbox
 report_and_exit

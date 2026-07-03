@@ -22,7 +22,7 @@ cmd_add "Call the accountant due:today @calls" >/dev/null
 cmd_add "Pay overdue invoice due:$yesterday_d +Bills" >/dev/null
 cmd_add "Follow up +Apollo" >/dev/null
 
-# Two completed entries appended directly (cmd_done not implemented yet),
+# Two completed entries appended directly (bypassing cmd_complete),
 # with distinct completion dates to exercise logbook's descending sort.
 older_done=$(date_add_days "$today_d" -5)
 newer_done=$(date_add_days "$today_d" -2)

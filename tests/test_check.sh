@@ -15,7 +15,7 @@ detect_date_flavor
 
 cmd_add "Book flights to Lisbon" >/dev/null
 cmd_add "Write project brief +Apollo due:2026-07-10 @deepwork" >/dev/null
-cmd_done 2 >/dev/null
+cmd_complete 2 >/dev/null
 
 code=0
 (cmd_check >/dev/null 2>&1) || code=$?

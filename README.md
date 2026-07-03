@@ -127,7 +127,7 @@ headway $ add "Call the accountant due:2026-06-30 @calls"
 added 3: 2026-06-30 Call the accountant due:2026-06-30 @calls
 headway $ today
 3: 2026-06-30 Call the accountant due:2026-06-30 @calls
-headway $ done 3
+headway $ complete 3
 completed 3: x 2026-06-30 2026-06-30 Call the accountant due:2026-06-30 @calls
 headway $ inbox
 1: 2026-06-30 Book flights to Lisbon
@@ -211,22 +211,31 @@ headway a  "..."            # shorthand
 ### Completing tasks
 
 ```bash
-headway done <id>           # mark done, preserving priority as pri:A
-headway undo <id>           # unmark, restoring (A) priority if present
+headway complete <id> [<id>...]   # mark done, preserving priority as pri:A
+headway undo <id> [<id>...]       # unmark, restoring (A) priority if present
 ```
+
+Both `complete` and `undo` accept multiple ids in one call. All ids are validated up front, so a bad id anywhere in the list aborts the whole batch — the file is never left half-updated.
 
 ### Editing tasks
 
 ```bash
-headway edit <id>           # open task in $EDITOR
-headway edit <id> <text>    # replace task line directly, no editor
-headway due <id> YYYY-MM-DD # set or update due date
-headway due <id> today      # convenience shorthand — writes today's actual date
-headway move <id> +Project  # move to a project
-headway priority <id> A     # set priority A–Z (or 'none')
-headway tag <id> @tagname   # add a tag
-headway rm <id>             # delete task permanently
+headway edit <id>                 # open task in $EDITOR
+headway edit <id> <text>          # replace task line directly, no editor
+headway due <id> YYYY-MM-DD       # set or update due date
+headway due <id> today            # convenience shorthand — writes today's actual date
+headway due <id> none             # clear the due date
+headway priority <id> A           # set priority A–Z (or 'none')
+headway tag <id> @tagname         # add a tag
+headway tag <id> -@tagname        # remove a tag
+headway tag <id> none             # clear all tags
+headway project <id> +Project     # assign task to a project
+headway project <id> none         # clear the project
+headway show <id>                 # print a labelled detail block
+headway delete <id> [<id>...]     # delete permanently (prompts unless -y)
 ```
+
+`delete` accepts multiple ids and deletes in descending id order so renumbering doesn't invalidate later ids in the same call. Add `-y` / `--yes` at any position (or set `CONFIRM_DELETE=false` in the config) to skip the confirmation prompt.
 
 ### Listing and filtering
 
@@ -284,8 +293,8 @@ THEME_REPEAT=34               # repeat:INTERVAL                 — default: blu
 THEME_DONE=2                  # whole line, once done           — default: dim
 
 # Behaviour
-AUTO_ARCHIVE=false           # if true, headway done moves tasks to done.txt immediately
-CONFIRM_DELETE=true          # prompt before headway rm — recommended
+AUTO_ARCHIVE=false           # if true, headway complete moves tasks to done.txt immediately
+CONFIRM_DELETE=true          # prompt before headway delete — recommended (override per-call with -y/--yes)
 ```
 
 Theme values are raw SGR parameter codes — the part between `\033[` and

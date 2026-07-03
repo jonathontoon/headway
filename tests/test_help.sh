@@ -34,7 +34,7 @@ done
 
 # --- -h/--help on subcommands ----------------------------------------------
 
-for cmd in add done undo edit due move priority tag rm list inbox today \
+for cmd in add complete undo edit due priority tag delete show list inbox today \
 	upcoming someday logbook projects project archive stats check; do
 	for flag in -h --help; do
 		code=0
@@ -55,8 +55,8 @@ assert_eq "$before" "$after" "add --help: does not mutate TODO_FILE"
 code=0; (: >"$TODO_FILE"; $HW add >/dev/null 2>&1) || code=$?
 assert_exit_code "2" "$code" "add (no args): exit 2 for usage error"
 
-code=0; (: >"$TODO_FILE"; $HW done >/dev/null 2>&1) || code=$?
-assert_exit_code "2" "$code" "done (no args): exit 2"
+code=0; (: >"$TODO_FILE"; $HW complete >/dev/null 2>&1) || code=$?
+assert_exit_code "2" "$code" "complete (no args): exit 2"
 
 code=0; (: >"$TODO_FILE"; $HW due 1 >/dev/null 2>&1) || code=$?
 assert_exit_code "2" "$code" "due (missing date): exit 2"
@@ -67,16 +67,16 @@ assert_exit_code "2" "$code" "priority (no args): exit 2"
 # Runtime errors stay at exit 1 (distinct from usage errors)
 : >"$TODO_FILE"
 $HW add "some task" >/dev/null
-code=0; $HW done abc >/dev/null 2>&1 || code=$?
-assert_exit_code "1" "$code" "done abc: runtime error stays exit 1"
+code=0; $HW complete abc >/dev/null 2>&1 || code=$?
+assert_exit_code "1" "$code" "complete abc: runtime error stays exit 1"
 
 # --- unknown command: exit 2 + typo suggestion -----------------------------
 
 code=0
-out=$($HW dne 2>&1) || code=$?
+out=$($HW dlete 2>&1) || code=$?
 assert_exit_code "2" "$code" "unknown command: exit 2"
-assert_match "unknown command: dne" "$out" "unknown command: names the input"
-assert_match "did you mean 'done'\\?" "$out" "unknown command: suggests near match"
+assert_match "unknown command: dlete" "$out" "unknown command: names the input"
+assert_match "did you mean 'delete'\\?" "$out" "unknown command: suggests near match"
 
 # Bogus command with no close match: still exit 2, no suggestion line.
 code=0
@@ -95,18 +95,17 @@ assert_eq "0" "$(printf '%s\n' "$out" | grep -c 'Usage: headway <command>')" \
 
 rm -f "$TODO_FILE"
 code=0
-out=$($HW done 5 2>&1) || code=$?
-assert_exit_code "1" "$code" "done <id> on missing file: exit 1"
-assert_match "no tasks yet" "$out" "done <id> on missing file: friendly hint"
+out=$($HW complete 5 2>&1) || code=$?
+assert_exit_code "1" "$code" "complete <id> on missing file: exit 1"
+assert_match "no tasks yet" "$out" "complete <id> on missing file: friendly hint"
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c "awk:")" \
-	"done <id> on missing file: no raw awk error"
+	"complete <id> on missing file: no raw awk error"
 
-for cmd in undo edit due move priority tag rm; do
+for cmd in undo edit due priority tag delete show; do
 	# Give each command enough positional args to reach require_todo_file
 	# without tripping the usage-error path first.
 	case "$cmd" in
 		due) args="1 2026-01-01" ;;
-		move) args="1 +X" ;;
 		priority) args="1 A" ;;
 		tag) args="1 @x" ;;
 		*) args="1" ;;
@@ -118,6 +117,13 @@ for cmd in undo edit due move priority tag rm; do
 	assert_eq "0" "$(printf '%s\n' "$out" | grep -c "awk:")" \
 		"$cmd on missing file: no raw awk error"
 done
+
+# project <id> +X (set-mode) also goes through require_todo_file.
+rm -f "$TODO_FILE"
+code=0
+out=$($HW project 1 +X 2>&1) || code=$?
+assert_exit_code "1" "$code" "project <id> on missing file: exit 1"
+assert_match "no tasks yet" "$out" "project <id> on missing file: friendly hint"
 
 teardown_sandbox
 report_and_exit

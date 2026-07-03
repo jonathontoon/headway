@@ -1,5 +1,5 @@
 #!/bin/sh
-# Tests for hw edit/due/move/priority/tag/rm.
+# Tests for hw edit/due/project/priority/tag/delete.
 
 set -eu
 
@@ -26,17 +26,26 @@ code=0
 (cmd_due 1 not-a-date >/dev/null 2>&1) || code=$?
 assert_exit_code "1" "$code" "due: invalid date is rejected"
 
-# --- move: replaces project membership -------------------------------------
+# --- project <id> +X: replaces project membership --------------------------
 
 cmd_add "Sketch the new logo +OldProject" >/dev/null
-cmd_move 2 +Branding >/dev/null
+cmd_project 2 +Branding >/dev/null
 line2=$(line_at 2)
-assert_match "\+Branding" "$line2" "move: new project present"
-assert_eq "" "$(printf '%s\n' "$line2" | grep -o '+OldProject' || true)" "move: old project removed"
+assert_match "\+Branding" "$line2" "project <id>: new project present"
+assert_eq "" "$(printf '%s\n' "$line2" | grep -o '+OldProject' || true)" "project <id>: old project removed"
 
 code=0
-(cmd_move 2 NotAProject >/dev/null 2>&1) || code=$?
-assert_exit_code "1" "$code" "move: rejects argument without leading +"
+(cmd_project 2 NotAProject >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "project <id>: rejects value without leading +"
+
+# --- project <id> none: clears project --------------------------------------
+
+cmd_project 2 none >/dev/null
+line2=$(line_at 2)
+assert_eq "" "$(printf '%s\n' "$line2" | grep -o '+Branding' || true)" "project <id> none: project cleared"
+
+# Restore the project so subsequent tests reference the same task shape.
+cmd_project 2 +Branding >/dev/null
 
 # --- priority: set, clear, completed-task targets pri: ----------------------
 
@@ -53,13 +62,13 @@ code=0
 (cmd_priority 3 ZZ >/dev/null 2>&1) || code=$?
 assert_exit_code "1" "$code" "priority: rejects multi-char value"
 
-cmd_done 3 >/dev/null
+cmd_complete 3 >/dev/null
 cmd_priority 3 B >/dev/null
 line3=$(line_at 3)
 assert_match "pri:B" "$line3" "priority: completed task gets pri: extension"
 assert_match "^x " "$line3" "priority: completed task stays marked done"
 
-# --- tag: idempotent add -----------------------------------------------------
+# --- tag: idempotent add, remove via -@, clear via none ---------------------
 
 cmd_add "Plan the offsite" >/dev/null
 cmd_tag 4 @planning >/dev/null
@@ -73,18 +82,35 @@ assert_eq "$before_tag_line" "$after_tag_line" "tag: re-adding an existing tag i
 
 code=0
 (cmd_tag 4 notatag >/dev/null 2>&1) || code=$?
-assert_exit_code "1" "$code" "tag: rejects argument without leading @"
+assert_exit_code "1" "$code" "tag: rejects value without leading @/-@"
 
-# --- rm: deletes the line, shifting ids -------------------------------------
+cmd_tag 4 @followup >/dev/null
+cmd_tag 4 -@planning >/dev/null
+line4=$(line_at 4)
+assert_eq "" "$(printf '%s\n' "$line4" | grep -o '@planning' || true)" "tag -@: removes named tag"
+assert_match "@followup" "$line4" "tag -@: leaves other tags intact"
+
+cmd_tag 4 none >/dev/null
+line4=$(line_at 4)
+assert_eq "" "$(printf '%s\n' "$line4" | grep -oE '@[A-Za-z]+' || true)" "tag none: all tags cleared"
+
+# --- due <id> none: clears due date ----------------------------------------
+
+cmd_due 1 2026-08-15 >/dev/null
+cmd_due 1 none >/dev/null
+line1=$(line_at 1)
+assert_eq "" "$(printf '%s\n' "$line1" | grep -o 'due:' || true)" "due none: due date cleared"
+
+# --- delete: single, prompt-aware -------------------------------------------
 
 before_count=$(awk 'END{print NR}' "$TODO_FILE")
 target_line=$(line_at 1)
-cmd_rm 1 >/dev/null
+cmd_delete 1 >/dev/null
 after_count=$(awk 'END{print NR}' "$TODO_FILE")
-assert_eq "$((before_count - 1))" "$after_count" "rm: file shrinks by one line"
+assert_eq "$((before_count - 1))" "$after_count" "delete: file shrinks by one line"
 new_line1=$(line_at 1)
 assert_eq "$(printf '%s' "$target_line" | grep -c 'Sketch the new logo' || true)" "0" "sanity: removed task is gone from line 1"
-assert_match "Sketch the new logo" "$new_line1" "rm: subsequent task shifts up to id 1"
+assert_match "Sketch the new logo" "$new_line1" "delete: subsequent task shifts up to id 1"
 
 # --- edit: round trip through a fake $EDITOR ---------------------------------
 
