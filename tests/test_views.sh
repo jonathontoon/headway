@@ -29,12 +29,19 @@ newer_done=$(date_add_days "$today_d" -2)
 printf 'x %s %s Archive old emails +Apollo\n' "$older_done" "$today_d" >>"$TODO_FILE"
 printf 'x %s %s Clear out downloads folder\n' "$newer_done" "$today_d" >>"$TODO_FILE"
 
-# --- list: all incomplete tasks, file order -------------------------------
+# --- list: all incomplete tasks, grouped by bucket ------------------------
 
 list_out=$(cmd_list)
-assert_eq "5" "$(printf '%s\n' "$list_out" | wc -l | tr -d ' ')" "list: shows all 5 incomplete tasks"
+task_lines=$(printf '%s\n' "$list_out" | grep -cE '^[0-9]+:' || true)
+assert_eq "5" "$task_lines" "list: shows all 5 incomplete tasks"
 assert_match "^1: .*Book flights to Lisbon" "$list_out" "list: includes task 1"
 assert_match "^5: .*Follow up" "$list_out" "list: includes task 5"
+# The mixed-bucket fixture (overdue, today, upcoming, someday) triggers
+# the grouped-list section headers.
+assert_match "^Overdue$"   "$list_out" "list: Overdue section header present"
+assert_match "^Due today$" "$list_out" "list: Due today section header present"
+assert_match "^Upcoming$"  "$list_out" "list: Upcoming section header present"
+assert_match "^Someday$"   "$list_out" "list: Someday section header present"
 
 # --- inbox: tasks with no project, regardless of due ----------------------
 

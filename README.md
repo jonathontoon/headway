@@ -173,7 +173,10 @@ headway $ exit
 `headway shell` has real line editing on a real terminal, all built in
 pure POSIX `sh` — no `bash`, no `readline`, no external dependency:
 Left/Right/Home/End move the cursor, Backspace/Delete edit in place, and
-Up/Down recall previous commands. History is saved to a file
+Up/Down recall previous commands. **Tab** completes the partial token at
+the cursor against command names (first token), `+Project` names, or
+`@tag` names — a single match fills the token and adds a trailing
+space; multiple matches print below the prompt. History is saved to a file
 (`~/.config/headway/history` by default, or `$HEADWAY_HISTORY`) and
 persists across sessions. Page Up/Down jump 10 history entries at a time
 rather than doing terminal scrollback, since raw mode intercepts those
@@ -240,11 +243,15 @@ headway delete <id> [<id>...]     # delete permanently (prompts unless -y)
 ### Listing and filtering
 
 ```bash
-headway list                  # list all incomplete tasks
-headway list +LaunchBlog      # filter by project
+headway list                  # all incomplete tasks, grouped by bucket
+headway list +LaunchBlog      # filter by project (flat, no grouping)
 headway list @deepwork        # filter by tag
 headway list "keyword"        # full-text search
 ```
+
+`headway list` (with no filter) groups its output into **Overdue**, **Due today**, **Upcoming**, and **Someday** sections. Section headers appear only when at least two buckets are populated — a list that happens to be all-someday or all-overdue still prints flat.
+
+Dates in any view carry an inline relative-date hint after `due:DATE`: `(yesterday)`, `(today)`, `(tomorrow)`, or a weekday name (`monday`..`sunday`) for dates 2–7 days out. Display-only; the `todo.txt` file is unchanged.
 
 ### Projects
 

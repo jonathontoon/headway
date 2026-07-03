@@ -23,6 +23,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Usage errors (missing required args, unknown command) now exit **2**; runtime errors continue to exit **1**. Scripts can distinguish "you called it wrong" from "the operation failed".
 - Commands run on a fresh install (no `~/todo.txt` yet) print a friendly `no tasks yet - try 'headway add "..."'` message instead of leaking a raw `awk: can't open file`.
 
+### Added (Tier 3)
+
+- Relative-date labels in view output: `due:DATE` now shows an inline hint of `(yesterday)`, `(today)`, `(tomorrow)`, or a weekday name (`monday`..`sunday`) for dates 2–7 days out. Display-only — the todo.txt file is never touched. Weekday-name labels always refer to the next occurrence of that weekday, so `monday` a week from Monday points seven days out (never at today, which is already `today`).
+- `list` (without a filter) now groups tasks into Overdue / Due today / Upcoming / Someday sections with headers between them. Section headers appear only when at least two buckets are populated — a single-bucket list still prints flat. Filtered `list +Project` / `list @tag` / `list keyword` stays flat as before.
+- Tab completion in `headway shell`: command names (first token), `+Project` names, and `@tag` names. Single match fills and adds a trailing space; multiple matches list candidates and reprint the prompt.
+
+### Fixed
+
+- BSD `date` arithmetic: positive offsets are now signed explicitly with `+`. Previously an unsigned offset like `-v1d` was interpreted as "set day-of-month to 1" instead of "add one day", producing wrong dates for `+Nd` shorthand, repeat: bookkeeping, and any forward arithmetic on macOS or other BSD systems. This also resolves the previously known-failing `tests/test_repeat.sh` on macOS.
+
 ### Renamed (breaking)
 
 - `done` → `complete` — avoids collision with the POSIX shell keyword used to close `for`/`while` loops.

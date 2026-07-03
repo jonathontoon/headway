@@ -208,13 +208,78 @@ greeting() {
 	fi
 }
 
+# date_weekday_name <YYYY-MM-DD>
+# Prints the lowercase full weekday name (e.g. "monday", "sunday") for the
+# given date. Flavor-specific because BSD `date` cannot parse a bare
+# YYYY-MM-DD with `-d`, and BusyBox `date` needs the -u/-d combination.
+date_weekday_name() {
+	case "$DATE_FLAVOR" in
+	gnu) date -d "$1" "+%A" | tr 'A-Z' 'a-z' ;;
+	bsd) date -j -f "%Y-%m-%d" "$1" "+%A" | tr 'A-Z' 'a-z' ;;
+	busybox) date -u -d "$1" "+%A" | tr 'A-Z' 'a-z' ;;
+	esac
+}
+
+# format_due_hint <YYYY-MM-DD>
+# Emits a short relative label for a due date compared to today. Returns:
+#   "yesterday"           for due == today - 1
+#   "today"               for due == today
+#   "tomorrow"            for due == today + 1
+#   "monday".."sunday"    for due in today+2..today+7 (the next occurrence
+#                         of that weekday; when today's own weekday name
+#                         would apply it points seven days out, never at
+#                         today - "today" already covers same-day)
+# Anything else: prints nothing.
+#
+# Display-only. Callers wrap the returned label in parens after due:DATE;
+# the raw todo.txt is never touched.
+format_due_hint() {
+	_fdh_date="$1"
+	_fdh_today=$(today)
+	if [ "$_fdh_date" = "$_fdh_today" ]; then
+		printf 'today\n'
+		return 0
+	fi
+	if [ "$_fdh_date" = "$(date_add_days "$_fdh_today" -1)" ]; then
+		printf 'yesterday\n'
+		return 0
+	fi
+	if [ "$_fdh_date" = "$(date_add_days "$_fdh_today" 1)" ]; then
+		printf 'tomorrow\n'
+		return 0
+	fi
+	_fdh_i=2
+	while [ "$_fdh_i" -le 7 ]; do
+		if [ "$_fdh_date" = "$(date_add_days "$_fdh_today" "$_fdh_i")" ]; then
+			date_weekday_name "$_fdh_date"
+			return 0
+		fi
+		_fdh_i=$((_fdh_i + 1))
+	done
+}
+
+# bsd_signed_offset <offset>
+# Prepends `+` to an unsigned offset so BSD `date -v` reads it as a delta
+# rather than an absolute-field set (`-v1d` sets day-of-month to 1;
+# `-v+1d` adds one day). Passes explicitly-signed offsets through
+# unchanged.
+bsd_signed_offset() {
+	case "$1" in
+	-* | +*) printf '%s\n' "$1" ;;
+	*) printf '+%s\n' "$1" ;;
+	esac
+}
+
 # date_add_days <YYYY-MM-DD> <signed-offset>
 date_add_days() {
 	base="$1"
 	offset="$2"
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$base + $offset day" "+%Y-%m-%d" ;;
-	bsd) date -j -v"${offset}"d -f "%Y-%m-%d" "$base" "+%Y-%m-%d" ;;
+	bsd)
+		_dad_o=$(bsd_signed_offset "$offset")
+		date -j -v"${_dad_o}"d -f "%Y-%m-%d" "$base" "+%Y-%m-%d"
+		;;
 	busybox)
 		_dad_epoch=$(date -u -d "$base" "+%s") || die "invalid date: $base"
 		_dad_epoch=$((_dad_epoch + offset * 86400))
@@ -231,7 +296,10 @@ date_add_months() {
 	offset="$2"
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$base + $offset month" "+%Y-%m-%d" ;;
-	bsd) date -j -v"${offset}"m -f "%Y-%m-%d" "$base" "+%Y-%m-%d" ;;
+	bsd)
+		_dam_o=$(bsd_signed_offset "$offset")
+		date -j -v"${_dam_o}"m -f "%Y-%m-%d" "$base" "+%Y-%m-%d"
+		;;
 	busybox)
 		_dam_y=${base%%-*}
 		_dam_rest=${base#*-}
@@ -258,7 +326,10 @@ date_add_years() {
 	offset="$2"
 	case "$DATE_FLAVOR" in
 	gnu) date -d "$base + $offset year" "+%Y-%m-%d" ;;
-	bsd) date -j -v"${offset}"y -f "%Y-%m-%d" "$base" "+%Y-%m-%d" ;;
+	bsd)
+		_day_o=$(bsd_signed_offset "$offset")
+		date -j -v"${_day_o}"y -f "%Y-%m-%d" "$base" "+%Y-%m-%d"
+		;;
 	busybox)
 		_day_y=${base%%-*}
 		_day_rest=${base#*-}
@@ -703,6 +774,42 @@ collect_view_rows() {
 	done <"$TODO_FILE"
 }
 
+# emit_row <id> <raw-line> <use-color>
+# Formats a single task row for display: applies colorize_line when
+# use-color is "true", parses the raw line to pull P_DUE for a relative
+# hint (via format_due_hint), and honors SHOW_IDS. Shared by render_view
+# and render_grouped_view so the two never drift.
+emit_row() {
+	_er_id="$1"
+	_er_raw="$2"
+	_er_use_color="$3"
+
+	if [ "$_er_use_color" = "true" ]; then
+		_er_display=$(colorize_line "$_er_raw")
+	else
+		_er_display="$_er_raw"
+	fi
+
+	parse_line "$_er_raw"
+	_er_hint=""
+	if [ -n "$P_DUE" ]; then
+		_er_h=$(format_due_hint "$P_DUE")
+		if [ -n "$_er_h" ]; then
+			if [ "$_er_use_color" = "true" ]; then
+				_er_hint=" $(sgr_wrap "$THEME_DATE" "($_er_h)")"
+			else
+				_er_hint=" ($_er_h)"
+			fi
+		fi
+	fi
+
+	if [ "${SHOW_IDS:-true}" = "false" ]; then
+		printf '%s%s\n' "$_er_display" "$_er_hint"
+	else
+		printf '%s: %s%s\n' "$_er_id" "$_er_display" "$_er_hint"
+	fi
+}
+
 # render_view <which> [filter]
 # Prints "<id>: <line>" for each task in view <which>, sorted ascending by
 # sortkey (today/upcoming: due date; logbook: completion date, descending;
@@ -725,14 +832,7 @@ render_view() {
 	use_color && _rv_use_color=true
 
 	printf '%s\n' "$_rv_sorted" | while IFS="$_rv_tab" read -r _ _rv_id _rv_line; do
-		if [ "$_rv_use_color" = "true" ]; then
-			_rv_line=$(colorize_line "$_rv_line")
-		fi
-		if [ "${SHOW_IDS:-true}" = "false" ]; then
-			printf '%s\n' "$_rv_line"
-		else
-			printf '%s: %s\n' "$_rv_id" "$_rv_line"
-		fi
+		emit_row "$_rv_id" "$_rv_line" "$_rv_use_color"
 	done
 }
 
@@ -1188,10 +1288,89 @@ cmd_show() {
 	return 0
 }
 
+# render_grouped_list
+# Emits every incomplete task, bucketed into Overdue / Due today /
+# Upcoming / Someday sections. Section headers appear only when at least
+# two buckets have content - a list that happens to be all-someday or
+# all-overdue still prints flat, unadorned, matching the pre-grouping
+# behaviour so it doesn't feel over-decorated for the common case.
+render_grouped_list() {
+	[ -f "$TODO_FILE" ] || return 0
+
+	_rgl_today=$(today)
+	_rgl_tab=$(printf '\t')
+	_rgl_use_color=false
+	use_color && _rgl_use_color=true
+
+	_rgl_od=$(mktemp) || die "mktemp failed"
+	_rgl_td=$(mktemp) || { rm -f "$_rgl_od"; die "mktemp failed"; }
+	_rgl_up=$(mktemp) || { rm -f "$_rgl_od" "$_rgl_td"; die "mktemp failed"; }
+	_rgl_sd=$(mktemp) || { rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up"; die "mktemp failed"; }
+
+	_rgl_id=0
+	while IFS= read -r _rgl_raw || [ -n "$_rgl_raw" ]; do
+		_rgl_id=$((_rgl_id + 1))
+		[ -n "$_rgl_raw" ] || continue
+		parse_line "$_rgl_raw"
+		[ "$P_DONE" = "false" ] || continue
+
+		if [ -z "$P_DUE" ]; then
+			_rgl_bucket=$_rgl_sd
+			_rgl_key=$(printf '%05d' "$_rgl_id")
+		elif expr "$P_DUE" '<' "$_rgl_today" >/dev/null; then
+			_rgl_bucket=$_rgl_od
+			_rgl_key="$P_DUE"
+		elif [ "$P_DUE" = "$_rgl_today" ]; then
+			_rgl_bucket=$_rgl_td
+			_rgl_key="$P_DUE"
+		else
+			_rgl_bucket=$_rgl_up
+			_rgl_key="$P_DUE"
+		fi
+		printf '%s\t%s\t%s\n' "$_rgl_key" "$_rgl_id" "$_rgl_raw" >>"$_rgl_bucket"
+	done <"$TODO_FILE"
+
+	_rgl_populated=0
+	for _rgl_f in "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"; do
+		[ -s "$_rgl_f" ] && _rgl_populated=$((_rgl_populated + 1))
+	done
+	_rgl_show_headers=false
+	[ "$_rgl_populated" -ge 2 ] && _rgl_show_headers=true
+
+	_rgl_first=true
+	for _rgl_pair in "Overdue|$_rgl_od" "Due today|$_rgl_td" "Upcoming|$_rgl_up" "Someday|$_rgl_sd"; do
+		_rgl_header="${_rgl_pair%%|*}"
+		_rgl_file="${_rgl_pair#*|}"
+		[ -s "$_rgl_file" ] || continue
+
+		if [ "$_rgl_show_headers" = "true" ]; then
+			[ "$_rgl_first" = "false" ] && printf '\n'
+			_rgl_h="$_rgl_header"
+			[ "$_rgl_use_color" = "true" ] && _rgl_h=$(sgr_wrap "$THEME_DATE" "$_rgl_header")
+			printf '%s\n' "$_rgl_h"
+		fi
+		_rgl_first=false
+
+		sort -t "$_rgl_tab" -k1,1 "$_rgl_file" | while IFS="$_rgl_tab" read -r _ _rgl_rid _rgl_rline; do
+			emit_row "$_rgl_rid" "$_rgl_rline" "$_rgl_use_color"
+		done
+	done
+
+	rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"
+}
+
 # cmd_list [+Project|@tag|"keyword"]
+# With no filter, prints tasks grouped into Overdue / Due today / Upcoming
+# / Someday (headers appear only if two or more of those buckets have
+# entries). With a filter, prints a flat list - a targeted query wants
+# its results contiguous, not carved into sections.
 cmd_list() {
 	case "${1:-}" in -h | --help) printf 'usage: headway list [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "list" "${1:-}"
+	if [ "$#" -ge 1 ] && [ -n "$1" ]; then
+		render_view "list" "$1"
+	else
+		render_grouped_list
+	fi
 }
 # cmd_inbox [+Project|@tag|"keyword"] - incomplete tasks with no project
 cmd_inbox() {
@@ -1863,6 +2042,126 @@ _rli_read_byte() {
 	_rli_byte="${_rli_raw%X}"
 }
 
+# _hw_shell_commands
+# The command names the interactive shell recognises, for tab completion.
+# Space-separated so it's easy to keep in sync with dispatch_cmd's case;
+# the shell also honours help/exit/quit itself.
+_hw_shell_commands() {
+	printf '%s' "add a complete undo edit due priority tag delete show list inbox today upcoming someday logbook projects project archive stats check help exit quit"
+}
+
+# _hw_tags_in_todo
+# Distinct @tag tokens present in TODO_FILE, sorted, one per line. Used
+# by _rli_tab for @-completion. Empty output if the file doesn't exist or
+# has no @tags.
+_hw_tags_in_todo() {
+	[ -f "$TODO_FILE" ] || return 0
+	awk '
+	{
+		if (substr($0, 1, 2) == "x ") next
+		n = split($0, toks, " ")
+		for (i = 1; i <= n; i++) {
+			t = toks[i]
+			if (substr(t, 1, 1) == "@" && length(t) > 1) print t
+		}
+	}' "$TODO_FILE" | sort -u
+}
+
+# _rli_tab
+# Complete the partial token at end of $_rli_before against commands
+# (first token), projects (starts with +), or tags (starts with @). One
+# match: fill the buffer and add a trailing space. Multiple matches:
+# print them below the current prompt line; the main loop's _rli_redraw
+# then reprints the prompt and buffer on a fresh line. Zero matches:
+# silent no-op.
+#
+# Deliberately does nothing when the cursor is mid-line ($_rli_after
+# non-empty) - completing between existing characters is ergonomically
+# fiddly and not worth the complexity in v1.
+_rli_tab() {
+	[ -z "$_rli_after" ] || return 0
+
+	# Extract the trailing partial (non-space chars at end of _rli_before)
+	# and $_rli_tab_pre (everything before it, whitespace intact).
+	_rli_tab_partial=""
+	_rli_tab_pre="$_rli_before"
+	while [ -n "$_rli_tab_pre" ]; do
+		_rli_tab_lc="${_rli_tab_pre#"${_rli_tab_pre%?}"}"
+		[ "$_rli_tab_lc" = " " ] && break
+		_rli_tab_partial="$_rli_tab_lc$_rli_tab_partial"
+		_rli_tab_pre="${_rli_tab_pre%?}"
+	done
+
+	# No partial (empty buffer or trailing space): would flood with every
+	# candidate; require the user to type at least one character first.
+	[ -n "$_rli_tab_partial" ] || return 0
+
+	# "First token" iff $_rli_tab_pre contains no non-space char.
+	_rli_tab_hasprefix=false
+	_rli_tab_p="$_rli_tab_pre"
+	while [ -n "$_rli_tab_p" ]; do
+		_rli_tab_pc="${_rli_tab_p#"${_rli_tab_p%?}"}"
+		if [ "$_rli_tab_pc" != " " ]; then
+			_rli_tab_hasprefix=true
+			break
+		fi
+		_rli_tab_p="${_rli_tab_p%?}"
+	done
+
+	# Classify.
+	case "$_rli_tab_partial" in
+	+*) _rli_tab_src="projects" ;;
+	@*) _rli_tab_src="tags" ;;
+	*)
+		[ "$_rli_tab_hasprefix" = "false" ] || return 0
+		_rli_tab_src="commands"
+		;;
+	esac
+
+	case "$_rli_tab_src" in
+	projects) _rli_tab_cands=$(cmd_projects 2>/dev/null || true) ;;
+	tags) _rli_tab_cands=$(_hw_tags_in_todo) ;;
+	commands) _rli_tab_cands=$(_hw_shell_commands | tr ' ' '\n') ;;
+	esac
+	[ -n "$_rli_tab_cands" ] || return 0
+
+	# Filter to prefix matches, tallying as we go.
+	_rli_tab_matches=""
+	_rli_tab_mcount=0
+	_rli_tab_first=""
+	_rli_tab_ifs="$IFS"
+	IFS='
+'
+	for _rli_tab_c in $_rli_tab_cands; do
+		[ -n "$_rli_tab_c" ] || continue
+		case "$_rli_tab_c" in
+		"$_rli_tab_partial"*)
+			_rli_tab_mcount=$((_rli_tab_mcount + 1))
+			[ -z "$_rli_tab_first" ] && _rli_tab_first="$_rli_tab_c"
+			_rli_tab_matches="${_rli_tab_matches}${_rli_tab_c}
+"
+			;;
+		esac
+	done
+	IFS="$_rli_tab_ifs"
+
+	if [ "$_rli_tab_mcount" -eq 0 ]; then
+		return 0
+	elif [ "$_rli_tab_mcount" -eq 1 ]; then
+		# Rebuild _rli_before as (prefix minus partial) + match + " ".
+		# Reconstructing from $_rli_tab_pre avoids ${var%$pat} - the
+		# partial can contain glob metacharacters.
+		_rli_before="${_rli_tab_pre}${_rli_tab_first} "
+	else
+		# Multi-match: list candidates below the current prompt. The main
+		# loop's _rli_redraw then reprints prompt+buffer on a fresh line.
+		printf '\n' >&2
+		printf '%s' "$_rli_tab_matches" | while IFS= read -r _rli_tab_m; do
+			[ -n "$_rli_tab_m" ] && printf '  %s\n' "$_rli_tab_m" >&2
+		done
+	fi
+}
+
 # _rli_backspace / _rli_forward_delete
 # Delete the character left of / at the cursor. No-ops at either edge.
 _rli_backspace() {
@@ -2010,6 +2309,7 @@ read_line_interactive() {
 	_rli_bs=$(printf '\010')
 	_rli_esc=$(printf '\033')
 	_rli_ctrld=$(printf '\004')
+	_rli_tab_byte=$(printf '\t')
 
 	trap '_rli_interrupted=true' INT
 
@@ -2041,6 +2341,9 @@ read_line_interactive() {
 			;;
 		"$_rli_del" | "$_rli_bs")
 			_rli_backspace
+			;;
+		"$_rli_tab_byte")
+			_rli_tab
 			;;
 		"$_rli_ctrld")
 			if [ -z "$_rli_before$_rli_after" ]; then
