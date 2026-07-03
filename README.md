@@ -382,16 +382,18 @@ For comparison, the original [todo.txt CLI](https://github.com/todotxt/todo.txt-
 
 ## Contributing
 
-`headway` is a single shell script. Read it — it's meant to be readable.
+`headway` is a single shell script — but the source lives split across `src/00-preamble.sh` through `src/09-main.sh`, one file per concern (helpers, date, parsing, views, commands, editor, shell, main). `headway.sh` is the concatenation, built by `make build`. It's committed so `curl | sh` and Homebrew keep working, and `make verify` catches drift.
 
 ```bash
 git clone https://github.com/jonathontoon/headway.git
 cd headway
-./headway.sh add "Fix the thing"   # run locally
-make test                          # run the test suite
+make build                         # regenerate headway.sh from src/*.sh
+./headway.sh                       # launch the shell locally
+make test                          # run the test suite (builds first)
+make verify                        # check that headway.sh matches src/*.sh
 ```
 
-Please open an issue before starting significant work. Keep pull requests focused and the dependency list at zero.
+Please open an issue before starting significant work. Edit `src/*.sh`, not `headway.sh` — the CI verify step will fail if the bundle is out of sync. Keep pull requests focused and the dependency list at zero.
 
 ---
 

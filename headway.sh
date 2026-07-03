@@ -658,6 +658,17 @@ colorize_line() {
 	printf '%s\n' "$_cl_out"
 }
 
+# report_change <verb> <id> <raw-line>
+# Prints the standard "<verb> <id>: <line>" confirmation that every
+# mutating command emits on success, colorising the line when use_color
+# is active. Single source of truth for that shape so `added`/`edited`/
+# `deleted`/etc. all format identically.
+report_change() {
+	_rc_display="$3"
+	use_color && _rc_display=$(colorize_line "$3")
+	printf '%s %s: %s\n' "$1" "$2" "$_rc_display"
+}
+
 # resolve_id <id>
 # Validates that <id> is a positive integer within the current line count
 # of TODO_FILE. Task IDs are simply 1-indexed line numbers - they are NOT
@@ -836,456 +847,6 @@ render_view() {
 	done
 }
 
-# ---------------------------------------------------------------------------
-# Usage
-# ---------------------------------------------------------------------------
-
-usage() {
-	cat <<EOF
-headway $HEADWAY_VERSION - a shell-based todo.txt task manager.
-
-Usage: headway              start the interactive shell
-       headway --help       print this help and exit
-       headway --version    print the version and exit
-
-headway runs as a shell: launch it with \`headway\`, then type commands
-at the prompt. There is no one-shot command mode.
-
-Every command below accepts \`--help\` for its own usage line.
-
-Task IDs are the task's current line number in TODO_FILE. They are NOT
-stable across edits - deleting or archiving a task shifts the IDs of
-every task below it.
-
-Adding:
-  add "text [+Project] [due:DATE] [@tag]"   add a task
-
-Completing:
-  complete <id> [<id>...]                   mark done (priority -> pri:A)
-  undo <id> [<id>...]                       unmark (restores (A) priority)
-
-Editing:
-  edit <id>                                 open task in \$EDITOR
-  edit <id> <text>                          replace task line directly
-  due <id> <DATE|none>                      set, update, or clear due date
-  priority <id> <A-Z|none>                  set or clear priority
-  tag <id> @tag                             add a tag
-  tag <id> -@tag                            remove a tag
-  tag <id> none                             clear all tags
-  project <id> +Project                     assign task to a project
-  project <id> none                         clear task's project
-  show <id>                                 print full detail for one task
-  delete <id> [<id>...]                     delete permanently
-
-Listing:
-  list [+Project|@tag|"keyword"]            list incomplete tasks (grouped)
-  inbox                                     tasks with no project
-  today                                     due today, plus overdue
-  upcoming                                  future-dated tasks
-  someday                                   tasks with no due date
-  logbook                                   completed tasks
-
-Projects:
-  projects                                  list all projects
-  project +Project                          show tasks in a project
-
-Maintenance:
-  archive                                   move completed tasks to DONE_FILE
-  stats                                     summary counts
-  check                                     verify TODO_FILE is well-formed
-
-Shell:
-  help                                      show this help
-  exit                                      end the shell session (also Ctrl-D)
-EOF
-}
-
-# ---------------------------------------------------------------------------
-# Commands (stubs - implemented incrementally)
-# ---------------------------------------------------------------------------
-
-# cmd_add <text> [+Project] [due:DATE] [@tag] [repeat:FREQ]
-# Resolves any due: shorthand to a real YYYY-MM-DD before writing, sets
-# the creation date to today, and appends the new canonical line to
-# TODO_FILE. Project/tag/due/repeat tokens may appear anywhere in <text>;
-# everything else becomes the description.
-cmd_add() {
-	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 1 ] || usage_die "$_u"
-	parse_line "$*"
-	P_DONE=false
-	P_PRIORITY=""
-	P_PRI_EXT=""
-	P_CREATION_DATE=$(today)
-	if [ -n "$P_DUE" ]; then
-		# explicit "|| exit 1" rather than relying on implicit set -e
-		# propagation: -e is silently disabled for an entire command
-		# (including nested command substitutions) whenever that
-		# command is itself the LHS of &&/||/if/while in an ancestor
-		# context, so callers further up the stack cannot be trusted
-		# to preserve it.
-		P_DUE=$(resolve_date_shorthand "$P_DUE") || exit 1
-	fi
-	[ -n "$P_DESC" ] || die "task description cannot be empty"
-
-	new_line=$(format_line)
-	printf '%s\n' "$new_line" >>"$TODO_FILE"
-	id=$(awk 'END { print NR }' "$TODO_FILE")
-	_display_line="$new_line"
-	use_color && _display_line=$(colorize_line "$new_line")
-	printf 'added %s: %s\n' "$id" "$_display_line"
-}
-# cmd_complete <id> [<id>...]
-# Marks one or more tasks done: for each, priority (if any) moves to a
-# trailing pri: extension, and the completion date is stamped alongside the
-# original creation date. If a task carries repeat:daily|weekly|monthly|yearly,
-# a new occurrence is appended with the due date advanced by one interval
-# from the completed task's due date (today's date if it had none).
-#
-# When multiple ids are given they are all resolved (and validated as still
-# open) before any are mutated - a later bad id aborts the whole batch, so
-# the file is never left half-updated.
-cmd_complete() {
-	_u='usage: headway complete <id> [<id>...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 1 ] || usage_die "$_u"
-	require_todo_file
-
-	# Resolve and pre-validate every id first so a bad one in position N
-	# doesn't leave positions 1..N-1 already applied.
-	for _cc_arg in "$@"; do
-		_cc_id=$(resolve_id "$_cc_arg") || exit 1
-		parse_line "$(line_at "$_cc_id")"
-		[ "$P_DONE" = "false" ] || die "task $_cc_id is already done"
-	done
-
-	for _cc_arg in "$@"; do
-		id=$(resolve_id "$_cc_arg")
-		raw=$(line_at "$id")
-		parse_line "$raw"
-
-		orig_priority="$P_PRIORITY"
-		orig_due="$P_DUE"
-		orig_repeat="$P_REPEAT"
-
-		P_DONE=true
-		P_COMPLETION_DATE=$(today)
-		P_PRI_EXT="$orig_priority"
-		P_PRIORITY=""
-		completed_line=$(format_line)
-		replace_line_at "$id" "$completed_line"
-		_display_line="$completed_line"
-		use_color && _display_line=$(colorize_line "$completed_line")
-		printf 'completed %s: %s\n' "$id" "$_display_line"
-
-		next_due=""
-		case "$orig_repeat" in
-		daily) next_due=$(date_add_days "${orig_due:-$(today)}" 1) ;;
-		weekly) next_due=$(date_add_days "${orig_due:-$(today)}" 7) ;;
-		monthly) next_due=$(date_add_months "${orig_due:-$(today)}" 1) ;;
-		yearly) next_due=$(date_add_years "${orig_due:-$(today)}" 1) ;;
-		esac
-
-		if [ -n "$next_due" ]; then
-			P_DONE=false
-			P_COMPLETION_DATE=""
-			P_PRIORITY="$orig_priority"
-			P_PRI_EXT=""
-			P_CREATION_DATE=$(today)
-			P_DUE="$next_due"
-			next_line=$(format_line)
-			printf '%s\n' "$next_line" >>"$TODO_FILE"
-			next_id=$(awk 'END { print NR }' "$TODO_FILE")
-			_display_line="$next_line"
-			use_color && _display_line=$(colorize_line "$next_line")
-			printf 'added %s: %s\n' "$next_id" "$_display_line"
-		fi
-	done
-}
-
-# cmd_undo <id> [<id>...]
-# Reverses cmd_complete: restores the priority marker from pri: (if any) and
-# clears the completion date. Byte-identical to the pre-done line. Accepts
-# multiple ids; pre-validates all of them before mutating any.
-cmd_undo() {
-	_u='usage: headway undo <id> [<id>...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 1 ] || usage_die "$_u"
-	require_todo_file
-
-	for _cu_arg in "$@"; do
-		_cu_id=$(resolve_id "$_cu_arg") || exit 1
-		parse_line "$(line_at "$_cu_id")"
-		[ "$P_DONE" = "true" ] || die "task $_cu_id is not done"
-	done
-
-	for _cu_arg in "$@"; do
-		id=$(resolve_id "$_cu_arg")
-		parse_line "$(line_at "$id")"
-
-		P_DONE=false
-		P_PRIORITY="$P_PRI_EXT"
-		P_PRI_EXT=""
-		P_COMPLETION_DATE=""
-		new_line=$(format_line)
-		replace_line_at "$id" "$new_line"
-		_display_line="$new_line"
-		use_color && _display_line=$(colorize_line "$new_line")
-		printf 'undone %s: %s\n' "$id" "$_display_line"
-	done
-}
-# cmd_edit <id> [text]
-# With [text], replaces the task's line with it directly (verbatim, same
-# as the $EDITOR path below - no due-date shorthand resolution or field
-# re-formatting). Without it, opens the task's raw line in $EDITOR via a
-# scratch tempfile, then writes back whatever the editor leaves behind.
-# Either way, an empty result aborts the edit (the task is left
-# unchanged) rather than deleting the task.
-cmd_edit() {
-	_u='usage: headway edit <id> [text]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 1 ] || usage_die "$_u"
-	require_todo_file
-	id=$(resolve_id "$1") || exit 1
-	shift
-
-	if [ "$#" -ge 1 ]; then
-		new="$*"
-	else
-		raw=$(line_at "$id")
-		tmp=$(mktemp) || die "mktemp failed"
-		printf '%s\n' "$raw" >"$tmp"
-		if ! $EDITOR "$tmp"; then
-			rm -f "$tmp"
-			die "editor exited non-zero, task $id unchanged"
-		fi
-		new=$(cat "$tmp")
-		rm -f "$tmp"
-	fi
-
-	[ -n "$new" ] || die "empty edit aborted, task $id unchanged"
-	replace_line_at "$id" "$new"
-	_display_line="$new"
-	use_color && _display_line=$(colorize_line "$new")
-	printf 'edited %s: %s\n' "$id" "$_display_line"
-}
-
-# cmd_due <id> <DATE|none>
-# DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
-# `none` clears the task's due date, restoring it to someday.
-cmd_due() {
-	_u='usage: headway due <id> <date|none>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 2 ] || usage_die "$_u"
-	require_todo_file
-	id=$(resolve_id "$1") || exit 1
-	case "$2" in
-	none) new_due="" ;;
-	*) new_due=$(resolve_date_shorthand "$2") || exit 1 ;;
-	esac
-	parse_line "$(line_at "$id")"
-	P_DUE="$new_due"
-	new_line=$(format_line)
-	replace_line_at "$id" "$new_line"
-	_display_line="$new_line"
-	use_color && _display_line=$(colorize_line "$new_line")
-	printf 'due %s: %s\n' "$id" "$_display_line"
-}
-
-# (cmd_move was removed - its set-a-task's-project role is now the
-# id-shaped form of cmd_project below.)
-
-# cmd_priority <id> <A-Z|none>
-# Targets the (A) slot for active tasks, or the pri: extension for
-# already-completed ones, since a done line has no (A) position.
-cmd_priority() {
-	_u='usage: headway priority <id> <A-Z|none>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 2 ] || usage_die "$_u"
-	require_todo_file
-	id=$(resolve_id "$1") || exit 1
-	val="$2"
-	case "$val" in
-	none) val="" ;;
-	[A-Z]) ;;
-	*) die "invalid priority: $val (must be A-Z or 'none')" ;;
-	esac
-	parse_line "$(line_at "$id")"
-	if [ "$P_DONE" = "true" ]; then
-		P_PRI_EXT="$val"
-	else
-		P_PRIORITY="$val"
-	fi
-	new_line=$(format_line)
-	replace_line_at "$id" "$new_line"
-	_display_line="$new_line"
-	use_color && _display_line=$(colorize_line "$new_line")
-	printf 'priority %s: %s\n' "$id" "$_display_line"
-}
-
-# cmd_tag <id> @tag | -@tag | none
-# Adds @tag (idempotent - silent no-op if the task already has it),
-# removes @tag when written as -@tag, or clears every tag on the task
-# when the value is `none`.
-cmd_tag() {
-	_u='usage: headway tag <id> <@tag|-@tag|none>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 2 ] || usage_die "$_u"
-	require_todo_file
-	id=$(resolve_id "$1") || exit 1
-	tagval="$2"
-	raw=$(line_at "$id")
-	parse_line "$raw"
-
-	case "$tagval" in
-	none)
-		P_TAGS=""
-		_ct_action="cleared tags on"
-		;;
-	-@?*)
-		_ct_target="${tagval#-}"
-		_ct_new=""
-		_ct_found=false
-		for _ct_t in $P_TAGS; do
-			if [ "$_ct_t" = "$_ct_target" ]; then
-				_ct_found=true
-			else
-				_ct_new="${_ct_new:+$_ct_new }$_ct_t"
-			fi
-		done
-		if [ "$_ct_found" = "false" ]; then
-			printf 'task %s has no tag %s\n' "$id" "$_ct_target"
-			return 0
-		fi
-		P_TAGS="$_ct_new"
-		_ct_action="untagged $_ct_target on"
-		;;
-	@?*)
-		case " $P_TAGS " in
-		*" $tagval "*)
-			printf 'task %s already has tag %s\n' "$id" "$tagval"
-			return 0
-			;;
-		esac
-		P_TAGS="${P_TAGS:+$P_TAGS }$tagval"
-		_ct_action="tagged"
-		;;
-	*)
-		die "invalid tag value: $tagval (want @tag, -@tag, or 'none')"
-		;;
-	esac
-
-	new_line=$(format_line)
-	replace_line_at "$id" "$new_line"
-	_display_line="$new_line"
-	use_color && _display_line=$(colorize_line "$new_line")
-	printf '%s %s: %s\n' "$_ct_action" "$id" "$_display_line"
-}
-
-# cmd_delete <id> [<id>...]
-# Deletes one or more tasks permanently. Prompts for confirmation unless
-# CONFIRM_DELETE=false in the config; declining or piping EOF to the
-# prompt cancels (the safe default), never deletes.
-#
-# All ids are resolved and their raw lines snapshotted before any deletion
-# so a bad id aborts cleanly, and so a shown confirmation prompt names the
-# real target even if a preceding delete has already shifted line numbers.
-# Deletions happen in descending id order for the same reason - removing a
-# higher line number doesn't invalidate a lower one.
-cmd_delete() {
-	_u='usage: headway delete <id> [<id>...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 1 ] || usage_die "$_u"
-	require_todo_file
-
-	# Pre-resolve + snapshot every (id, raw) pair to a tempfile, then
-	# sort descending so later deletions don't renumber earlier ones.
-	# Tempfile rather than a shell var because command substitution
-	# eats trailing newlines, which would collapse tab-and-newline-
-	# separated rows into one glued blob.
-	_cd_pairs=$(mktemp) || die "mktemp failed"
-	_cd_tab=$(printf '\t')
-	for _cd_arg in "$@"; do
-		_cd_id=$(resolve_id "$_cd_arg") || { rm -f "$_cd_pairs"; exit 1; }
-		_cd_raw=$(line_at "$_cd_id")
-		printf '%s\t%s\n' "$_cd_id" "$_cd_raw" >>"$_cd_pairs"
-	done
-	_cd_sorted=$(mktemp) || { rm -f "$_cd_pairs"; die "mktemp failed"; }
-	sort -t "$_cd_tab" -k1,1 -n -r "$_cd_pairs" >"$_cd_sorted"
-	rm -f "$_cd_pairs"
-
-	# Confirm the whole batch at once (single prompt is easier to reason
-	# about than N prompts). CONFIRM_DELETE=false skips this.
-	if [ "$CONFIRM_DELETE" = "true" ]; then
-		_cd_count=$(awk 'END { print NR }' "$_cd_sorted")
-		if [ "$_cd_count" -eq 1 ]; then
-			_cd_pid=$(head -n 1 "$_cd_sorted" | cut -f 1)
-			_cd_pl=$(head -n 1 "$_cd_sorted" | cut -f 2-)
-			use_color_err && _cd_pl=$(colorize_line "$_cd_pl")
-			printf 'delete task %s: %s\nAre you sure? [y/N] ' "$_cd_pid" "$_cd_pl" >&2
-		else
-			printf 'delete %s tasks:\n' "$_cd_count" >&2
-			while IFS="$_cd_tab" read -r _cd_pid _cd_pl; do
-				[ -n "$_cd_pid" ] || continue
-				use_color_err && _cd_pl=$(colorize_line "$_cd_pl")
-				printf '  %s: %s\n' "$_cd_pid" "$_cd_pl" >&2
-			done <"$_cd_sorted"
-			printf 'Are you sure? [y/N] ' >&2
-		fi
-		reply=""
-		read -r reply || reply=""
-		case "$reply" in
-		y | Y | yes | YES) ;;
-		*)
-			rm -f "$_cd_sorted"
-			printf 'cancelled\n'
-			return 0
-			;;
-		esac
-	fi
-
-	while IFS="$_cd_tab" read -r _cd_did _cd_dl; do
-		[ -n "$_cd_did" ] || continue
-		awk -v id="$_cd_did" 'NR != id' "$TODO_FILE" | safe_write "$TODO_FILE"
-		_display_line="$_cd_dl"
-		use_color && _display_line=$(colorize_line "$_cd_dl")
-		printf 'deleted %s: %s\n' "$_cd_did" "$_display_line"
-	done <"$_cd_sorted"
-	rm -f "$_cd_sorted"
-}
-# cmd_show <id>
-# Prints a labelled detail block for a single task - the inverse of the
-# one-liner render_view uses. Handy when the task line is long enough to
-# wrap in a normal listing, or when you want the field names spelled out
-# rather than encoded as +Project / @tag / due: / repeat:.
-cmd_show() {
-	_u='usage: headway show <id>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
-	[ "$#" -ge 1 ] || usage_die "$_u"
-	require_todo_file
-	id=$(resolve_id "$1") || exit 1
-	parse_line "$(line_at "$id")"
-
-	_cs_status="open"
-	[ "$P_DONE" = "true" ] && _cs_status="done"
-	_cs_pri="${P_PRIORITY:-${P_PRI_EXT:-}}"
-
-	printf 'id:         %s\n' "$id"
-	printf 'status:     %s\n' "$_cs_status"
-	[ -n "$_cs_pri" ] && printf 'priority:   %s\n' "$_cs_pri"
-	[ -n "$P_DESC" ] && printf 'desc:       %s\n' "$P_DESC"
-	[ -n "$P_PROJECTS" ] && printf 'project:    %s\n' "$P_PROJECTS"
-	[ -n "$P_TAGS" ] && printf 'tags:       %s\n' "$P_TAGS"
-	[ -n "$P_DUE" ] && printf 'due:        %s\n' "$P_DUE"
-	[ -n "$P_REPEAT" ] && printf 'repeat:     %s\n' "$P_REPEAT"
-	[ -n "$P_CREATION_DATE" ] && printf 'created:    %s\n' "$P_CREATION_DATE"
-	[ -n "$P_COMPLETION_DATE" ] && printf 'completed:  %s\n' "$P_COMPLETION_DATE"
-	# The final [ -n "" ] && printf ... returns 1 when the field is empty;
-	# an explicit return keeps cmd_show's exit code aligned with success.
-	return 0
-}
-
 # render_grouped_list
 # Emits every incomplete task, bucketed into Overdue / Due today /
 # Upcoming / Someday sections. Section headers appear only when at least
@@ -1355,6 +916,374 @@ render_grouped_list() {
 	done
 
 	rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"
+}
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
+# cmd_add <text> [+Project] [due:DATE] [@tag] [repeat:FREQ]
+# Resolves any due: shorthand to a real YYYY-MM-DD before writing, sets
+# the creation date to today, and appends the new canonical line to
+# TODO_FILE. Project/tag/due/repeat tokens may appear anywhere in <text>;
+# everything else becomes the description.
+cmd_add() {
+	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	parse_line "$*"
+	P_DONE=false
+	P_PRIORITY=""
+	P_PRI_EXT=""
+	P_CREATION_DATE=$(today)
+	if [ -n "$P_DUE" ]; then
+		# explicit "|| exit 1" rather than relying on implicit set -e
+		# propagation: -e is silently disabled for an entire command
+		# (including nested command substitutions) whenever that
+		# command is itself the LHS of &&/||/if/while in an ancestor
+		# context, so callers further up the stack cannot be trusted
+		# to preserve it.
+		P_DUE=$(resolve_date_shorthand "$P_DUE") || exit 1
+	fi
+	[ -n "$P_DESC" ] || die "task description cannot be empty"
+
+	new_line=$(format_line)
+	printf '%s\n' "$new_line" >>"$TODO_FILE"
+	id=$(awk 'END { print NR }' "$TODO_FILE")
+	report_change "added" "$id" "$new_line"
+}
+# cmd_complete <id> [<id>...]
+# Marks one or more tasks done: for each, priority (if any) moves to a
+# trailing pri: extension, and the completion date is stamped alongside the
+# original creation date. If a task carries repeat:daily|weekly|monthly|yearly,
+# a new occurrence is appended with the due date advanced by one interval
+# from the completed task's due date (today's date if it had none).
+#
+# When multiple ids are given they are all resolved (and validated as still
+# open) before any are mutated - a later bad id aborts the whole batch, so
+# the file is never left half-updated.
+cmd_complete() {
+	_u='usage: headway complete <id> [<id>...]'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
+
+	# Resolve and pre-validate every id first so a bad one in position N
+	# doesn't leave positions 1..N-1 already applied.
+	for _cc_arg in "$@"; do
+		_cc_id=$(resolve_id "$_cc_arg") || exit 1
+		parse_line "$(line_at "$_cc_id")"
+		[ "$P_DONE" = "false" ] || die "task $_cc_id is already done"
+	done
+
+	for _cc_arg in "$@"; do
+		id=$(resolve_id "$_cc_arg")
+		raw=$(line_at "$id")
+		parse_line "$raw"
+
+		orig_priority="$P_PRIORITY"
+		orig_due="$P_DUE"
+		orig_repeat="$P_REPEAT"
+
+		P_DONE=true
+		P_COMPLETION_DATE=$(today)
+		P_PRI_EXT="$orig_priority"
+		P_PRIORITY=""
+		completed_line=$(format_line)
+		replace_line_at "$id" "$completed_line"
+		report_change "completed" "$id" "$completed_line"
+
+		next_due=""
+		case "$orig_repeat" in
+		daily) next_due=$(date_add_days "${orig_due:-$(today)}" 1) ;;
+		weekly) next_due=$(date_add_days "${orig_due:-$(today)}" 7) ;;
+		monthly) next_due=$(date_add_months "${orig_due:-$(today)}" 1) ;;
+		yearly) next_due=$(date_add_years "${orig_due:-$(today)}" 1) ;;
+		esac
+
+		if [ -n "$next_due" ]; then
+			P_DONE=false
+			P_COMPLETION_DATE=""
+			P_PRIORITY="$orig_priority"
+			P_PRI_EXT=""
+			P_CREATION_DATE=$(today)
+			P_DUE="$next_due"
+			next_line=$(format_line)
+			printf '%s\n' "$next_line" >>"$TODO_FILE"
+			next_id=$(awk 'END { print NR }' "$TODO_FILE")
+			report_change "added" "$next_id" "$next_line"
+		fi
+	done
+}
+
+# cmd_undo <id> [<id>...]
+# Reverses cmd_complete: restores the priority marker from pri: (if any) and
+# clears the completion date. Byte-identical to the pre-done line. Accepts
+# multiple ids; pre-validates all of them before mutating any.
+cmd_undo() {
+	_u='usage: headway undo <id> [<id>...]'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
+
+	for _cu_arg in "$@"; do
+		_cu_id=$(resolve_id "$_cu_arg") || exit 1
+		parse_line "$(line_at "$_cu_id")"
+		[ "$P_DONE" = "true" ] || die "task $_cu_id is not done"
+	done
+
+	for _cu_arg in "$@"; do
+		id=$(resolve_id "$_cu_arg")
+		parse_line "$(line_at "$id")"
+
+		P_DONE=false
+		P_PRIORITY="$P_PRI_EXT"
+		P_PRI_EXT=""
+		P_COMPLETION_DATE=""
+		new_line=$(format_line)
+		replace_line_at "$id" "$new_line"
+		report_change "undone" "$id" "$new_line"
+	done
+}
+# cmd_edit <id> [text]
+# With [text], replaces the task's line with it directly (verbatim, same
+# as the $EDITOR path below - no due-date shorthand resolution or field
+# re-formatting). Without it, opens the task's raw line in $EDITOR via a
+# scratch tempfile, then writes back whatever the editor leaves behind.
+# Either way, an empty result aborts the edit (the task is left
+# unchanged) rather than deleting the task.
+cmd_edit() {
+	_u='usage: headway edit <id> [text]'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
+	id=$(resolve_id "$1") || exit 1
+	shift
+
+	if [ "$#" -ge 1 ]; then
+		new="$*"
+	else
+		raw=$(line_at "$id")
+		tmp=$(mktemp) || die "mktemp failed"
+		printf '%s\n' "$raw" >"$tmp"
+		if ! $EDITOR "$tmp"; then
+			rm -f "$tmp"
+			die "editor exited non-zero, task $id unchanged"
+		fi
+		new=$(cat "$tmp")
+		rm -f "$tmp"
+	fi
+
+	[ -n "$new" ] || die "empty edit aborted, task $id unchanged"
+	replace_line_at "$id" "$new"
+	report_change "edited" "$id" "$new"
+}
+
+# cmd_due <id> <DATE|none>
+# DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
+# `none` clears the task's due date, restoring it to someday.
+cmd_due() {
+	_u='usage: headway due <id> <date|none>'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
+	id=$(resolve_id "$1") || exit 1
+	case "$2" in
+	none) new_due="" ;;
+	*) new_due=$(resolve_date_shorthand "$2") || exit 1 ;;
+	esac
+	parse_line "$(line_at "$id")"
+	P_DUE="$new_due"
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	report_change "due" "$id" "$new_line"
+}
+
+# (cmd_move was removed - its set-a-task's-project role is now the
+# id-shaped form of cmd_project below.)
+
+# cmd_priority <id> <A-Z|none>
+# Targets the (A) slot for active tasks, or the pri: extension for
+# already-completed ones, since a done line has no (A) position.
+cmd_priority() {
+	_u='usage: headway priority <id> <A-Z|none>'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
+	id=$(resolve_id "$1") || exit 1
+	val="$2"
+	case "$val" in
+	none) val="" ;;
+	[A-Z]) ;;
+	*) die "invalid priority: $val (must be A-Z or 'none')" ;;
+	esac
+	parse_line "$(line_at "$id")"
+	if [ "$P_DONE" = "true" ]; then
+		P_PRI_EXT="$val"
+	else
+		P_PRIORITY="$val"
+	fi
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	report_change "priority" "$id" "$new_line"
+}
+
+# cmd_tag <id> @tag | -@tag | none
+# Adds @tag (idempotent - silent no-op if the task already has it),
+# removes @tag when written as -@tag, or clears every tag on the task
+# when the value is `none`.
+cmd_tag() {
+	_u='usage: headway tag <id> <@tag|-@tag|none>'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+	require_todo_file
+	id=$(resolve_id "$1") || exit 1
+	tagval="$2"
+	raw=$(line_at "$id")
+	parse_line "$raw"
+
+	case "$tagval" in
+	none)
+		P_TAGS=""
+		_ct_action="cleared tags on"
+		;;
+	-@?*)
+		_ct_target="${tagval#-}"
+		_ct_new=""
+		_ct_found=false
+		for _ct_t in $P_TAGS; do
+			if [ "$_ct_t" = "$_ct_target" ]; then
+				_ct_found=true
+			else
+				_ct_new="${_ct_new:+$_ct_new }$_ct_t"
+			fi
+		done
+		if [ "$_ct_found" = "false" ]; then
+			printf 'task %s has no tag %s\n' "$id" "$_ct_target"
+			return 0
+		fi
+		P_TAGS="$_ct_new"
+		_ct_action="untagged $_ct_target on"
+		;;
+	@?*)
+		case " $P_TAGS " in
+		*" $tagval "*)
+			printf 'task %s already has tag %s\n' "$id" "$tagval"
+			return 0
+			;;
+		esac
+		P_TAGS="${P_TAGS:+$P_TAGS }$tagval"
+		_ct_action="tagged"
+		;;
+	*)
+		die "invalid tag value: $tagval (want @tag, -@tag, or 'none')"
+		;;
+	esac
+
+	new_line=$(format_line)
+	replace_line_at "$id" "$new_line"
+	report_change "$_ct_action" "$id" "$new_line"
+}
+
+# cmd_delete <id> [<id>...]
+# Deletes one or more tasks permanently. Prompts for confirmation unless
+# CONFIRM_DELETE=false in the config; declining or piping EOF to the
+# prompt cancels (the safe default), never deletes.
+#
+# All ids are resolved and their raw lines snapshotted before any deletion
+# so a bad id aborts cleanly, and so a shown confirmation prompt names the
+# real target even if a preceding delete has already shifted line numbers.
+# Deletions happen in descending id order for the same reason - removing a
+# higher line number doesn't invalidate a lower one.
+cmd_delete() {
+	_u='usage: headway delete <id> [<id>...]'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
+
+	# Pre-resolve + snapshot every (id, raw) pair to a tempfile, then
+	# sort descending so later deletions don't renumber earlier ones.
+	# Tempfile rather than a shell var because command substitution
+	# eats trailing newlines, which would collapse tab-and-newline-
+	# separated rows into one glued blob.
+	_cd_pairs=$(mktemp) || die "mktemp failed"
+	_cd_tab=$(printf '\t')
+	for _cd_arg in "$@"; do
+		_cd_id=$(resolve_id "$_cd_arg") || { rm -f "$_cd_pairs"; exit 1; }
+		_cd_raw=$(line_at "$_cd_id")
+		printf '%s\t%s\n' "$_cd_id" "$_cd_raw" >>"$_cd_pairs"
+	done
+	_cd_sorted=$(mktemp) || { rm -f "$_cd_pairs"; die "mktemp failed"; }
+	sort -t "$_cd_tab" -k1,1 -n -r "$_cd_pairs" >"$_cd_sorted"
+	rm -f "$_cd_pairs"
+
+	# Confirm the whole batch at once (single prompt is easier to reason
+	# about than N prompts). CONFIRM_DELETE=false skips this.
+	if [ "$CONFIRM_DELETE" = "true" ]; then
+		_cd_count=$(awk 'END { print NR }' "$_cd_sorted")
+		if [ "$_cd_count" -eq 1 ]; then
+			_cd_pid=$(head -n 1 "$_cd_sorted" | cut -f 1)
+			_cd_pl=$(head -n 1 "$_cd_sorted" | cut -f 2-)
+			use_color_err && _cd_pl=$(colorize_line "$_cd_pl")
+			printf 'delete task %s: %s\nAre you sure? [y/N] ' "$_cd_pid" "$_cd_pl" >&2
+		else
+			printf 'delete %s tasks:\n' "$_cd_count" >&2
+			while IFS="$_cd_tab" read -r _cd_pid _cd_pl; do
+				[ -n "$_cd_pid" ] || continue
+				use_color_err && _cd_pl=$(colorize_line "$_cd_pl")
+				printf '  %s: %s\n' "$_cd_pid" "$_cd_pl" >&2
+			done <"$_cd_sorted"
+			printf 'Are you sure? [y/N] ' >&2
+		fi
+		reply=""
+		read -r reply || reply=""
+		case "$reply" in
+		y | Y | yes | YES) ;;
+		*)
+			rm -f "$_cd_sorted"
+			printf 'cancelled\n'
+			return 0
+			;;
+		esac
+	fi
+
+	while IFS="$_cd_tab" read -r _cd_did _cd_dl; do
+		[ -n "$_cd_did" ] || continue
+		awk -v id="$_cd_did" 'NR != id' "$TODO_FILE" | safe_write "$TODO_FILE"
+		report_change "deleted" "$_cd_did" "$_cd_dl"
+	done <"$_cd_sorted"
+	rm -f "$_cd_sorted"
+}
+# cmd_show <id>
+# Prints a labelled detail block for a single task - the inverse of the
+# one-liner render_view uses. Handy when the task line is long enough to
+# wrap in a normal listing, or when you want the field names spelled out
+# rather than encoded as +Project / @tag / due: / repeat:.
+cmd_show() {
+	_u='usage: headway show <id>'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 1 ] || usage_die "$_u"
+	require_todo_file
+	id=$(resolve_id "$1") || exit 1
+	parse_line "$(line_at "$id")"
+
+	_cs_status="open"
+	[ "$P_DONE" = "true" ] && _cs_status="done"
+	_cs_pri="${P_PRIORITY:-${P_PRI_EXT:-}}"
+
+	printf 'id:         %s\n' "$id"
+	printf 'status:     %s\n' "$_cs_status"
+	[ -n "$_cs_pri" ] && printf 'priority:   %s\n' "$_cs_pri"
+	[ -n "$P_DESC" ] && printf 'desc:       %s\n' "$P_DESC"
+	[ -n "$P_PROJECTS" ] && printf 'project:    %s\n' "$P_PROJECTS"
+	[ -n "$P_TAGS" ] && printf 'tags:       %s\n' "$P_TAGS"
+	[ -n "$P_DUE" ] && printf 'due:        %s\n' "$P_DUE"
+	[ -n "$P_REPEAT" ] && printf 'repeat:     %s\n' "$P_REPEAT"
+	[ -n "$P_CREATION_DATE" ] && printf 'created:    %s\n' "$P_CREATION_DATE"
+	[ -n "$P_COMPLETION_DATE" ] && printf 'completed:  %s\n' "$P_COMPLETION_DATE"
+	# The final [ -n "" ] && printf ... returns 1 when the field is empty;
+	# an explicit return keeps cmd_show's exit code aligned with success.
+	return 0
 }
 
 # cmd_list [+Project|@tag|"keyword"]
@@ -1448,9 +1377,7 @@ cmd_project() {
 	P_PROJECTS="$new_projects"
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	_display_line="$new_line"
-	use_color && _display_line=$(colorize_line "$new_line")
-	printf 'project %s: %s\n' "$id" "$_display_line"
+	report_change "project" "$id" "$new_line"
 }
 # cmd_archive
 # Moves every completed ("x ...") line out of TODO_FILE and appends it to
@@ -1598,269 +1525,6 @@ cmd_check() {
 	[ "$problems" -eq 0 ]
 }
 
-# ---------------------------------------------------------------------------
-# Dispatch
-# ---------------------------------------------------------------------------
-
-# dispatch_cmd <command> [arguments...]
-# The single source of truth for mapping a command name to its cmd_*
-# function. Called only from cmd_shell's REPL loop - main() no longer
-# dispatches subcommands since headway has no one-shot mode.
-dispatch_cmd() {
-	cmd="${1:-}"
-	[ "$#" -gt 0 ] && shift
-
-	case "$cmd" in
-	add) cmd_add "$@" ;;
-	complete) cmd_complete "$@" ;;
-	undo) cmd_undo "$@" ;;
-	edit) cmd_edit "$@" ;;
-	due) cmd_due "$@" ;;
-	priority) cmd_priority "$@" ;;
-	tag) cmd_tag "$@" ;;
-	delete) cmd_delete "$@" ;;
-	show) cmd_show "$@" ;;
-	list) cmd_list "$@" ;;
-	inbox) cmd_inbox "$@" ;;
-	today) cmd_today "$@" ;;
-	upcoming) cmd_upcoming "$@" ;;
-	someday) cmd_someday "$@" ;;
-	logbook) cmd_logbook "$@" ;;
-	projects) cmd_projects "$@" ;;
-	project) cmd_project "$@" ;;
-	archive) cmd_archive "$@" ;;
-	stats) cmd_stats "$@" ;;
-	check) cmd_check "$@" ;;
-	*)
-		err "unknown command: $cmd"
-		suggest_command "$cmd"
-		err "type 'help' for the full command list"
-		return 2
-		;;
-	esac
-}
-
-# shell_open_count
-# Prints the number of open (not completed) tasks in TODO_FILE.
-shell_open_count() {
-	[ -f "$TODO_FILE" ] || return 0
-
-	awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE"
-}
-
-# shell_summary
-# Prints a one-line count of open tasks and how many are due today (which,
-# per render_view's "today" rules, includes anything overdue), for callers
-# that still want the old compact summary.
-shell_summary() {
-	[ -f "$TODO_FILE" ] || return 0
-
-	active=$(shell_open_count)
-	if [ "$active" -eq 0 ]; then
-		printf 'No open tasks - you are all caught up.\n'
-		return 0
-	fi
-
-	due_today=$(render_view today | awk 'END { print NR + 0 }')
-
-	task_word="tasks"
-	[ "$active" -eq 1 ] && task_word="task"
-
-	if [ "$due_today" -gt 0 ]; then
-		due_word="tasks"
-		[ "$due_today" -eq 1 ] && due_word="task"
-		printf '%s open %s, %s %s due today.\n' "$active" "$task_word" "$due_today" "$due_word"
-	else
-		printf '%s open %s.\n' "$active" "$task_word"
-	fi
-}
-
-# shell_welcome_task_line <id> <raw-line> <use-color>
-# Prints one indented task line in the same logical shape as render_view:
-# "<id>: <date> <description> [+project] [due:date] [@tag]". The optional
-# color treatment reuses existing THEME_* values and is display-only.
-shell_welcome_task_line() {
-	_swtl_id="$1"
-	_swtl_raw="$2"
-	_swtl_use_color="$3"
-
-	if [ "$_swtl_use_color" = "true" ]; then
-		_swtl_id=$(sgr_wrap "$THEME_DATE" "$_swtl_id")
-		_swtl_line=$(colorize_line "$_swtl_raw")
-	else
-		_swtl_line="$_swtl_raw"
-	fi
-
-	if [ "${SHOW_IDS:-true}" = "false" ]; then
-		printf '  %s\n' "$_swtl_line"
-	else
-		printf '  %s: %s\n' "$_swtl_id" "$_swtl_line"
-	fi
-}
-
-# shell_welcome_group <rows> <today> <group> <use-color>
-# Prints up to three overdue or due-today task lines from tab-delimited
-# collect_view_rows output. Extra rows collapse into "... N more — see
-# 'today'" to keep the startup banner short.
-shell_welcome_group() {
-	_swg_rows="$1"
-	_swg_today="$2"
-	_swg_group="$3"
-	_swg_use_color="$4"
-	_swg_tab=$(printf '\t')
-	_swg_seen=0
-
-	[ -n "$_swg_rows" ] || return 0
-
-	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _swg_due _swg_id _swg_raw; do
-		case "$_swg_group" in
-		overdue)
-			expr "$_swg_due" '<' "$_swg_today" >/dev/null || continue
-			;;
-		today)
-			[ "$_swg_due" = "$_swg_today" ] || continue
-			;;
-		esac
-
-		_swg_seen=$((_swg_seen + 1))
-		if [ "$_swg_seen" -le 3 ]; then
-			shell_welcome_task_line "$_swg_id" "$_swg_raw" "$_swg_use_color"
-		fi
-	done
-}
-
-# shell_welcome_more_count <rows> <today> <group>
-# Prints how many rows would remain after shell_welcome_group's first three.
-shell_welcome_more_count() {
-	_swm_rows="$1"
-	_swm_today="$2"
-	_swm_group="$3"
-	_swm_tab=$(printf '\t')
-
-	[ -n "$_swm_rows" ] || {
-		printf '0\n'
-		return 0
-	}
-
-	printf '%s\n' "$_swm_rows" | while IFS="$_swm_tab" read -r _swm_due _ _; do
-		case "$_swm_group" in
-		overdue)
-			expr "$_swm_due" '<' "$_swm_today" >/dev/null || continue
-			;;
-		today)
-			[ "$_swm_due" = "$_swm_today" ] || continue
-			;;
-		esac
-		printf '.\n'
-	done | awk 'END { extra = NR - 3; if (extra < 0) extra = 0; print extra }'
-}
-
-# shell_welcome_count <rows> <today> <group>
-shell_welcome_count() {
-	_swc_rows="$1"
-	_swc_today="$2"
-	_swc_group="$3"
-	_swc_tab=$(printf '\t')
-
-	[ -n "$_swc_rows" ] || {
-		printf '0\n'
-		return 0
-	}
-
-	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _swc_due _ _; do
-		case "$_swc_group" in
-		overdue)
-			expr "$_swc_due" '<' "$_swc_today" >/dev/null || continue
-			;;
-		today)
-			[ "$_swc_due" = "$_swc_today" ] || continue
-			;;
-		esac
-		printf '.\n'
-	done | awk 'END { print NR + 0 }'
-}
-
-# shell_welcome_banner
-# Prints the interactive shell welcome message before the first prompt.
-shell_welcome_banner() {
-	_swb_today=$(today)
-	_swb_active=0
-	[ -f "$TODO_FILE" ] && _swb_active=$(shell_open_count)
-	_swb_rows=""
-	if [ -f "$TODO_FILE" ]; then
-		_swb_tab=$(printf '\t')
-		_swb_rows=$(collect_view_rows today | sort -t "$_swb_tab" -k1,1)
-	fi
-	_swb_due_count=$(printf '%s\n' "$_swb_rows" | awk 'NF { n++ } END { print n + 0 }')
-	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue)
-	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today)
-	_swb_use_color=false
-	use_color_err && _swb_use_color=true
-
-	_swb_version="headway v$HEADWAY_VERSION"
-	_swb_hint='Type "help" for commands, "exit" to leave.'
-	if [ "$_swb_use_color" = "true" ]; then
-		_swb_version=$(sgr_wrap "$THEME_DATE" "$_swb_version")
-		_swb_hint=$(sgr_wrap "$THEME_DATE" "$_swb_hint")
-	fi
-
-	printf '%s\n\n' "$_swb_version"
-
-	if [ "$_swb_due_count" -gt 0 ]; then
-		_swb_due_text=$_swb_due_count
-		[ "$_swb_use_color" = "true" ] && _swb_due_text=$(sgr_wrap "$THEME_DUE" "$_swb_due_text")
-		_swb_due_word="tasks"
-		[ "$_swb_due_count" -eq 1 ] && _swb_due_word="task"
-		printf '%s! You have %s %s due.\n' "$(greeting)" "$_swb_due_text" "$_swb_due_word"
-	else
-		_swb_task_word="tasks"
-		[ "$_swb_active" -eq 1 ] && _swb_task_word="task"
-		printf '%s! You have %s open %s, nothing due today.\n' "$(greeting)" "$_swb_active" "$_swb_task_word"
-	fi
-
-	if [ "$_swb_due_count" -gt 0 ]; then
-		_swb_show_headers=false
-		if [ "$_swb_overdue_count" -gt 0 ] && [ "$_swb_today_count" -gt 0 ]; then
-			_swb_show_headers=true
-		fi
-
-		if [ "$_swb_overdue_count" -gt 0 ]; then
-			printf '\n'
-			if [ "$_swb_show_headers" = "true" ]; then
-				_swb_header="Overdue"
-				[ "$_swb_use_color" = "true" ] && _swb_header=$(sgr_wrap "$THEME_DATE" "$_swb_header")
-				printf '  %s\n' "$_swb_header"
-			fi
-			shell_welcome_group "$_swb_rows" "$_swb_today" overdue "$_swb_use_color"
-			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" overdue)
-			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
-		fi
-
-		if [ "$_swb_today_count" -gt 0 ]; then
-			printf '\n'
-			if [ "$_swb_show_headers" = "true" ]; then
-				_swb_header="Due today"
-				[ "$_swb_use_color" = "true" ] && _swb_header=$(sgr_wrap "$THEME_DATE" "$_swb_header")
-				printf '  %s\n' "$_swb_header"
-			fi
-			shell_welcome_group "$_swb_rows" "$_swb_today" today "$_swb_use_color"
-			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" today)
-			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
-		fi
-	fi
-
-	printf '\n%s\n\n' "$_swb_hint"
-}
-
-# tokenize_line <line>
-# Splits <line> into $US-joined words the way a shell command line would
-# be split - but WITHOUT evaluating it as shell code. Single/double quotes
-# group words and are stripped; their contents are copied verbatim. $VAR,
-# `cmd`, $(cmd), and globs are never expanded - a todo-item REPL has no
-# legitimate use for shell expansion, so not expanding it is the fix, not
-# a limitation. Prints the joined tokens and returns 0, or prints nothing
-# and returns 1 if a quote is left unterminated. Walks the string one
-# character at a time via parameter expansion (no per-character fork).
 tokenize_line() {
 	_tl_rest="$1"
 	_tl_tab=$(printf '\t')
@@ -2368,6 +2032,242 @@ read_line_interactive() {
 # arrow-key cursor movement and Up/Down/PgUp/PgDn history (see its comment
 # for how); piped/non-tty input falls back to plain `read -r`, unchanged.
 # `exit` ends the session; EOF (Ctrl-D) does the same.
+# ---------------------------------------------------------------------------
+# Dispatch
+# ---------------------------------------------------------------------------
+
+# dispatch_cmd <command> [arguments...]
+# The single source of truth for mapping a command name to its cmd_*
+# function. Called only from cmd_shell's REPL loop - main() no longer
+# dispatches subcommands since headway has no one-shot mode.
+dispatch_cmd() {
+	cmd="${1:-}"
+	[ "$#" -gt 0 ] && shift
+
+	case "$cmd" in
+	add) cmd_add "$@" ;;
+	complete) cmd_complete "$@" ;;
+	undo) cmd_undo "$@" ;;
+	edit) cmd_edit "$@" ;;
+	due) cmd_due "$@" ;;
+	priority) cmd_priority "$@" ;;
+	tag) cmd_tag "$@" ;;
+	delete) cmd_delete "$@" ;;
+	show) cmd_show "$@" ;;
+	list) cmd_list "$@" ;;
+	inbox) cmd_inbox "$@" ;;
+	today) cmd_today "$@" ;;
+	upcoming) cmd_upcoming "$@" ;;
+	someday) cmd_someday "$@" ;;
+	logbook) cmd_logbook "$@" ;;
+	projects) cmd_projects "$@" ;;
+	project) cmd_project "$@" ;;
+	archive) cmd_archive "$@" ;;
+	stats) cmd_stats "$@" ;;
+	check) cmd_check "$@" ;;
+	*)
+		err "unknown command: $cmd"
+		suggest_command "$cmd"
+		err "type 'help' for the full command list"
+		return 2
+		;;
+	esac
+}
+
+# shell_open_count
+# Prints the number of open (not completed) tasks in TODO_FILE.
+shell_open_count() {
+	[ -f "$TODO_FILE" ] || return 0
+
+	awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE"
+}
+
+# shell_welcome_task_line <id> <raw-line> <use-color>
+# Prints one indented task line in the same logical shape as render_view:
+# "<id>: <date> <description> [+project] [due:date] [@tag]". The optional
+# color treatment reuses existing THEME_* values and is display-only.
+shell_welcome_task_line() {
+	_swtl_id="$1"
+	_swtl_raw="$2"
+	_swtl_use_color="$3"
+
+	if [ "$_swtl_use_color" = "true" ]; then
+		_swtl_id=$(sgr_wrap "$THEME_DATE" "$_swtl_id")
+		_swtl_line=$(colorize_line "$_swtl_raw")
+	else
+		_swtl_line="$_swtl_raw"
+	fi
+
+	if [ "${SHOW_IDS:-true}" = "false" ]; then
+		printf '  %s\n' "$_swtl_line"
+	else
+		printf '  %s: %s\n' "$_swtl_id" "$_swtl_line"
+	fi
+}
+
+# shell_welcome_group <rows> <today> <group> <use-color>
+# Prints up to three overdue or due-today task lines from tab-delimited
+# collect_view_rows output. Extra rows collapse into "... N more — see
+# 'today'" to keep the startup banner short.
+shell_welcome_group() {
+	_swg_rows="$1"
+	_swg_today="$2"
+	_swg_group="$3"
+	_swg_use_color="$4"
+	_swg_tab=$(printf '\t')
+	_swg_seen=0
+
+	[ -n "$_swg_rows" ] || return 0
+
+	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _swg_due _swg_id _swg_raw; do
+		case "$_swg_group" in
+		overdue)
+			expr "$_swg_due" '<' "$_swg_today" >/dev/null || continue
+			;;
+		today)
+			[ "$_swg_due" = "$_swg_today" ] || continue
+			;;
+		esac
+
+		_swg_seen=$((_swg_seen + 1))
+		if [ "$_swg_seen" -le 3 ]; then
+			shell_welcome_task_line "$_swg_id" "$_swg_raw" "$_swg_use_color"
+		fi
+	done
+}
+
+# shell_welcome_more_count <rows> <today> <group>
+# Prints how many rows would remain after shell_welcome_group's first three.
+shell_welcome_more_count() {
+	_swm_rows="$1"
+	_swm_today="$2"
+	_swm_group="$3"
+	_swm_tab=$(printf '\t')
+
+	[ -n "$_swm_rows" ] || {
+		printf '0\n'
+		return 0
+	}
+
+	printf '%s\n' "$_swm_rows" | while IFS="$_swm_tab" read -r _swm_due _ _; do
+		case "$_swm_group" in
+		overdue)
+			expr "$_swm_due" '<' "$_swm_today" >/dev/null || continue
+			;;
+		today)
+			[ "$_swm_due" = "$_swm_today" ] || continue
+			;;
+		esac
+		printf '.\n'
+	done | awk 'END { extra = NR - 3; if (extra < 0) extra = 0; print extra }'
+}
+
+# shell_welcome_count <rows> <today> <group>
+shell_welcome_count() {
+	_swc_rows="$1"
+	_swc_today="$2"
+	_swc_group="$3"
+	_swc_tab=$(printf '\t')
+
+	[ -n "$_swc_rows" ] || {
+		printf '0\n'
+		return 0
+	}
+
+	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _swc_due _ _; do
+		case "$_swc_group" in
+		overdue)
+			expr "$_swc_due" '<' "$_swc_today" >/dev/null || continue
+			;;
+		today)
+			[ "$_swc_due" = "$_swc_today" ] || continue
+			;;
+		esac
+		printf '.\n'
+	done | awk 'END { print NR + 0 }'
+}
+
+# shell_welcome_banner
+# Prints the interactive shell welcome message before the first prompt.
+shell_welcome_banner() {
+	_swb_today=$(today)
+	_swb_active=0
+	[ -f "$TODO_FILE" ] && _swb_active=$(shell_open_count)
+	_swb_rows=""
+	if [ -f "$TODO_FILE" ]; then
+		_swb_tab=$(printf '\t')
+		_swb_rows=$(collect_view_rows today | sort -t "$_swb_tab" -k1,1)
+	fi
+	_swb_due_count=$(printf '%s\n' "$_swb_rows" | awk 'NF { n++ } END { print n + 0 }')
+	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue)
+	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today)
+	_swb_use_color=false
+	use_color_err && _swb_use_color=true
+
+	_swb_version="headway v$HEADWAY_VERSION"
+	_swb_hint='Type "help" for commands, "exit" to leave.'
+	if [ "$_swb_use_color" = "true" ]; then
+		_swb_version=$(sgr_wrap "$THEME_DATE" "$_swb_version")
+		_swb_hint=$(sgr_wrap "$THEME_DATE" "$_swb_hint")
+	fi
+
+	printf '%s\n\n' "$_swb_version"
+
+	if [ "$_swb_due_count" -gt 0 ]; then
+		_swb_due_text=$_swb_due_count
+		[ "$_swb_use_color" = "true" ] && _swb_due_text=$(sgr_wrap "$THEME_DUE" "$_swb_due_text")
+		_swb_due_word="tasks"
+		[ "$_swb_due_count" -eq 1 ] && _swb_due_word="task"
+		printf '%s! You have %s %s due.\n' "$(greeting)" "$_swb_due_text" "$_swb_due_word"
+	else
+		_swb_task_word="tasks"
+		[ "$_swb_active" -eq 1 ] && _swb_task_word="task"
+		printf '%s! You have %s open %s, nothing due today.\n' "$(greeting)" "$_swb_active" "$_swb_task_word"
+	fi
+
+	if [ "$_swb_due_count" -gt 0 ]; then
+		_swb_show_headers=false
+		if [ "$_swb_overdue_count" -gt 0 ] && [ "$_swb_today_count" -gt 0 ]; then
+			_swb_show_headers=true
+		fi
+
+		if [ "$_swb_overdue_count" -gt 0 ]; then
+			printf '\n'
+			if [ "$_swb_show_headers" = "true" ]; then
+				_swb_header="Overdue"
+				[ "$_swb_use_color" = "true" ] && _swb_header=$(sgr_wrap "$THEME_DATE" "$_swb_header")
+				printf '  %s\n' "$_swb_header"
+			fi
+			shell_welcome_group "$_swb_rows" "$_swb_today" overdue "$_swb_use_color"
+			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" overdue)
+			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
+		fi
+
+		if [ "$_swb_today_count" -gt 0 ]; then
+			printf '\n'
+			if [ "$_swb_show_headers" = "true" ]; then
+				_swb_header="Due today"
+				[ "$_swb_use_color" = "true" ] && _swb_header=$(sgr_wrap "$THEME_DATE" "$_swb_header")
+				printf '  %s\n' "$_swb_header"
+			fi
+			shell_welcome_group "$_swb_rows" "$_swb_today" today "$_swb_use_color"
+			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" today)
+			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
+		fi
+	fi
+
+	printf '\n%s\n\n' "$_swb_hint"
+}
+
+# tokenize_line <line>
+# Splits <line> into $US-joined words the way a shell command line would
+# be split - but WITHOUT evaluating it as shell code. Single/double quotes
+# group words and are stripped; their contents are copied verbatim. $VAR,
+# `cmd`, $(cmd), and globs are never expanded - a todo-item REPL has no
+# legitimate use for shell expansion, so not expanding it is the fix, not
+# a limitation. Prints the joined tokens and returns 0, or prints nothing
+# and returns 1 if a quote is left unterminated. Walks the string one
+# character at a time via parameter expansion (no per-character fork).
 cmd_shell() {
 	if [ -t 0 ]; then
 		# read_line_interactive runs inside a $(...) subshell (forked for
@@ -2452,6 +2352,70 @@ cmd_shell() {
 		(set -eu; dispatch_cmd "$@")
 		set -e
 	done
+}
+
+# ---------------------------------------------------------------------------
+# Usage
+# ---------------------------------------------------------------------------
+
+usage() {
+	cat <<EOF
+headway $HEADWAY_VERSION - a shell-based todo.txt task manager.
+
+Usage: headway              start the interactive shell
+       headway --help       print this help and exit
+       headway --version    print the version and exit
+
+headway runs as a shell: launch it with \`headway\`, then type commands
+at the prompt. There is no one-shot command mode.
+
+Every command below accepts \`--help\` for its own usage line.
+
+Task IDs are the task's current line number in TODO_FILE. They are NOT
+stable across edits - deleting or archiving a task shifts the IDs of
+every task below it.
+
+Adding:
+  add "text [+Project] [due:DATE] [@tag]"   add a task
+
+Completing:
+  complete <id> [<id>...]                   mark done (priority -> pri:A)
+  undo <id> [<id>...]                       unmark (restores (A) priority)
+
+Editing:
+  edit <id>                                 open task in \$EDITOR
+  edit <id> <text>                          replace task line directly
+  due <id> <DATE|none>                      set, update, or clear due date
+  priority <id> <A-Z|none>                  set or clear priority
+  tag <id> @tag                             add a tag
+  tag <id> -@tag                            remove a tag
+  tag <id> none                             clear all tags
+  project <id> +Project                     assign task to a project
+  project <id> none                         clear task's project
+  show <id>                                 print full detail for one task
+  delete <id> [<id>...]                     delete permanently
+
+Listing:
+  list [+Project|@tag|"keyword"]            list incomplete tasks (grouped)
+  inbox                                     tasks with no project
+  today                                     due today, plus overdue
+  upcoming                                  future-dated tasks
+  someday                                   tasks with no due date
+  logbook                                   completed tasks
+
+Projects:
+  projects                                  list all projects
+  project +Project                          show tasks in a project
+
+Maintenance:
+  archive                                   move completed tasks to DONE_FILE
+  stats                                     summary counts
+  check                                     verify TODO_FILE is well-formed
+
+Shell:
+  help                                      show this help
+  exit                                      end the shell session (also Ctrl-D)
+EOF
 }
 
 main() {
