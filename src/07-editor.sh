@@ -181,7 +181,7 @@ _rli_read_byte() {
 # Space-separated so it's easy to keep in sync with dispatch_cmd's case;
 # the shell also honours help/exit itself.
 _hw_shell_commands() {
-	printf '%s' "add complete undo edit due priority tag delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
+	printf '%s' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
 }
 
 # _hw_tags_in_todo

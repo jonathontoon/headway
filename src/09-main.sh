@@ -29,13 +29,15 @@ Completing:
 Editing:
   edit <id>                                 open task in \$EDITOR
   edit <id> <text>                          replace task line directly
-  due <id> <DATE|none>                      set, update, or clear due date
-  priority <id> <A-Z|none>                  set or clear priority
-  tag <id> @tag                             add a tag
-  tag <id> -@tag                            remove a tag
-  tag <id> none                             clear all tags
+  due <id> <DATE>                           set or update due date
+  priority <id> <A-Z>                       set or update priority
+  tag <id> @tag [@tag...]                   add tag(s)
   project <id> +Project                     assign task to a project
-  project <id> none                         clear task's project
+  clear due <id> [<id>...]                  clear due date
+  clear priority <id> [<id>...]             clear priority
+  clear tags <id> [<id>...]                 clear all tags
+  clear tags <id> @tag [@tag...]            remove specific tag(s)
+  clear project <id> [<id>...]              clear project
   show <id>                                 print full detail for one task
   delete <id> [<id>...]                     delete permanently
 

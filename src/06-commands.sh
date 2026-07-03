@@ -159,19 +159,16 @@ cmd_edit() {
 	report_change "edited" "$id" "$new"
 }
 
-# cmd_due <id> <DATE|none>
+# cmd_due <id> <DATE>
 # DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
-# `none` clears the task's due date, restoring it to someday.
+# Use `clear due <id>` to remove a due date.
 cmd_due() {
-	_u='usage: headway due <id> <date|none>'
+	_u='usage: headway due <id> <date>'
 	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
-	case "$2" in
-	none) new_due="" ;;
-	*) new_due=$(resolve_date_shorthand "$2") || exit 1 ;;
-	esac
+	new_due=$(resolve_date_shorthand "$2") || exit 1
 	parse_line "$(line_at "$id")"
 	P_DUE="$new_due"
 	new_line=$(format_line)
@@ -182,20 +179,20 @@ cmd_due() {
 # (cmd_move was removed - its set-a-task's-project role is now the
 # id-shaped form of cmd_project below.)
 
-# cmd_priority <id> <A-Z|none>
+# cmd_priority <id> <A-Z>
 # Targets the (A) slot for active tasks, or the pri: extension for
 # already-completed ones, since a done line has no (A) position.
+# Use `clear priority <id>` to remove a priority.
 cmd_priority() {
-	_u='usage: headway priority <id> <A-Z|none>'
+	_u='usage: headway priority <id> <A-Z>'
 	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	val="$2"
 	case "$val" in
-	none) val="" ;;
 	[A-Z]) ;;
-	*) die "invalid priority: $val (must be A-Z or 'none')" ;;
+	*) die "invalid priority: $val (must be A-Z)" ;;
 	esac
 	parse_line "$(line_at "$id")"
 	if [ "$P_DONE" = "true" ]; then
@@ -208,61 +205,127 @@ cmd_priority() {
 	report_change "priority" "$id" "$new_line"
 }
 
-# cmd_tag <id> @tag | -@tag | none
-# Adds @tag (idempotent - silent no-op if the task already has it),
-# removes @tag when written as -@tag, or clears every tag on the task
-# when the value is `none`.
+# cmd_tag <id> @tag [@tag...]
+# Adds one or more tags. Idempotent per tag - if the task already has
+# one of the listed tags, it's a silent no-op for that tag. Use
+# `clear tags <id>` to wipe all tags, or `clear tags <id> @tag` to
+# remove specific tag(s).
 cmd_tag() {
-	_u='usage: headway tag <id> <@tag|-@tag|none>'
+	_u='usage: headway tag <id> @tag [@tag...]'
 	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
-	tagval="$2"
-	raw=$(line_at "$id")
-	parse_line "$raw"
+	shift
+	parse_line "$(line_at "$id")"
 
-	case "$tagval" in
-	none)
-		P_TAGS=""
-		_ct_action="cleared tags on"
-		;;
-	-@?*)
-		_ct_target="${tagval#-}"
-		_ct_new=""
-		_ct_found=false
-		for _ct_t in $P_TAGS; do
-			if [ "$_ct_t" = "$_ct_target" ]; then
-				_ct_found=true
-			else
-				_ct_new="${_ct_new:+$_ct_new }$_ct_t"
-			fi
-		done
-		if [ "$_ct_found" = "false" ]; then
-			printf 'task %s has no tag %s\n' "$id" "$_ct_target"
-			return 0
-		fi
-		P_TAGS="$_ct_new"
-		_ct_action="untagged $_ct_target on"
-		;;
-	@?*)
+	_ct_added=0
+	for _ct_tagval in "$@"; do
+		case "$_ct_tagval" in
+		@?*) ;;
+		*) die "invalid tag: $_ct_tagval (want @tag)" ;;
+		esac
 		case " $P_TAGS " in
-		*" $tagval "*)
-			printf 'task %s already has tag %s\n' "$id" "$tagval"
-			return 0
+		*" $_ct_tagval "*)
+			printf 'task %s already has tag %s\n' "$id" "$_ct_tagval"
+			continue
 			;;
 		esac
-		P_TAGS="${P_TAGS:+$P_TAGS }$tagval"
-		_ct_action="tagged"
-		;;
-	*)
-		die "invalid tag value: $tagval (want @tag, -@tag, or 'none')"
-		;;
-	esac
+		P_TAGS="${P_TAGS:+$P_TAGS }$_ct_tagval"
+		_ct_added=$((_ct_added + 1))
+	done
+
+	[ "$_ct_added" -gt 0 ] || return 0
 
 	new_line=$(format_line)
 	replace_line_at "$id" "$new_line"
-	report_change "$_ct_action" "$id" "$new_line"
+	report_change "tagged" "$id" "$new_line"
+}
+
+# cmd_clear <due|priority|tags|project> <id> [<id>...]
+# cmd_clear tags <id> @tag [@tag...]
+#
+# Empties a field on one or more tasks. Any trailing @-prefixed arg
+# is treated as a specific tag to remove and requires field=tags plus
+# exactly one id; without them, `clear tags` wipes every tag on every
+# listed task. Warns (without failing) when a removal targets a tag the
+# task doesn't have.
+cmd_clear() {
+	_u='usage: headway clear <due|priority|tags|project> <id> [<id>...]
+       headway clear tags <id> @tag [@tag...]'
+	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
+	[ "$#" -ge 2 ] || usage_die "$_u"
+
+	_cc_field="$1"
+	shift
+	case "$_cc_field" in
+	due | priority | tags | project) ;;
+	*) die "invalid field: $_cc_field (want due, priority, tags, or project)" ;;
+	esac
+
+	require_todo_file
+
+	# Partition remaining args into ids and @-prefixed removal targets.
+	_cc_ids=""
+	_cc_tags=""
+	for _cc_arg in "$@"; do
+		case "$_cc_arg" in
+		@?*) _cc_tags="${_cc_tags:+$_cc_tags }$_cc_arg" ;;
+		*) _cc_ids="${_cc_ids:+$_cc_ids }$_cc_arg" ;;
+		esac
+	done
+
+	[ -n "$_cc_ids" ] || usage_die "$_u"
+
+	if [ -n "$_cc_tags" ]; then
+		[ "$_cc_field" = "tags" ] || die "@tag arguments only valid with 'clear tags'"
+		# Per-tag removal targets a single task; batching ids here would
+		# be ambiguous ("did the user mean one @tag on many tasks, or a
+		# task list with a stray @tag?"). Force the single-id shape.
+		set -- $_cc_ids
+		[ "$#" -eq 1 ] || die "clear tags @tag takes a single id"
+		_cc_id=$(resolve_id "$1") || exit 1
+		parse_line "$(line_at "$_cc_id")"
+		_cc_removed=0
+		for _cc_target in $_cc_tags; do
+			_cc_new=""
+			_cc_found=false
+			for _cc_t in $P_TAGS; do
+				if [ "$_cc_t" = "$_cc_target" ]; then
+					_cc_found=true
+				else
+					_cc_new="${_cc_new:+$_cc_new }$_cc_t"
+				fi
+			done
+			if [ "$_cc_found" = "false" ]; then
+				printf 'task %s has no tag %s\n' "$_cc_id" "$_cc_target"
+				continue
+			fi
+			P_TAGS="$_cc_new"
+			_cc_removed=$((_cc_removed + 1))
+		done
+		[ "$_cc_removed" -gt 0 ] || return 0
+		new_line=$(format_line)
+		replace_line_at "$_cc_id" "$new_line"
+		report_change "cleared tag" "$_cc_id" "$new_line"
+		return 0
+	fi
+
+	for _cc_arg in $_cc_ids; do
+		_cc_id=$(resolve_id "$_cc_arg") || exit 1
+		parse_line "$(line_at "$_cc_id")"
+		case "$_cc_field" in
+		due) P_DUE="" ;;
+		priority)
+			if [ "$P_DONE" = "true" ]; then P_PRI_EXT=""; else P_PRIORITY=""; fi
+			;;
+		tags) P_TAGS="" ;;
+		project) P_PROJECTS="" ;;
+		esac
+		new_line=$(format_line)
+		replace_line_at "$_cc_id" "$new_line"
+		report_change "cleared $_cc_field" "$_cc_id" "$new_line"
+	done
 }
 
 # cmd_delete <id> [<id>...]
@@ -421,17 +484,15 @@ cmd_projects() {
 	}' "$TODO_FILE" | sort -u
 }
 
-# cmd_project +Project              (view: list tasks in a project)
-# cmd_project <id> +Project | none  (set: assign or clear a task's project)
+# cmd_project +Project        (view: list tasks in a project)
+# cmd_project <id> +Project   (set: assign a task to a project)
 #
-# Dispatches on the shape of the first argument: `+X` means view, a numeric
-# id means set. This replaces the old `cmd_move` (which took the id-shaped
-# form under a different name); the set form now sits alongside `tag`,
-# `priority`, and `due` in the same <verb> <id> <value> pattern.
+# Dispatches on the shape of the first argument: `+X` means view, a
+# numeric id means set. Use `clear project <id>` to remove a task's
+# project.
 cmd_project() {
 	_u='usage: headway project +Project              (list tasks in project)
-       headway project <id> +Project      (assign task to project)
-       headway project <id> none          (clear task'"'"'s project)'
+       headway project <id> +Project      (assign task to project)'
 	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 
@@ -443,15 +504,14 @@ cmd_project() {
 		;;
 	esac
 
-	# id-shaped form: <id> <+Project|none>
+	# id-shaped form: <id> <+Project>
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
 	value="$2"
 	case "$value" in
-	none) new_projects="" ;;
 	+?*) new_projects="$value" ;;
-	*) die "invalid project value: $value (want +Project or 'none')" ;;
+	*) die "invalid project value: $value (want +Project)" ;;
 	esac
 	parse_line "$(line_at "$id")"
 	P_PROJECTS="$new_projects"

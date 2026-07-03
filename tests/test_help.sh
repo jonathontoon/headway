@@ -46,7 +46,7 @@ assert_exit_code "2" "$code" "--version --help: exit 2"
 
 # --- in-shell: every command accepts --help --------------------------------
 
-for cmd in add complete undo edit due priority tag delete show list inbox today \
+for cmd in add complete undo edit due priority tag clear delete show list inbox today \
 	upcoming someday logbook projects project archive stats check; do
 	out=$(printf '%s --help\nexit\n' "$cmd" | $HW 2>&1)
 	assert_match "^usage: headway $cmd" "$out" "in-shell $cmd --help: prints subcommand usage"
@@ -104,6 +104,14 @@ for cmd in undo edit due priority tag delete show; do
 	assert_match "no tasks yet" "$out" "in-shell $cmd on missing file: friendly hint"
 	assert_eq "0" "$(printf '%s\n' "$out" | grep -c 'awk:' || true)" \
 		"in-shell $cmd on missing file: no raw awk error"
+done
+
+for field in due priority tags project; do
+	rm -f "$TODO_FILE"
+	out=$(printf 'clear %s 1\nexit\n' "$field" | $HW 2>&1)
+	assert_match "no tasks yet" "$out" "in-shell clear $field on missing file: friendly hint"
+	assert_eq "0" "$(printf '%s\n' "$out" | grep -c 'awk:' || true)" \
+		"in-shell clear $field on missing file: no raw awk error"
 done
 
 teardown_sandbox

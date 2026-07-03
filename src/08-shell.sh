@@ -18,6 +18,7 @@ dispatch_cmd() {
 	due) cmd_due "$@" ;;
 	priority) cmd_priority "$@" ;;
 	tag) cmd_tag "$@" ;;
+	clear) cmd_clear "$@" ;;
 	delete) cmd_delete "$@" ;;
 	show) cmd_show "$@" ;;
 	list) cmd_list "$@" ;;

@@ -109,7 +109,7 @@ show_out=$(cmd_show 1)
 assert_match "^status:     done" "$show_out" "show: completed task shows status=done"
 assert_match "^completed:  " "$show_out" "show: completion date present"
 
-# --- project: unified view (+X) and set (<id> +X | none) -------------------
+# --- project: unified view (+X) and set (<id> +X); clear project ------------
 
 teardown_sandbox
 setup_sandbox
@@ -127,10 +127,10 @@ cmd_project 2 +Apollo >/dev/null
 line2=$(sed -n 2p "$TODO_FILE")
 assert_match "\+Apollo" "$line2" "project <id> +X: task assigned"
 
-cmd_project 2 none >/dev/null
+cmd_clear project 2 >/dev/null
 line2=$(sed -n 2p "$TODO_FILE")
 assert_eq "0" "$(printf '%s\n' "$line2" | grep -c '+Apollo' || true)" \
-	"project <id> none: project cleared"
+	"clear project: project cleared"
 
 teardown_sandbox
 report_and_exit

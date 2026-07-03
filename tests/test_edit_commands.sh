@@ -38,11 +38,11 @@ code=0
 (cmd_project 2 NotAProject >/dev/null 2>&1) || code=$?
 assert_exit_code "1" "$code" "project <id>: rejects value without leading +"
 
-# --- project <id> none: clears project --------------------------------------
+# --- clear project: removes project membership ------------------------------
 
-cmd_project 2 none >/dev/null
+cmd_clear project 2 >/dev/null
 line2=$(line_at 2)
-assert_eq "" "$(printf '%s\n' "$line2" | grep -o '+Branding' || true)" "project <id> none: project cleared"
+assert_eq "" "$(printf '%s\n' "$line2" | grep -o '+Branding' || true)" "clear project: project cleared"
 
 # Restore the project so subsequent tests reference the same task shape.
 cmd_project 2 +Branding >/dev/null
@@ -54,13 +54,17 @@ cmd_priority 3 A >/dev/null
 line3=$(line_at 3)
 assert_match "^\(A\) " "$line3" "priority: (A) applied to active task"
 
-cmd_priority 3 none >/dev/null
+cmd_clear priority 3 >/dev/null
 line3=$(line_at 3)
-assert_match "^[0-9]{4}-" "$line3" "priority: cleared, no (X) marker remains"
+assert_match "^[0-9]{4}-" "$line3" "clear priority: cleared, no (X) marker remains"
 
 code=0
 (cmd_priority 3 ZZ >/dev/null 2>&1) || code=$?
 assert_exit_code "1" "$code" "priority: rejects multi-char value"
+
+code=0
+(cmd_priority 3 none >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "priority: 'none' is no longer a magic value"
 
 cmd_complete 3 >/dev/null
 cmd_priority 3 B >/dev/null
@@ -68,7 +72,7 @@ line3=$(line_at 3)
 assert_match "pri:B" "$line3" "priority: completed task gets pri: extension"
 assert_match "^x " "$line3" "priority: completed task stays marked done"
 
-# --- tag: idempotent add, remove via -@, clear via none ---------------------
+# --- tag: additive-only, multi-tag add --------------------------------------
 
 cmd_add "Plan the offsite" >/dev/null
 cmd_tag 4 @planning >/dev/null
@@ -82,24 +86,60 @@ assert_eq "$before_tag_line" "$after_tag_line" "tag: re-adding an existing tag i
 
 code=0
 (cmd_tag 4 notatag >/dev/null 2>&1) || code=$?
-assert_exit_code "1" "$code" "tag: rejects value without leading @/-@"
+assert_exit_code "1" "$code" "tag: rejects value without leading @"
 
-cmd_tag 4 @followup >/dev/null
-cmd_tag 4 -@planning >/dev/null
+code=0
+(cmd_tag 4 -@planning >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "tag: -@tag shorthand no longer accepted"
+
+cmd_tag 4 @followup @urgent >/dev/null
 line4=$(line_at 4)
-assert_eq "" "$(printf '%s\n' "$line4" | grep -o '@planning' || true)" "tag -@: removes named tag"
-assert_match "@followup" "$line4" "tag -@: leaves other tags intact"
+assert_match "@followup" "$line4" "tag: multi-tag add includes @followup"
+assert_match "@urgent" "$line4" "tag: multi-tag add includes @urgent"
 
-cmd_tag 4 none >/dev/null
+# --- clear tags: specific removal, then wipe --------------------------------
+
+cmd_clear tags 4 @planning >/dev/null
 line4=$(line_at 4)
-assert_eq "" "$(printf '%s\n' "$line4" | grep -oE '@[A-Za-z]+' || true)" "tag none: all tags cleared"
+assert_eq "" "$(printf '%s\n' "$line4" | grep -o '@planning' || true)" "clear tags @: named tag removed"
+assert_match "@followup" "$line4" "clear tags @: other tags intact"
 
-# --- due <id> none: clears due date ----------------------------------------
+cmd_clear tags 4 >/dev/null
+line4=$(line_at 4)
+assert_eq "" "$(printf '%s\n' "$line4" | grep -oE '@[A-Za-z]+' || true)" "clear tags: all tags cleared"
+
+# --- clear due: removes due date -------------------------------------------
 
 cmd_due 1 2026-08-15 >/dev/null
-cmd_due 1 none >/dev/null
+cmd_clear due 1 >/dev/null
 line1=$(line_at 1)
-assert_eq "" "$(printf '%s\n' "$line1" | grep -o 'due:' || true)" "due none: due date cleared"
+assert_eq "" "$(printf '%s\n' "$line1" | grep -o 'due:' || true)" "clear due: due date cleared"
+
+# --- clear: bulk ids -------------------------------------------------------
+
+cmd_due 1 2026-09-01 >/dev/null
+cmd_due 2 2026-09-02 >/dev/null
+cmd_clear due 1 2 >/dev/null
+assert_eq "" "$(line_at 1 | grep -o 'due:' || true)" "clear due bulk: id 1 cleared"
+assert_eq "" "$(line_at 2 | grep -o 'due:' || true)" "clear due bulk: id 2 cleared"
+
+# --- clear: rejects unknown field and bad-shape input ----------------------
+
+code=0
+(cmd_clear bogus 1 >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "clear: unknown field rejected"
+
+code=0
+(cmd_clear due >/dev/null 2>&1) || code=$?
+assert_exit_code "2" "$code" "clear: missing id rejected"
+
+code=0
+(cmd_clear tags 1 2 @foo >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "clear tags @tag: rejects more than one id"
+
+code=0
+(cmd_clear due 1 @foo >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "clear due: rejects @tag arguments"
 
 # --- delete: single, prompt-aware -------------------------------------------
 

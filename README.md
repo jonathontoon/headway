@@ -194,22 +194,28 @@ Both `complete` and `undo` accept multiple ids in one call. All ids are validate
 ### Editing tasks
 
 ```bash
-edit <id>                 # open task in $EDITOR
-edit <id> <text>          # replace task line directly, no editor
-due <id> YYYY-MM-DD       # set or update due date
-due <id> today            # convenience shorthand — writes today's actual date
-due <id> none             # clear the due date
-priority <id> A           # set priority A–Z (or 'none')
-tag <id> @tagname         # add a tag
-tag <id> -@tagname        # remove a tag
-tag <id> none             # clear all tags
-project <id> +Project     # assign task to a project
-project <id> none         # clear the project
-show <id>                 # print a labelled detail block
-delete <id> [<id>...]     # delete permanently (prompts to confirm)
+edit <id>                        # open task in $EDITOR
+edit <id> <text>                 # replace task line directly, no editor
+due <id> YYYY-MM-DD              # set or update due date
+due <id> today                   # convenience shorthand — writes today's actual date
+priority <id> A                  # set priority A–Z
+tag <id> @tagname [@tag...]      # add one or more tags
+project <id> +Project            # assign task to a project
+show <id>                        # print a labelled detail block
+delete <id> [<id>...]            # delete permanently (prompts to confirm)
 ```
 
-`delete` accepts multiple ids and deletes in descending id order so renumbering doesn't invalidate later ids in the same call. Set `CONFIRM_DELETE=false` in your config to skip the confirmation prompt.
+Fields are emptied with a dedicated `clear` verb — no magic sentinel values:
+
+```bash
+clear due <id> [<id>...]         # clear due date on one or more tasks
+clear priority <id> [<id>...]    # clear priority
+clear tags <id> [<id>...]        # clear every tag on the task(s)
+clear tags <id> @tagname [@tag…] # remove specific tag(s) from a single task
+clear project <id> [<id>...]     # clear project
+```
+
+`delete` and `clear` accept multiple ids in one call. `delete` removes in descending id order so renumbering doesn't invalidate later ids in the same call. Set `CONFIRM_DELETE=false` in your config to skip the confirmation prompt.
 
 ### Listing and filtering
 
