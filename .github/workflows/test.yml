@@ -5,6 +5,14 @@ on:
   pull_request:
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify headway.sh matches src/*.sh
+        run: make verify
+
   test:
     runs-on: ubuntu-latest
     container: alpine:3.20
