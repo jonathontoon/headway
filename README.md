@@ -174,10 +174,10 @@ All commands below are typed at the `headway $` prompt.
 ### Views
 
 ```bash
-inbox              # tasks with no project assigned
+inbox              # tasks with no project and no due date
 today              # due today, plus anything overdue
 upcoming           # future-dated tasks, in chronological order
-someday            # tasks with no due date
+someday            # project tasks with no due date
 logbook            # completed tasks, most recent first
 
 today +LaunchBlog  # any view, filtered by project
@@ -234,7 +234,7 @@ list @deepwork        # filter by tag
 list "keyword"        # full-text search
 ```
 
-`list` (with no filter) groups its output into **Overdue**, **Due today**, **Upcoming**, and **Someday** sections. Section headers appear only when at least two buckets are populated — a list that happens to be all-someday or all-overdue still prints flat.
+`list` (with no filter) groups its output into **Overdue**, **Due today**, **Upcoming**, **Inbox**, and **Someday** sections. Section headers appear only when at least two buckets are populated — a list that happens to be all-inbox, all-someday, or all-overdue still prints flat.
 
 Dates in any view carry an inline relative-date hint after `due:DATE`: `(yesterday)`, `(today)`, `(tomorrow)`, or a weekday name (`monday`..`sunday`) for dates 2–7 days out. Display-only; the `todo.txt` file is unchanged.
 

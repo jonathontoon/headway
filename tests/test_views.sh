@@ -21,6 +21,7 @@ cmd_add "Write project brief +Apollo due:$future_d @deepwork" >/dev/null
 cmd_add "Call the accountant due:today @calls" >/dev/null
 cmd_add "Pay overdue invoice due:$yesterday_d +Bills" >/dev/null
 cmd_add "Follow up +Apollo" >/dev/null
+cmd_add "Submit meter reading due:$future_d" >/dev/null
 
 # Two completed entries appended directly (bypassing cmd_complete),
 # with distinct completion dates to exercise logbook's descending sort.
@@ -33,22 +34,24 @@ printf 'x %s %s Clear out downloads folder\n' "$newer_done" "$today_d" >>"$TODO_
 
 list_out=$(cmd_list)
 task_lines=$(printf '%s\n' "$list_out" | grep -cE '^[0-9]+:' || true)
-assert_eq "5" "$task_lines" "list: shows all 5 incomplete tasks"
+assert_eq "6" "$task_lines" "list: shows all 6 incomplete tasks"
 assert_match "^1: .*Book flights to Lisbon" "$list_out" "list: includes task 1"
 assert_match "^5: .*Follow up" "$list_out" "list: includes task 5"
-# The mixed-bucket fixture (overdue, today, upcoming, someday) triggers
+# The mixed-bucket fixture (overdue, today, upcoming, inbox, someday) triggers
 # the grouped-list section headers.
 assert_match "^Overdue$"   "$list_out" "list: Overdue section header present"
 assert_match "^Due today$" "$list_out" "list: Due today section header present"
 assert_match "^Upcoming$"  "$list_out" "list: Upcoming section header present"
+assert_match "^Inbox$"     "$list_out" "list: Inbox section header present"
 assert_match "^Someday$"   "$list_out" "list: Someday section header present"
 
-# --- inbox: tasks with no project, regardless of due ----------------------
+# --- inbox: tasks with no project or due date -----------------------------
 
 inbox_out=$(cmd_inbox)
-assert_eq "2" "$(printf '%s\n' "$inbox_out" | wc -l | tr -d ' ')" "inbox: two tasks have no project"
-assert_match "^1: .*Book flights to Lisbon" "$inbox_out" "inbox: plain task present"
-assert_match "^3: .*Call the accountant" "$inbox_out" "inbox: due:today task present (no project)"
+assert_eq "1" "$(printf '%s\n' "$inbox_out" | wc -l | tr -d ' ')" "inbox: one task has no project or due date"
+assert_match "^1: .*Book flights to Lisbon" "$inbox_out" "inbox: plain undated task present"
+assert_eq "" "$(printf '%s\n' "$inbox_out" | grep "Call the accountant" || true)" "inbox: due-today projectless task excluded"
+assert_eq "" "$(printf '%s\n' "$inbox_out" | grep "Submit meter reading" || true)" "inbox: future-dated projectless task excluded"
 
 # --- today: due today, plus overdue ---------------------------------------
 
@@ -60,14 +63,15 @@ assert_match "^4: .*Pay overdue invoice" "$today_out" "today: overdue task prese
 # --- upcoming: future-dated tasks ------------------------------------------
 
 upcoming_out=$(cmd_upcoming)
-assert_eq "1" "$(printf '%s\n' "$upcoming_out" | wc -l | tr -d ' ')" "upcoming: one future-dated task"
+assert_eq "2" "$(printf '%s\n' "$upcoming_out" | wc -l | tr -d ' ')" "upcoming: two future-dated tasks"
 assert_match "^2: .*Write project brief" "$upcoming_out" "upcoming: future task present"
+assert_match "^6: .*Submit meter reading" "$upcoming_out" "upcoming: future projectless task present"
 
-# --- someday: no due date ---------------------------------------------------
+# --- someday: no due date, with a project ----------------------------------
 
 someday_out=$(cmd_someday)
-assert_eq "2" "$(printf '%s\n' "$someday_out" | wc -l | tr -d ' ')" "someday: two tasks with no due date"
-assert_match "^1: .*Book flights to Lisbon" "$someday_out" "someday: plain task present"
+assert_eq "1" "$(printf '%s\n' "$someday_out" | wc -l | tr -d ' ')" "someday: one projected task has no due date"
+assert_eq "" "$(printf '%s\n' "$someday_out" | grep "Book flights to Lisbon" || true)" "someday: projectless undated task excluded"
 assert_match "^5: .*Follow up" "$someday_out" "someday: project task with no due present"
 
 # --- logbook: completed tasks, most recent completion first ---------------
@@ -76,8 +80,8 @@ logbook_out=$(cmd_logbook)
 assert_eq "2" "$(printf '%s\n' "$logbook_out" | wc -l | tr -d ' ')" "logbook: two completed tasks"
 first_line=$(printf '%s\n' "$logbook_out" | sed -n 1p)
 second_line=$(printf '%s\n' "$logbook_out" | sed -n 2p)
-assert_match "^7: .*Clear out downloads folder" "$first_line" "logbook: most recently completed task first"
-assert_match "^6: .*Archive old emails" "$second_line" "logbook: older completed task second"
+assert_match "^8: .*Clear out downloads folder" "$first_line" "logbook: most recently completed task first"
+assert_match "^7: .*Archive old emails" "$second_line" "logbook: older completed task second"
 
 # --- filtering: +Project ----------------------------------------------------
 

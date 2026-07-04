@@ -760,6 +760,7 @@ collect_view_rows() {
 
 		case "$_cvr_which" in
 		inbox)
+			[ -z "$P_DUE" ] || continue
 			[ -z "$P_PROJECTS" ] || continue
 			;;
 		today)
@@ -772,6 +773,7 @@ collect_view_rows() {
 			;;
 		someday)
 			[ -z "$P_DUE" ] || continue
+			[ -n "$P_PROJECTS" ] || continue
 			;;
 		esac
 
@@ -853,10 +855,10 @@ render_view() {
 
 # render_grouped_list
 # Emits every incomplete task, bucketed into Overdue / Due today /
-# Upcoming / Someday sections. Section headers appear only when at least
-# two buckets have content - a list that happens to be all-someday or
-# all-overdue still prints flat, unadorned, matching the pre-grouping
-# behaviour so it doesn't feel over-decorated for the common case.
+# Upcoming / Inbox / Someday sections. Section headers appear only when at least
+# two buckets have content - a list that happens to be all-inbox,
+# all-someday, or all-overdue still prints flat, unadorned, matching the
+# pre-grouping behaviour so it doesn't feel over-decorated for the common case.
 render_grouped_list() {
 	[ -f "$TODO_FILE" ] || return 0
 
@@ -869,6 +871,7 @@ render_grouped_list() {
 	_rgl_td=$(mktemp) || { rm -f "$_rgl_od"; die "mktemp failed"; }
 	_rgl_up=$(mktemp) || { rm -f "$_rgl_od" "$_rgl_td"; die "mktemp failed"; }
 	_rgl_sd=$(mktemp) || { rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up"; die "mktemp failed"; }
+	_rgl_ib=$(mktemp) || { rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"; die "mktemp failed"; }
 
 	_rgl_id=0
 	while IFS= read -r _rgl_raw || [ -n "$_rgl_raw" ]; do
@@ -878,7 +881,11 @@ render_grouped_list() {
 		[ "$P_DONE" = "false" ] || continue
 
 		if [ -z "$P_DUE" ]; then
-			_rgl_bucket=$_rgl_sd
+			if [ -z "$P_PROJECTS" ]; then
+				_rgl_bucket=$_rgl_ib
+			else
+				_rgl_bucket=$_rgl_sd
+			fi
 			_rgl_key=$(printf '%05d' "$_rgl_id")
 		elif expr "$P_DUE" '<' "$_rgl_today" >/dev/null; then
 			_rgl_bucket=$_rgl_od
@@ -894,14 +901,14 @@ render_grouped_list() {
 	done <"$TODO_FILE"
 
 	_rgl_populated=0
-	for _rgl_f in "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"; do
+	for _rgl_f in "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_ib" "$_rgl_sd"; do
 		[ -s "$_rgl_f" ] && _rgl_populated=$((_rgl_populated + 1))
 	done
 	_rgl_show_headers=false
 	[ "$_rgl_populated" -ge 2 ] && _rgl_show_headers=true
 
 	_rgl_first=true
-	for _rgl_pair in "Overdue|$_rgl_od" "Due today|$_rgl_td" "Upcoming|$_rgl_up" "Someday|$_rgl_sd"; do
+	for _rgl_pair in "Overdue|$_rgl_od" "Due today|$_rgl_td" "Upcoming|$_rgl_up" "Inbox|$_rgl_ib" "Someday|$_rgl_sd"; do
 		_rgl_header="${_rgl_pair%%|*}"
 		_rgl_file="${_rgl_pair#*|}"
 		[ -s "$_rgl_file" ] || continue
@@ -919,7 +926,7 @@ render_grouped_list() {
 		done
 	done
 
-	rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"
+	rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_ib" "$_rgl_sd"
 }
 # ---------------------------------------------------------------------------
 # Commands
@@ -2425,10 +2432,10 @@ Editing:
 
 Listing:
   list [+Project|@tag|"keyword"]            list incomplete tasks (grouped)
-  inbox                                     tasks with no project
+  inbox                                     tasks with no due date and no project
   today                                     due today, plus overdue
   upcoming                                  future-dated tasks
-  someday                                   tasks with no due date
+  someday                                   project tasks with no due date
   logbook                                   completed tasks
 
 Projects:

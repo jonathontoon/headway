@@ -64,11 +64,11 @@ HEADWAY_LIB_ONLY=true
 . ./headway.sh
 detect_date_flavor
 
-# All-someday case: single bucket, no headers.
+# All-inbox case: single bucket, no headers.
 cmd_add "task A" >/dev/null
 cmd_add "task B" >/dev/null
 list_out=$(cmd_list)
-assert_eq "0" "$(printf '%s\n' "$list_out" | grep -cE '^Overdue$|^Due today$|^Upcoming$|^Someday$' || true)" \
+assert_eq "0" "$(printf '%s\n' "$list_out" | grep -cE '^Overdue$|^Due today$|^Upcoming$|^Inbox$|^Someday$' || true)" \
 	"grouped list: single bucket prints no headers"
 
 # Mix of buckets: headers appear.
@@ -78,6 +78,7 @@ future_d=$(date_add_days "$today_d" 10)
 cmd_add "overdue" >/dev/null
 cmd_add "due today" >/dev/null
 cmd_add "future" >/dev/null
+cmd_add "later +Home" >/dev/null
 cmd_due 3 "$yesterday_d" >/dev/null
 cmd_due 4 today >/dev/null
 cmd_due 5 "$future_d" >/dev/null
@@ -86,11 +87,12 @@ list_out=$(cmd_list)
 assert_match "^Overdue$" "$list_out" "grouped list: Overdue header"
 assert_match "^Due today$" "$list_out" "grouped list: Due today header"
 assert_match "^Upcoming$" "$list_out" "grouped list: Upcoming header"
-assert_match "^Someday$" "$list_out" "grouped list: Someday header (task A/B still someday)"
+assert_match "^Inbox$" "$list_out" "grouped list: Inbox header (task A/B still inbox)"
+assert_match "^Someday$" "$list_out" "grouped list: Someday header (project task has no due)"
 
 # Filtered list stays flat (no headers).
 filtered=$(cmd_list "overdue")
-assert_eq "0" "$(printf '%s\n' "$filtered" | grep -cE '^Overdue$|^Due today$|^Upcoming$|^Someday$' || true)" \
+assert_eq "0" "$(printf '%s\n' "$filtered" | grep -cE '^Overdue$|^Due today$|^Upcoming$|^Inbox$|^Someday$' || true)" \
 	"grouped list: filtered call renders flat"
 
 # --- tab completion: commands / projects / tags ---------------------------

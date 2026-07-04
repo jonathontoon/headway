@@ -41,10 +41,10 @@ Editing:
 
 Listing:
   list [+Project|@tag|"keyword"]            list incomplete tasks (grouped)
-  inbox                                     tasks with no project
+  inbox                                     tasks with no due date and no project
   today                                     due today, plus overdue
   upcoming                                  future-dated tasks
-  someday                                   tasks with no due date
+  someday                                   project tasks with no due date
   logbook                                   completed tasks
 
 Projects:
