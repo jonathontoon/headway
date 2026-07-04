@@ -45,5 +45,11 @@ assert_match "2 active, 0 done \(2 total\)" "$stats_out" "stats: active/done tot
 assert_match "^projects:" "$stats_out" "stats: projects section header present"
 assert_match "\+Apollo +1" "$stats_out" "stats: per-project count present"
 
+# --- stats: project column pads to the longest name, not a fixed width -----
+
+cmd_add "Track the launch +SuperLongProjectNameHere" >/dev/null
+stats_out=$(cmd_stats)
+assert_match "\+SuperLongProjectNameHere  1" "$stats_out" "stats: long project name keeps a fixed 2-space gap instead of misaligning"
+
 teardown_sandbox
 report_and_exit

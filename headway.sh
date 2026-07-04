@@ -30,8 +30,8 @@ THEME_TAG_DEFAULT="35"
 THEME_DUE_DEFAULT="1;31"
 THEME_DATE_DEFAULT="2"
 THEME_DESC_DEFAULT=""
-THEME_REPEAT_DEFAULT="34"
-THEME_DONE_DEFAULT="2"
+THEME_REPEAT_DEFAULT="1;34"
+THEME_DONE_DEFAULT="2;9"
 # ---------------------------------------------------------------------------
 # Generic helpers
 # ---------------------------------------------------------------------------
@@ -135,12 +135,18 @@ expand_tilde() {
 
 # use_color
 # Returns success (0) if colored output should be used, based on the
-# COLOR config value ("auto"/"true"/"false") and whether stdout is a tty.
+# COLOR config value ("auto"/"true"/"false"), the NO_COLOR convention
+# (https://no-color.org - any non-empty value disables color while
+# COLOR=auto, though an explicit COLOR=true still wins, same as a tool's
+# own --color=always flag would), and whether stdout is a tty.
 use_color() {
 	case "${COLOR:-auto}" in
 	true) return 0 ;;
 	false) return 1 ;;
-	*) [ -t 1 ] ;;
+	*)
+		[ -z "${NO_COLOR:-}" ] || return 1
+		[ -t 1 ]
+		;;
 	esac
 }
 
@@ -152,7 +158,10 @@ use_color_err() {
 	case "${COLOR:-auto}" in
 	true) return 0 ;;
 	false) return 1 ;;
-	*) [ -t 2 ] ;;
+	*)
+		[ -z "${NO_COLOR:-}" ] || return 1
+		[ -t 2 ]
+		;;
 	esac
 }
 
@@ -1303,6 +1312,29 @@ cmd_delete() {
 	done <"$_cd_sorted"
 	rm -f "$_cd_sorted"
 }
+# _cs_field <padded-label> <value> [value-theme]
+# Prints one cmd_show detail line. Dims the label via THEME_DATE - the
+# same "metadata" role it plays everywhere else. The value gets
+# [value-theme] (e.g. THEME_PROJECT, THEME_DUE) so it matches how the
+# same field is colored in listings; once the task is done, the value
+# is dimmed via THEME_DONE instead, mirroring how colorize_line() dims a
+# completed task as a whole. Reads $_cs_use_color/$_cs_status from
+# cmd_show's scope.
+_cs_field() {
+	_csf_label="$1"
+	_csf_value="$2"
+	_csf_theme="${3:-}"
+	if [ "$_cs_use_color" = "true" ]; then
+		_csf_label=$(sgr_wrap "$THEME_DATE" "$_csf_label")
+		if [ "$_cs_status" = "done" ]; then
+			_csf_value=$(sgr_wrap "$THEME_DONE" "$_csf_value")
+		elif [ -n "$_csf_theme" ]; then
+			_csf_value=$(sgr_wrap "$_csf_theme" "$_csf_value")
+		fi
+	fi
+	printf '%s%s\n' "$_csf_label" "$_csf_value"
+}
+
 # cmd_show <id>
 # Prints a labelled detail block for a single task - the inverse of the
 # one-liner render_view uses. Handy when the task line is long enough to
@@ -1318,19 +1350,22 @@ cmd_show() {
 	_cs_status="open"
 	[ "$P_DONE" = "true" ] && _cs_status="done"
 	_cs_pri="${P_PRIORITY:-${P_PRI_EXT:-}}"
+	_cs_use_color=false
+	use_color && _cs_use_color=true
 
-	printf 'id:         %s\n' "$id"
-	printf 'status:     %s\n' "$_cs_status"
-	[ -n "$_cs_pri" ] && printf 'priority:   %s\n' "$_cs_pri"
-	[ -n "$P_DESC" ] && printf 'desc:       %s\n' "$P_DESC"
-	[ -n "$P_PROJECTS" ] && printf 'project:    %s\n' "$P_PROJECTS"
-	[ -n "$P_TAGS" ] && printf 'tags:       %s\n' "$P_TAGS"
-	[ -n "$P_DUE" ] && printf 'due:        %s\n' "$P_DUE"
-	[ -n "$P_REPEAT" ] && printf 'repeat:     %s\n' "$P_REPEAT"
-	[ -n "$P_CREATION_DATE" ] && printf 'created:    %s\n' "$P_CREATION_DATE"
-	[ -n "$P_COMPLETION_DATE" ] && printf 'completed:  %s\n' "$P_COMPLETION_DATE"
-	# The final [ -n "" ] && printf ... returns 1 when the field is empty;
-	# an explicit return keeps cmd_show's exit code aligned with success.
+	_cs_field "id:         " "$id"
+	_cs_field "status:     " "$_cs_status"
+	[ -n "$_cs_pri" ] && _cs_field "priority:   " "$_cs_pri" "${THEME_PRIORITY:-}"
+	[ -n "$P_DESC" ] && _cs_field "desc:       " "$P_DESC" "${THEME_DESC:-}"
+	[ -n "$P_PROJECTS" ] && _cs_field "project:    " "$P_PROJECTS" "${THEME_PROJECT:-}"
+	[ -n "$P_TAGS" ] && _cs_field "tags:       " "$P_TAGS" "${THEME_TAG:-}"
+	[ -n "$P_DUE" ] && _cs_field "due:        " "$P_DUE" "${THEME_DUE:-}"
+	[ -n "$P_REPEAT" ] && _cs_field "repeat:     " "$P_REPEAT" "${THEME_REPEAT:-}"
+	[ -n "$P_CREATION_DATE" ] && _cs_field "created:    " "$P_CREATION_DATE" "${THEME_DATE:-}"
+	[ -n "$P_COMPLETION_DATE" ] && _cs_field "completed:  " "$P_COMPLETION_DATE" "${THEME_DATE:-}"
+	# The final [ -n "" ] && _cs_field ... returns 1 when the field is
+	# empty; an explicit return keeps cmd_show's exit code aligned with
+	# success.
 	return 0
 }
 
@@ -1375,10 +1410,13 @@ cmd_someday() {
 cmd_logbook() {
 	cmd_view "logbook" "$@"
 }
-# cmd_projects
-# Lists the distinct +Project tokens carried by incomplete tasks, one per
-# line, sorted alphabetically.
-cmd_projects() {
+# _list_projects
+# Plain, uncolored list of distinct +Project tokens carried by incomplete
+# tasks, one per line, sorted alphabetically. The shared data source
+# behind cmd_projects (the user-facing command) as well as internal
+# consumers that need plain tokens - cmd_stats and _rli_tab's completion
+# candidates (src/07-editor.sh) - which would break if fed escape codes.
+_list_projects() {
 	[ -f "$TODO_FILE" ] || return 0
 	awk '
 	{
@@ -1389,6 +1427,23 @@ cmd_projects() {
 			if (substr(t, 1, 1) == "+" && length(t) > 1) print t
 		}
 	}' "$TODO_FILE" | sort -u
+}
+
+# cmd_projects
+# Lists the distinct +Project tokens carried by incomplete tasks, one per
+# line, sorted alphabetically - colorized via THEME_PROJECT like +Project
+# tokens are everywhere else they appear, when use_color() allows it.
+cmd_projects() {
+	_cp_use_color=false
+	use_color && _cp_use_color=true
+	_list_projects | while IFS= read -r _cp_proj; do
+		if [ "$_cp_use_color" = "true" ]; then
+			sgr_wrap "$THEME_PROJECT" "$_cp_proj"
+			printf '\n'
+		else
+			printf '%s\n' "$_cp_proj"
+		fi
+	done
 }
 
 # cmd_project +Project        (view: list tasks in a project)
@@ -1454,12 +1509,27 @@ cmd_archive() {
 	printf 'archived %s completed task(s)\n' "$count"
 }
 
+# _stat_field <label> <value>
+# Prints one cmd_stats summary line, dimming the label via THEME_DATE -
+# the same "metadata" role it plays everywhere else - when use_color()
+# allows it. Reads $_st_use_color from cmd_stats's scope.
+_stat_field() {
+	if [ "$_st_use_color" = "true" ]; then
+		printf '%s%s\n' "$(sgr_wrap "$THEME_DATE" "$1")" "$2"
+	else
+		printf '%s%s\n' "$1" "$2"
+	fi
+}
+
 # cmd_stats
 # Summary counts: active vs. done totals, a count per view, and a count
 # per project (across incomplete tasks).
 cmd_stats() {
+	_st_use_color=false
+	use_color && _st_use_color=true
+
 	if [ ! -f "$TODO_FILE" ]; then
-		printf 'tasks:    0 active, 0 done (0 total)\n'
+		_stat_field "tasks:    " "0 active, 0 done (0 total)"
 		return 0
 	fi
 
@@ -1474,28 +1544,52 @@ cmd_stats() {
 $counts
 EOF
 
-	printf 'tasks:    %s active, %s done (%s total)\n' "$active" "$done_count" "$total"
-	printf 'inbox:    %s\n' "$(render_view inbox | awk 'END { print NR }')"
-	printf 'today:    %s\n' "$(render_view today | awk 'END { print NR }')"
-	printf 'upcoming: %s\n' "$(render_view upcoming | awk 'END { print NR }')"
-	printf 'someday:  %s\n' "$(render_view someday | awk 'END { print NR }')"
+	_stat_field "tasks:    " "$active active, $done_count done ($total total)"
+	_stat_field "inbox:    " "$(render_view inbox | awk 'END { print NR }')"
+	_stat_field "today:    " "$(render_view today | awk 'END { print NR }')"
+	_stat_field "upcoming: " "$(render_view upcoming | awk 'END { print NR }')"
+	_stat_field "someday:  " "$(render_view someday | awk 'END { print NR }')"
 
-	projects=$(cmd_projects)
+	projects=$(_list_projects)
 	if [ -n "$projects" ]; then
-		printf 'projects:\n'
+		_stat_field "projects:" ""
+		# Pad the name column to the longest project name (+ a 2-space
+		# gap) rather than a fixed width, so alignment holds regardless
+		# of how long a project name is. Padding is computed and applied
+		# to the plain name *before* colorizing - padding the colorized
+		# string would count its invisible escape bytes toward the
+		# width and silently break the alignment this is meant to fix.
+		_st_width=$(printf '%s\n' "$projects" | awk '{ if (length($0) > w) w = length($0) } END { print w + 2 }')
 		printf '%s\n' "$projects" | while IFS= read -r proj; do
 			proj_count=$(render_view list "$proj" | awk 'END { print NR }')
-			printf '  %-20s %s\n' "$proj" "$proj_count"
+			_st_gap=$((_st_width - ${#proj}))
+			[ "$_st_gap" -lt 1 ] && _st_gap=1
+			_st_spaces=$(printf "%${_st_gap}s" "")
+			_st_display="$proj"
+			[ "$_st_use_color" = "true" ] && _st_display=$(sgr_wrap "$THEME_PROJECT" "$proj")
+			printf '  %s%s%s\n' "$_st_display" "$_st_spaces" "$proj_count"
 		done
 	fi
 }
 
 # cmd_check
-# Verifies TODO_FILE is well-formed. Prints "line <N>: <message>" to
-# stderr for every problem found; exits 0 if clean, 1 otherwise. Checks:
-# blank lines, malformed priority markers, invalid due: dates, repeat:
-# values outside daily/weekly/monthly/yearly, and completed lines missing
-# either date.
+# _check_report <line-no> <message>
+# Emits one cmd_check diagnostic to stderr as "headway: line <N>: <message>"
+# - the same "headway: " prefix every other error uses - dimming just the
+# "line N" locator (reusing THEME_DATE, the same treatment metadata gets
+# elsewhere) when use_color_err() allows it. Bumps the caller's $problems.
+_check_report() {
+	problems=$((problems + 1))
+	_cr_loc="line $1"
+	use_color_err && _cr_loc=$(sgr_wrap "$THEME_DATE" "$_cr_loc")
+	printf 'headway: %s: %s\n' "$_cr_loc" "$2" >&2
+}
+
+# Verifies TODO_FILE is well-formed. Prints one diagnostic per problem
+# found via _check_report, followed by a summary line; exits 0 if clean,
+# 1 otherwise. Checks: blank lines, malformed priority markers, invalid
+# due: dates, repeat: values outside daily/weekly/monthly/yearly, and
+# completed lines missing either date.
 cmd_check() {
 	[ -f "$TODO_FILE" ] || die "no such file: $TODO_FILE"
 	problems=0
@@ -1504,8 +1598,7 @@ cmd_check() {
 		id=$((id + 1))
 
 		if [ -z "$raw" ]; then
-			printf 'line %s: blank line\n' "$id" >&2
-			problems=$((problems + 1))
+			_check_report "$id" "blank line"
 			continue
 		fi
 
@@ -1519,10 +1612,7 @@ cmd_check() {
 			'('*)
 				case "$raw" in
 				'('[A-Z]') '*) ;;
-				*)
-					printf 'line %s: malformed priority marker\n' "$id" >&2
-					problems=$((problems + 1))
-					;;
+				*) _check_report "$id" "malformed priority marker" ;;
 				esac
 				;;
 			esac
@@ -1530,12 +1620,10 @@ cmd_check() {
 			case "$raw" in
 			'x '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' '*) ;;
 			'x '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' '*)
-				printf 'line %s: completed task missing creation date\n' "$id" >&2
-				problems=$((problems + 1))
+				_check_report "$id" "completed task missing creation date"
 				;;
 			*)
-				printf 'line %s: completed task missing completion date\n' "$id" >&2
-				problems=$((problems + 1))
+				_check_report "$id" "completed task missing completion date"
 				;;
 			esac
 		fi
@@ -1546,18 +1634,14 @@ cmd_check() {
 			due:*)
 				dueval="${tok#due:}"
 				if ! is_valid_date "$dueval"; then
-					printf 'line %s: invalid due date: %s\n' "$id" "$dueval" >&2
-					problems=$((problems + 1))
+					_check_report "$id" "invalid due date: $dueval"
 				fi
 				;;
 			repeat:*)
 				repeatval="${tok#repeat:}"
 				case "$repeatval" in
 				daily | weekly | monthly | yearly) ;;
-				*)
-					printf 'line %s: invalid repeat value: %s\n' "$id" "$repeatval" >&2
-					problems=$((problems + 1))
-					;;
+				*) _check_report "$id" "invalid repeat value: $repeatval" ;;
 				esac
 				;;
 			esac
@@ -1565,7 +1649,15 @@ cmd_check() {
 		set +f
 	done <"$TODO_FILE"
 
-	[ "$problems" -eq 0 ]
+	if [ "$problems" -eq 0 ]; then
+		printf 'TODO_FILE is well-formed\n'
+		return 0
+	fi
+
+	_cc_word="problems"
+	[ "$problems" -eq 1 ] && _cc_word="problem"
+	printf 'headway: %s %s found\n' "$problems" "$_cc_word" >&2
+	return 1
 }
 tokenize_line() {
 	_tl_rest="$1"
@@ -1813,7 +1905,7 @@ _rli_tab() {
 	esac
 
 	case "$_rli_tab_src" in
-	projects) _rli_tab_cands=$(cmd_projects 2>/dev/null || true) ;;
+	projects) _rli_tab_cands=$(_list_projects 2>/dev/null || true) ;;
 	tags) _rli_tab_cands=$(_hw_tags_in_todo) ;;
 	commands) _rli_tab_cands=$(headway_commands | tr ' ' '\n') ;;
 	esac

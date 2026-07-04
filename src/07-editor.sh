@@ -244,7 +244,7 @@ _rli_tab() {
 	esac
 
 	case "$_rli_tab_src" in
-	projects) _rli_tab_cands=$(cmd_projects 2>/dev/null || true) ;;
+	projects) _rli_tab_cands=$(_list_projects 2>/dev/null || true) ;;
 	tags) _rli_tab_cands=$(_hw_tags_in_todo) ;;
 	commands) _rli_tab_cands=$(headway_commands | tr ' ' '\n') ;;
 	esac

@@ -51,6 +51,37 @@ result=$(
 )
 assert_eq "1" "$result" "use_color_err: COLOR=false returns failure"
 
+# --- NO_COLOR: disables color while COLOR=auto, even on a tty --------------
+
+result=$(
+	COLOR=auto
+	NO_COLOR=1
+	code=0
+	use_color || code=$?
+	printf '%s\n' "$code"
+)
+assert_eq "1" "$result" "use_color: NO_COLOR set forces failure under COLOR=auto"
+
+result=$(
+	COLOR=auto
+	NO_COLOR=1
+	code=0
+	use_color_err || code=$?
+	printf '%s\n' "$code"
+)
+assert_eq "1" "$result" "use_color_err: NO_COLOR set forces failure under COLOR=auto"
+
+# --- NO_COLOR: an explicit COLOR=true still overrides it --------------------
+
+result=$(
+	COLOR=true
+	NO_COLOR=1
+	code=0
+	use_color || code=$?
+	printf '%s\n' "$code"
+)
+assert_eq "0" "$result" "use_color: COLOR=true overrides NO_COLOR"
+
 # --- COLOR=false: gated call site (cmd_add) stays plain, byte-for-byte ------
 
 teardown_sandbox
@@ -94,8 +125,43 @@ colored_done=$(colorize_line "$done_line")
 esc_count=$(printf '%s' "$colored_done" | grep -o "$esc" | wc -l | tr -d ' ')
 assert_eq "2" "$esc_count" "colorize_line: completed task has exactly one open+reset (whole-line dim)"
 case "$colored_done" in
-*"${esc}[2m${done_line}${esc}[0m"*) pass ;;
+*"${esc}[2;9m${done_line}${esc}[0m"*) pass ;;
 *) fail "colorize_line: completed line not wrapped in THEME_DONE as a whole" ;;
+esac
+
+# --- COLOR=true: cmd_show/cmd_stats/cmd_projects are themed too -------------
+
+cmd_add "Write brief +Apollo due:2026-07-10 @deepwork" >/dev/null
+
+show_out=$(COLOR=true cmd_show 2)
+case "$show_out" in
+*"${esc}[2mid:         ${esc}[0m"*) pass ;;
+*) fail "cmd_show: label dimmed via THEME_DATE" ;;
+esac
+case "$show_out" in
+*"${esc}[36m+Apollo${esc}[0m"*) pass ;;
+*) fail "cmd_show: +Apollo project value still themed via THEME_PROJECT" ;;
+esac
+
+# cmd_projects while +Apollo is still open, before completing task 2 below
+# (cmd_projects only lists projects on incomplete tasks).
+projects_out=$(COLOR=true cmd_projects)
+case "$projects_out" in
+*"${esc}[36m+Apollo${esc}[0m"*) pass ;;
+*) fail "cmd_projects: +Apollo wrapped in THEME_PROJECT" ;;
+esac
+
+cmd_complete 2 >/dev/null
+show_out=$(COLOR=true cmd_show 2)
+case "$show_out" in
+*"${esc}[2mstatus:     ${esc}[0m${esc}[2;9mdone${esc}[0m"*) pass ;;
+*) fail "cmd_show: value dimmed+struck via THEME_DONE once task is done" ;;
+esac
+
+stats_out=$(COLOR=true cmd_stats)
+case "$stats_out" in
+*"${esc}[2mtasks:    ${esc}[0m"*) pass ;;
+*) fail "cmd_stats: label dimmed via THEME_DATE" ;;
 esac
 
 # --- THEME_PROJECT override: env var wins ------------------------------------

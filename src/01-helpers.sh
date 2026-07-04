@@ -101,12 +101,18 @@ expand_tilde() {
 
 # use_color
 # Returns success (0) if colored output should be used, based on the
-# COLOR config value ("auto"/"true"/"false") and whether stdout is a tty.
+# COLOR config value ("auto"/"true"/"false"), the NO_COLOR convention
+# (https://no-color.org - any non-empty value disables color while
+# COLOR=auto, though an explicit COLOR=true still wins, same as a tool's
+# own --color=always flag would), and whether stdout is a tty.
 use_color() {
 	case "${COLOR:-auto}" in
 	true) return 0 ;;
 	false) return 1 ;;
-	*) [ -t 1 ] ;;
+	*)
+		[ -z "${NO_COLOR:-}" ] || return 1
+		[ -t 1 ]
+		;;
 	esac
 }
 
@@ -118,7 +124,10 @@ use_color_err() {
 	case "${COLOR:-auto}" in
 	true) return 0 ;;
 	false) return 1 ;;
-	*) [ -t 2 ] ;;
+	*)
+		[ -z "${NO_COLOR:-}" ] || return 1
+		[ -t 2 ]
+		;;
 	esac
 }
 

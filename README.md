@@ -282,8 +282,8 @@ THEME_TAG=35                  # @tag tokens                     — default: mag
 THEME_DUE=1;31                # due:DATE                        — default: bold red
 THEME_DATE=2                  # creation/completion dates       — default: dim
 THEME_DESC=                   # task description                — default: unstyled
-THEME_REPEAT=34               # repeat:INTERVAL                 — default: blue
-THEME_DONE=2                  # whole line, once done           — default: dim
+THEME_REPEAT=1;34              # repeat:INTERVAL                 — default: bold blue
+THEME_DONE=2;9                 # whole line, once done           — default: dim + strikethrough
 
 # Behaviour
 CONFIRM_DELETE=true          # prompt before delete — recommended
@@ -298,6 +298,12 @@ display-only — it never touches what's written to `todo.txt`/`done.txt`,
 so switching colours around never touches your task data.
 
 Environment variables override config file values.
+
+While `COLOR=auto` (the default), headway also honours the [`NO_COLOR`](https://no-color.org)
+convention: setting `NO_COLOR` to any non-empty value disables colour
+regardless of whether output is going to a terminal. An explicit
+`COLOR=true` still overrides `NO_COLOR`, the same way a tool's own
+`--color=always` flag would.
 
 ---
 
