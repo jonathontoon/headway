@@ -87,10 +87,10 @@ suggest_command() {
 # sourced shell file) is never tilde-expanded by the shell automatically.
 expand_tilde() {
 	case "$1" in
-	"~")
+	\~)
 		printf '%s\n' "$HOME"
 		;;
-	"~/"*)
+	\~/*)
 		printf '%s\n' "$HOME/${1#\~/}"
 		;;
 	*)

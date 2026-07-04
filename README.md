@@ -112,7 +112,15 @@ echo 'alias headway="~/headway.sh"' >> ~/.zshrc
 
 ## Quick Start
 
-`headway` is a shell. Launch it with no arguments and you're in a session — type commands at the prompt:
+`headway` can run one command at a time, or launch an interactive shell when you call it with no arguments:
+
+```bash
+headway add "Book flights to Lisbon"
+headway today
+headway complete 3
+```
+
+Launch it with no arguments and you're in a session — type commands at the prompt:
 
 ```
 $ headway
@@ -137,7 +145,7 @@ headway $ inbox
 headway $ exit
 ```
 
-The shell is the only way to interact with `headway`. There is no one-shot command mode — running `headway add "..."` from the terminal is not supported. Only `headway --help` and `headway --version` are recognised at the outer level; anything else launches the shell (or, if given as an argument, is rejected with a usage error).
+Both forms use the same commands and output. `headway --help` and `headway --version` are handled at the outer level; `headway help` prints the command list.
 
 ---
 
@@ -339,7 +347,7 @@ A few principles that guide every decision in `headway`:
 
 **Your data is yours.** The source of truth is always `~/todo.txt` — a file you can read, edit, `grep`, back up, or delete without asking anyone's permission.
 
-**Capture first, organise second.** `headway add "thing"` puts a task in your inbox with zero friction. Adding a project or due date is optional and happens when it matters.
+**Capture first, organise second.** `headway add "thing"` or `add "thing"` inside the shell puts a task in your inbox with zero friction. Adding a project or due date is optional and happens when it matters.
 
 **Due dates, not scheduling steps.** You shouldn't have to tell your task manager both *when* you want to think about something *and* when it's actually due. Give it a date. That's enough.
 

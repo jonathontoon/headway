@@ -234,7 +234,6 @@ _rli_tab() {
 		_rli_tab_p="${_rli_tab_p%?}"
 	done
 
-	# Classify.
 	case "$_rli_tab_partial" in
 	+*) _rli_tab_src="projects" ;;
 	@*) _rli_tab_src="tags" ;;
@@ -251,7 +250,6 @@ _rli_tab() {
 	esac
 	[ -n "$_rli_tab_cands" ] || return 0
 
-	# Filter to prefix matches, tallying as we go.
 	_rli_tab_matches=""
 	_rli_tab_mcount=0
 	_rli_tab_first=""
@@ -274,13 +272,8 @@ _rli_tab() {
 	if [ "$_rli_tab_mcount" -eq 0 ]; then
 		return 0
 	elif [ "$_rli_tab_mcount" -eq 1 ]; then
-		# Rebuild _rli_before as (prefix minus partial) + match + " ".
-		# Reconstructing from $_rli_tab_pre avoids ${var%$pat} - the
-		# partial can contain glob metacharacters.
 		_rli_before="${_rli_tab_pre}${_rli_tab_first} "
 	else
-		# Multi-match: list candidates below the current prompt. The main
-		# loop's _rli_redraw then reprints prompt+buffer on a fresh line.
 		printf '\n' >&2
 		printf '%s' "$_rli_tab_matches" | while IFS= read -r _rli_tab_m; do
 			[ -n "$_rli_tab_m" ] && printf '  %s\n' "$_rli_tab_m" >&2
@@ -288,8 +281,6 @@ _rli_tab() {
 	fi
 }
 
-# _rli_backspace / _rli_forward_delete
-# Delete the character left of / at the cursor. No-ops at either edge.
 _rli_backspace() {
 	[ -n "$_rli_before" ] || return 0
 	_rli_before="${_rli_before%?}"
@@ -300,11 +291,6 @@ _rli_forward_delete() {
 	_rli_after="${_rli_after#?}"
 }
 
-# _rli_cursor_left / _rli_cursor_right
-# Move one character between $_rli_before and $_rli_after. No-ops at
-# either edge. The "last character of" idiom is the mirror image of
-# tokenize_line's "first character of" one - easy to get backwards:
-# first-char-of $x is ${x%"${x#?}"}, last-char-of $x is ${x#"${x%?}"}.
 _rli_cursor_left() {
 	[ -n "$_rli_before" ] || return 0
 	_rli_c="${_rli_before#"${_rli_before%?}"}"
@@ -319,7 +305,6 @@ _rli_cursor_right() {
 	_rli_before="$_rli_before$_rli_c"
 }
 
-# _rli_cursor_home / _rli_cursor_end
 _rli_cursor_home() {
 	_rli_after="$_rli_before$_rli_after"
 	_rli_before=""
@@ -330,12 +315,6 @@ _rli_cursor_end() {
 	_rli_after=""
 }
 
-# _rli_redraw
-# Full-line redraw: return to column 0, erase to end of line, reprint the
-# prompt and buffer, then reposition the cursor by moving left len($after)
-# columns. Simple and robust at human typing speed - no need to diff
-# against the previous draw. Goes to stderr, same as the prompt/banner
-# (stdout stays clean for command output).
 _rli_redraw() {
 	printf '\r\033[K' >&2
 	printf 'headway $ %s%s' "$_rli_before" "$_rli_after" >&2
@@ -344,15 +323,6 @@ _rli_redraw() {
 	fi
 }
 
-# _rli_handle_esc
-# Reads and dispatches the byte(s) following an ESC that read_line_interactive
-# already consumed. Recognises arrow keys, Home/End (both single-letter and
-# numbered-tilde encodings, terminal-dependent), Delete, and Page Up/Down
-# (repurposed as 10-entry history jumps, since raw mode intercepts these
-# bytes before a terminal emulator's own scrollback ever sees them).
-# Unrecognised or partial sequences are silently discarded. Returns 1 only
-# on true EOF while reading a continuation byte; check $_rli_interrupted
-# after calling, same as the main loop does around every read.
 _rli_handle_esc() {
 	_rli_read_byte || return 1
 	[ "$_rli_interrupted" = "true" ] && return 0
@@ -386,10 +356,6 @@ _rli_handle_esc() {
 	esac
 }
 
-# _rli_cleanup
-# Restores the terminal to whatever mode it was in before
-# read_line_interactive touched it, and clears the INT trap. Called at
-# every exit path - normal Enter, EOF, Ctrl-D, Ctrl-C.
 _rli_cleanup() {
 	stty "$_rli_saved_stty" 2>/dev/null
 	trap - INT
@@ -398,22 +364,8 @@ _rli_cleanup() {
 # read_line_interactive
 # One interactively-edited line: arrow keys, Home/End, Backspace/Delete,
 # and Up/Down/PgUp/PgDn history all work. Prints the finished line to
-# stdout with no trailing newline (matching how it's consumed via command
-# substitution). Returns 0 on Enter, 1 on true EOF or Ctrl-D on an empty
-# line (same contract as `read -r` - the caller ends the session), or 130
-# on Ctrl-C (abort this line only, caller should reprompt).
-#
-# Raw mode is scoped to this one call, not the whole cmd_shell session:
-# $EDITOR (via cmd_edit) and the confirmation prompt (via cmd_delete) both run
-# from the same loop between line reads and need normal canonical-mode
-# terminal behaviour, so it must never leak past a single line.
-#
-# Ctrl-C is handled via a real SIGINT (stty here never touches isig, so
-# signal generation stays on) rather than reading byte 0x03 directly: the
-# trap only sets a flag, and every read checks it afterward, rather than
-# trying to `return` multiple stack frames from inside the trap itself,
-# which is not reliably portable across shells when the signal lands
-# while a nested read is blocked.
+# stdout with no trailing newline. Returns 0 on Enter, 1 on EOF/Ctrl-D on
+# an empty line, or 130 on Ctrl-C.
 read_line_interactive() {
 	_rli_before=""
 	_rli_after=""
@@ -425,10 +377,8 @@ read_line_interactive() {
 	_rli_hist_pos=$((_rli_hist_count + 1))
 	_rli_hist_saved=""
 
-	# printf '\n' alone would have its trailing newline stripped by
-	# command substitution, leaving $_rli_nl empty (same issue
-	# _rli_read_byte's sentinel trick solves) - append and strip a
-	# sentinel here too so the comparison below actually matches Enter.
+	# Command substitution strips trailing newlines; append and strip a
+	# sentinel so Enter can be compared as a real byte, not as empty text.
 	_rli_nl=$(printf '\nX')
 	_rli_nl="${_rli_nl%X}"
 	_rli_del=$(printf '\177')
@@ -489,11 +439,3 @@ read_line_interactive() {
 	printf '\n' >&2
 	printf '%s' "$_rli_before$_rli_after"
 }
-
-# cmd_shell
-# Starts an interactive session: repeatedly prompts for a line, splits it
-# into arguments the same way a shell command line would be, and runs it
-# through dispatch_cmd. On a real terminal, read_line_interactive gives
-# arrow-key cursor movement and Up/Down/PgUp/PgDn history (see its comment
-# for how); piped/non-tty input falls back to plain `read -r`, unchanged.
-# `exit` ends the session; EOF (Ctrl-D) does the same.

@@ -44,9 +44,9 @@ greeting() {
 # YYYY-MM-DD with `-d`, and BusyBox `date` needs the -u/-d combination.
 date_weekday_name() {
 	case "$DATE_FLAVOR" in
-	gnu) date -d "$1" "+%A" | tr 'A-Z' 'a-z' ;;
-	bsd) date -j -f "%Y-%m-%d" "$1" "+%A" | tr 'A-Z' 'a-z' ;;
-	busybox) date -u -d "$1" "+%A" | tr 'A-Z' 'a-z' ;;
+	gnu) date -d "$1" "+%A" | tr '[:upper:]' '[:lower:]' ;;
+	bsd) date -j -f "%Y-%m-%d" "$1" "+%A" | tr '[:upper:]' '[:lower:]' ;;
+	busybox) date -u -d "$1" "+%A" | tr '[:upper:]' '[:lower:]' ;;
 	esac
 }
 
@@ -214,4 +214,3 @@ resolve_date_shorthand() {
 		;;
 	esac
 }
-

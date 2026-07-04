@@ -1,6 +1,7 @@
 #!/bin/sh
 # Tests for load_config precedence (env > config file > built-in default)
 # and tilde expansion.
+# shellcheck disable=SC2030,SC2031,SC2088
 
 set -eu
 

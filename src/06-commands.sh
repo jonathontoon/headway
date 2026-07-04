@@ -282,6 +282,7 @@ cmd_clear() {
 		# Per-tag removal targets a single task; batching ids here would
 		# be ambiguous ("did the user mean one @tag on many tasks, or a
 		# task list with a stray @tag?"). Force the single-id shape.
+		# shellcheck disable=SC2086
 		set -- $_cc_ids
 		[ "$#" -eq 1 ] || die "clear tags @tag takes a single id"
 		_cc_id=$(resolve_id "$1") || exit 1
@@ -442,30 +443,35 @@ cmd_list() {
 		render_grouped_list
 	fi
 }
-# cmd_inbox [+Project|@tag|"keyword"] - incomplete tasks with no project
+
+# cmd_view <view-name> [filter]
+# Shared implementation for simple view commands whose command name,
+# render_view name, and help line all match.
+cmd_view() {
+	_cv_name="$1"
+	shift
+	case "${1:-}" in --help) printf 'usage: headway %s [+Project|@tag|"keyword"]\n' "$_cv_name"; return 0 ;; esac
+	render_view "$_cv_name" "${1:-}"
+}
+
 cmd_inbox() {
-	case "${1:-}" in --help) printf 'usage: headway inbox [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "inbox" "${1:-}"
+	cmd_view "inbox" "$@"
 }
-# cmd_today [+Project|@tag|"keyword"] - due today, plus anything overdue
+
 cmd_today() {
-	case "${1:-}" in --help) printf 'usage: headway today [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "today" "${1:-}"
+	cmd_view "today" "$@"
 }
-# cmd_upcoming [+Project|@tag|"keyword"] - future-dated tasks
+
 cmd_upcoming() {
-	case "${1:-}" in --help) printf 'usage: headway upcoming [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "upcoming" "${1:-}"
+	cmd_view "upcoming" "$@"
 }
-# cmd_someday [+Project|@tag|"keyword"] - tasks with no due date
+
 cmd_someday() {
-	case "${1:-}" in --help) printf 'usage: headway someday [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "someday" "${1:-}"
+	cmd_view "someday" "$@"
 }
-# cmd_logbook [+Project|@tag|"keyword"] - completed tasks, most recent first
+
 cmd_logbook() {
-	case "${1:-}" in --help) printf 'usage: headway logbook [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "logbook" "${1:-}"
+	cmd_view "logbook" "$@"
 }
 # cmd_projects
 # Lists the distinct +Project tokens carried by incomplete tasks, one per
@@ -664,4 +670,3 @@ cmd_check() {
 
 	[ "$problems" -eq 0 ]
 }
-

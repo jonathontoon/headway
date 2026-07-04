@@ -4,6 +4,8 @@
 # POSIX sh ONLY. Do not use bashisms: no arrays, no [[ ]], no local,
 # no +=, no here-strings, no C-style for loops. This script must run
 # unmodified under dash and BusyBox ash.
+#
+# shellcheck disable=SC2034
 
 set -eu
 

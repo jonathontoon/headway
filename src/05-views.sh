@@ -214,4 +214,3 @@ render_grouped_list() {
 
 	rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"
 }
-

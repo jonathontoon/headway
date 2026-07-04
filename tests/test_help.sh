@@ -1,6 +1,6 @@
 #!/bin/sh
-# Tests for the shell-only outer surface: --help, --version, rejection of
-# any other args, and per-command --help emitted from inside the shell.
+# Tests for the outer surface: --help, --version, one-shot commands,
+# invalid arguments, and per-command --help.
 
 set -eu
 
@@ -25,14 +25,48 @@ assert_exit_code "0" "$code" "--help: exit 0"
 assert_match "Usage: headway" "$out" "--help: prints usage"
 assert_match "shell-based" "$out" "--help: frames headway as a shell"
 
-# --- outer surface: shorthands and old subcommands are rejected ------------
+# --- outer surface: one-shot commands --------------------------------------
 
-for bad in -h -v -V help --yes -y add complete list foo; do
+code=0
+out=$($HW add "Direct capture +CLI" 2>&1) || code=$?
+assert_exit_code "0" "$code" "one-shot add: exit 0"
+assert_match "added 1: .*Direct capture \+CLI" "$out" "one-shot add: prints confirmation"
+assert_file_contains "$TODO_FILE" "Direct capture \+CLI" "one-shot add: writes TODO_FILE"
+
+out=$($HW list 2>&1)
+assert_match "^1: .*Direct capture \+CLI" "$out" "one-shot list: prints existing task"
+
+out=$($HW add --help 2>&1)
+assert_match "^usage: headway add" "$out" "one-shot add --help: prints command usage"
+
+out=$($HW help 2>&1)
+assert_match "Usage: headway" "$out" "one-shot help: prints top-level usage"
+
+bad_conf="$SANDBOX/bad-config"
+printf 'return 9\n' >"$bad_conf"
+code=0
+out=$(HEADWAY_CONFIG="$bad_conf" $HW help 2>&1) || code=$?
+assert_exit_code "0" "$code" "one-shot help: ignores broken config"
+assert_match "Usage: headway" "$out" "one-shot help with broken config: prints usage"
+
+# --- outer surface: invalid flags/commands are rejected ---------------------
+
+for bad in -h -v -V --yes -y foo; do
 	code=0
 	out=$($HW "$bad" 2>&1) || code=$?
 	assert_exit_code "2" "$code" "$bad: rejected with exit 2"
-	assert_match "takes no command-line arguments" "$out" "$bad: names the constraint"
+	assert_match "unknown command: $bad" "$out" "$bad: names the unknown command"
 done
+
+code=0
+out=$($HW dlete 1 2>&1) || code=$?
+assert_exit_code "2" "$code" "one-shot typo: rejected with exit 2"
+assert_match "did you mean 'delete'\\?" "$out" "one-shot typo: suggests near match"
+
+code=0
+out=$($HW exit 2>&1) || code=$?
+assert_exit_code "2" "$code" "one-shot exit: rejected with exit 2"
+assert_match "exit is only available inside the interactive shell" "$out" "one-shot exit: names shell-only command"
 
 # --- outer surface: extra args after --help / --version also rejected ------
 
@@ -58,7 +92,7 @@ done
 out=$(printf 'add -h\nlist\nexit\n' | $HW 2>&1)
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^usage: headway add' || true)" \
 	"in-shell add -h: does not print help (no short-flag shortcut)"
-assert_match "added 1: .*-h" "$out" "in-shell add -h: treats -h as task text"
+assert_match "added [0-9]+: .*-h" "$out" "in-shell add -h: treats -h as task text"
 
 # --- in-shell: usage errors exit 2 (via return code from shell subshell) ---
 # The shell's REPL keeps running through failures, so we test by watching for

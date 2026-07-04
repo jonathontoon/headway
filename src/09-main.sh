@@ -7,11 +7,12 @@ usage() {
 headway $HEADWAY_VERSION - a shell-based todo.txt task manager.
 
 Usage: headway              start the interactive shell
+       headway <command>    run one command and exit
        headway --help       print this help and exit
        headway --version    print the version and exit
 
-headway runs as a shell: launch it with \`headway\`, then type commands
-at the prompt. There is no one-shot command mode.
+Run \`headway\` with no arguments for the interactive shell, or pass any
+command directly, e.g. \`headway add "Book flights"\`.
 
 Every command below accepts \`--help\` for its own usage line.
 
@@ -64,19 +65,26 @@ Shell:
 EOF
 }
 
+init_runtime() {
+	load_config
+	detect_date_flavor
+}
+
 main() {
-	# headway is a shell, not a one-shot CLI. The only outer-level options
-	# are --help and --version; no arguments launches the shell; anything
-	# else is a usage error.
+	# No arguments launches the shell; arguments run a single command
+	# through the same dispatcher the shell uses.
 	if [ "$#" -eq 0 ]; then
-		load_config
-		detect_date_flavor
+		init_runtime
 		cmd_shell
 		return
 	fi
 
 	if [ "$#" -eq 1 ]; then
 		case "$1" in
+		help)
+			usage
+			return 0
+			;;
 		--help)
 			usage
 			return 0
@@ -85,12 +93,11 @@ main() {
 			printf 'headway %s\n' "$HEADWAY_VERSION"
 			return 0
 			;;
-		esac
+	esac
 	fi
 
-	err "headway takes no command-line arguments"
-	err "run 'headway' to start the shell, 'headway --help' for help"
-	exit 2
+	init_runtime
+	dispatch_cmd "$@"
 }
 
 # Allow this script to be sourced as a library (e.g. by tests that want to

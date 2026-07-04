@@ -1,5 +1,6 @@
 #!/bin/sh
 # Tests for hw shell (the interactive REPL).
+# shellcheck disable=SC2016
 
 set -eu
 
@@ -263,14 +264,30 @@ code=$?
 assert_exit_code "0" "$code" "main --version: exit code 0"
 assert_match "^headway [0-9]+\\.[0-9]+\\.[0-9]+$" "$out" "main --version: prints 'headway <semver>'"
 
-# --- outer CLI rejects any other args --------------------------------------
+# --- `main` can run one-shot commands --------------------------------------
+
+teardown_sandbox
+setup_sandbox
+HEADWAY_LIB_ONLY=true
+. ./headway.sh
+
+code=0
+out=$(main add "Direct main +CLI" 2>&1) || code=$?
+assert_exit_code "0" "$code" "main add: exit code 0"
+assert_match "added 1: .*Direct main \+CLI" "$out" "main add: runs one-shot command"
+assert_file_contains "$TODO_FILE" "Direct main \+CLI" "main add: writes TODO_FILE"
+
+out=$(main list)
+assert_match "^1: .*Direct main \+CLI" "$out" "main list: sees one-shot add"
+
+# --- outer CLI rejects invalid args/commands -------------------------------
 
 code=0
 out=$(main --help extra 2>&1) || code=$?
 assert_exit_code "2" "$code" "main --help extra: usage error"
-assert_match "takes no command-line arguments" "$out" "main <args>: names the constraint"
+assert_match "unknown command: --help" "$out" "main --help extra: names unknown command"
 
-for bad in -h -v -V --yes add list; do
+for bad in -h -v -V --yes foo; do
 	code=0
 	out=$(main "$bad" 2>&1) || code=$?
 	assert_exit_code "2" "$code" "main $bad: rejected with exit 2"

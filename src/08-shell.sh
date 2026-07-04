@@ -4,8 +4,7 @@
 
 # dispatch_cmd <command> [arguments...]
 # The single source of truth for mapping a command name to its cmd_*
-# function. Called only from cmd_shell's REPL loop - main() no longer
-# dispatches subcommands since headway has no one-shot mode.
+# function. Used by both one-shot command execution and cmd_shell's REPL.
 dispatch_cmd() {
 	cmd="${1:-}"
 	[ "$#" -gt 0 ] && shift
@@ -32,6 +31,8 @@ dispatch_cmd() {
 	archive) cmd_archive "$@" ;;
 	stats) cmd_stats "$@" ;;
 	check) cmd_check "$@" ;;
+	help) usage ;;
+	exit) usage_die "exit is only available inside the interactive shell" ;;
 	*)
 		err "unknown command: $cmd"
 		suggest_command "$cmd"
@@ -103,37 +104,14 @@ shell_welcome_group() {
 	done
 }
 
-# shell_welcome_more_count <rows> <today> <group>
-# Prints how many rows would remain after shell_welcome_group's first three.
-shell_welcome_more_count() {
-	_swm_rows="$1"
-	_swm_today="$2"
-	_swm_group="$3"
-	_swm_tab=$(printf '\t')
-
-	[ -n "$_swm_rows" ] || {
-		printf '0\n'
-		return 0
-	}
-
-	printf '%s\n' "$_swm_rows" | while IFS="$_swm_tab" read -r _swm_due _ _; do
-		case "$_swm_group" in
-		overdue)
-			expr "$_swm_due" '<' "$_swm_today" >/dev/null || continue
-			;;
-		today)
-			[ "$_swm_due" = "$_swm_today" ] || continue
-			;;
-		esac
-		printf '.\n'
-	done | awk 'END { extra = NR - 3; if (extra < 0) extra = 0; print extra }'
-}
-
-# shell_welcome_count <rows> <today> <group>
+# shell_welcome_count <rows> <today> <group> [skip]
+# Counts welcome rows for a group. With [skip], subtracts that many rows
+# from the count, floored at zero; used for the "... N more" summary.
 shell_welcome_count() {
 	_swc_rows="$1"
 	_swc_today="$2"
 	_swc_group="$3"
+	_swc_skip="${4:-0}"
 	_swc_tab=$(printf '\t')
 
 	[ -n "$_swc_rows" ] || {
@@ -151,7 +129,7 @@ shell_welcome_count() {
 			;;
 		esac
 		printf '.\n'
-	done | awk 'END { print NR + 0 }'
+	done | awk -v skip="$_swc_skip" 'END { n = NR - skip; if (n < 0) n = 0; print n }'
 }
 
 # shell_welcome_banner
@@ -166,8 +144,8 @@ shell_welcome_banner() {
 		_swb_rows=$(collect_view_rows today | sort -t "$_swb_tab" -k1,1)
 	fi
 	_swb_due_count=$(printf '%s\n' "$_swb_rows" | awk 'NF { n++ } END { print n + 0 }')
-	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue)
-	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today)
+	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue 0)
+	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today 0)
 	_swb_use_color=false
 	use_color_err && _swb_use_color=true
 
@@ -206,7 +184,7 @@ shell_welcome_banner() {
 				printf '  %s\n' "$_swb_header"
 			fi
 			shell_welcome_group "$_swb_rows" "$_swb_today" overdue "$_swb_use_color"
-			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" overdue)
+			_swb_more=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue 3)
 			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
 		fi
 
@@ -218,7 +196,7 @@ shell_welcome_banner() {
 				printf '  %s\n' "$_swb_header"
 			fi
 			shell_welcome_group "$_swb_rows" "$_swb_today" today "$_swb_use_color"
-			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" today)
+			_swb_more=$(shell_welcome_count "$_swb_rows" "$_swb_today" today 3)
 			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
 		fi
 	fi
@@ -232,14 +210,9 @@ shell_welcome_banner() {
 # get read_line_interactive; piped input falls back to plain read -r.
 cmd_shell() {
 	if [ -t 0 ]; then
-		# read_line_interactive runs inside a $(...) subshell (forked for
-		# the command substitution), so its own INT trap only protects
-		# that subshell. SIGINT is delivered to the whole foreground
-		# process group, so without a trap here too, this outer process
-		# would die to the default disposition before it ever saw the
-		# subshell's result. Ignoring it here is what makes Ctrl-C abort
-		# only the current line being typed, not the whole session -
-		# matching how interactive REPLs (bash, python, etc.) behave.
+		# SIGINT is delivered to the whole foreground process group; the
+		# raw-mode reader handles it inside command substitution, so the
+		# outer REPL ignores it and inspects the reader's status instead.
 		trap '' INT
 		shell_welcome_banner >&2
 	fi
@@ -247,11 +220,6 @@ cmd_shell() {
 	while :; do
 		if [ -t 0 ]; then
 			printf 'headway $ ' >&2
-			# Deliberately not `if ! line=$(read_line_interactive); then`:
-			# `!` negates the exit status, so a $? read afterward would
-			# see the negated 0/1 boolean, never read_line_interactive's
-			# real 130 (Ctrl-C) vs 1 (EOF) distinction. Capturing it via
-			# `|| _sh_rc=$?` keeps the real code intact.
 			_sh_rc=0
 			line=$(read_line_interactive) || _sh_rc=$?
 			if [ "$_sh_rc" -ne 0 ]; then
@@ -284,6 +252,7 @@ cmd_shell() {
 		_sh_old_ifs="$IFS"
 		IFS="$US"
 		set -f
+		# shellcheck disable=SC2086
 		set -- $_sh_tokens
 		set +f
 		IFS="$_sh_old_ifs"
@@ -292,10 +261,6 @@ cmd_shell() {
 
 		case "$1" in
 		exit) break ;;
-		help)
-			usage
-			continue
-			;;
 		esac
 
 		# Run each command in a subshell: a failing command calls die(),

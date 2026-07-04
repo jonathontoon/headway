@@ -4,6 +4,8 @@
 # POSIX sh ONLY. Do not use bashisms: no arrays, no [[ ]], no local,
 # no +=, no here-strings, no C-style for loops. This script must run
 # unmodified under dash and BusyBox ash.
+#
+# shellcheck disable=SC2034
 
 set -eu
 
@@ -119,10 +121,10 @@ suggest_command() {
 # sourced shell file) is never tilde-expanded by the shell automatically.
 expand_tilde() {
 	case "$1" in
-	"~")
+	\~)
 		printf '%s\n' "$HOME"
 		;;
-	"~/"*)
+	\~/*)
 		printf '%s\n' "$HOME/${1#\~/}"
 		;;
 	*)
@@ -217,9 +219,9 @@ greeting() {
 # YYYY-MM-DD with `-d`, and BusyBox `date` needs the -u/-d combination.
 date_weekday_name() {
 	case "$DATE_FLAVOR" in
-	gnu) date -d "$1" "+%A" | tr 'A-Z' 'a-z' ;;
-	bsd) date -j -f "%Y-%m-%d" "$1" "+%A" | tr 'A-Z' 'a-z' ;;
-	busybox) date -u -d "$1" "+%A" | tr 'A-Z' 'a-z' ;;
+	gnu) date -d "$1" "+%A" | tr '[:upper:]' '[:lower:]' ;;
+	bsd) date -j -f "%Y-%m-%d" "$1" "+%A" | tr '[:upper:]' '[:lower:]' ;;
+	busybox) date -u -d "$1" "+%A" | tr '[:upper:]' '[:lower:]' ;;
 	esac
 }
 
@@ -387,7 +389,6 @@ resolve_date_shorthand() {
 		;;
 	esac
 }
-
 # ---------------------------------------------------------------------------
 # Config loading
 # ---------------------------------------------------------------------------
@@ -911,7 +912,6 @@ render_grouped_list() {
 
 	rm -f "$_rgl_od" "$_rgl_td" "$_rgl_up" "$_rgl_sd"
 }
-
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
@@ -1196,6 +1196,7 @@ cmd_clear() {
 		# Per-tag removal targets a single task; batching ids here would
 		# be ambiguous ("did the user mean one @tag on many tasks, or a
 		# task list with a stray @tag?"). Force the single-id shape.
+		# shellcheck disable=SC2086
 		set -- $_cc_ids
 		[ "$#" -eq 1 ] || die "clear tags @tag takes a single id"
 		_cc_id=$(resolve_id "$1") || exit 1
@@ -1356,30 +1357,35 @@ cmd_list() {
 		render_grouped_list
 	fi
 }
-# cmd_inbox [+Project|@tag|"keyword"] - incomplete tasks with no project
+
+# cmd_view <view-name> [filter]
+# Shared implementation for simple view commands whose command name,
+# render_view name, and help line all match.
+cmd_view() {
+	_cv_name="$1"
+	shift
+	case "${1:-}" in --help) printf 'usage: headway %s [+Project|@tag|"keyword"]\n' "$_cv_name"; return 0 ;; esac
+	render_view "$_cv_name" "${1:-}"
+}
+
 cmd_inbox() {
-	case "${1:-}" in --help) printf 'usage: headway inbox [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "inbox" "${1:-}"
+	cmd_view "inbox" "$@"
 }
-# cmd_today [+Project|@tag|"keyword"] - due today, plus anything overdue
+
 cmd_today() {
-	case "${1:-}" in --help) printf 'usage: headway today [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "today" "${1:-}"
+	cmd_view "today" "$@"
 }
-# cmd_upcoming [+Project|@tag|"keyword"] - future-dated tasks
+
 cmd_upcoming() {
-	case "${1:-}" in --help) printf 'usage: headway upcoming [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "upcoming" "${1:-}"
+	cmd_view "upcoming" "$@"
 }
-# cmd_someday [+Project|@tag|"keyword"] - tasks with no due date
+
 cmd_someday() {
-	case "${1:-}" in --help) printf 'usage: headway someday [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "someday" "${1:-}"
+	cmd_view "someday" "$@"
 }
-# cmd_logbook [+Project|@tag|"keyword"] - completed tasks, most recent first
+
 cmd_logbook() {
-	case "${1:-}" in --help) printf 'usage: headway logbook [+Project|@tag|"keyword"]\n'; return 0 ;; esac
-	render_view "logbook" "${1:-}"
+	cmd_view "logbook" "$@"
 }
 # cmd_projects
 # Lists the distinct +Project tokens carried by incomplete tasks, one per
@@ -1578,7 +1584,6 @@ cmd_check() {
 
 	[ "$problems" -eq 0 ]
 }
-
 tokenize_line() {
 	_tl_rest="$1"
 	_tl_tab=$(printf '\t')
@@ -1815,7 +1820,6 @@ _rli_tab() {
 		_rli_tab_p="${_rli_tab_p%?}"
 	done
 
-	# Classify.
 	case "$_rli_tab_partial" in
 	+*) _rli_tab_src="projects" ;;
 	@*) _rli_tab_src="tags" ;;
@@ -1832,7 +1836,6 @@ _rli_tab() {
 	esac
 	[ -n "$_rli_tab_cands" ] || return 0
 
-	# Filter to prefix matches, tallying as we go.
 	_rli_tab_matches=""
 	_rli_tab_mcount=0
 	_rli_tab_first=""
@@ -1855,13 +1858,8 @@ _rli_tab() {
 	if [ "$_rli_tab_mcount" -eq 0 ]; then
 		return 0
 	elif [ "$_rli_tab_mcount" -eq 1 ]; then
-		# Rebuild _rli_before as (prefix minus partial) + match + " ".
-		# Reconstructing from $_rli_tab_pre avoids ${var%$pat} - the
-		# partial can contain glob metacharacters.
 		_rli_before="${_rli_tab_pre}${_rli_tab_first} "
 	else
-		# Multi-match: list candidates below the current prompt. The main
-		# loop's _rli_redraw then reprints prompt+buffer on a fresh line.
 		printf '\n' >&2
 		printf '%s' "$_rli_tab_matches" | while IFS= read -r _rli_tab_m; do
 			[ -n "$_rli_tab_m" ] && printf '  %s\n' "$_rli_tab_m" >&2
@@ -1869,8 +1867,6 @@ _rli_tab() {
 	fi
 }
 
-# _rli_backspace / _rli_forward_delete
-# Delete the character left of / at the cursor. No-ops at either edge.
 _rli_backspace() {
 	[ -n "$_rli_before" ] || return 0
 	_rli_before="${_rli_before%?}"
@@ -1881,11 +1877,6 @@ _rli_forward_delete() {
 	_rli_after="${_rli_after#?}"
 }
 
-# _rli_cursor_left / _rli_cursor_right
-# Move one character between $_rli_before and $_rli_after. No-ops at
-# either edge. The "last character of" idiom is the mirror image of
-# tokenize_line's "first character of" one - easy to get backwards:
-# first-char-of $x is ${x%"${x#?}"}, last-char-of $x is ${x#"${x%?}"}.
 _rli_cursor_left() {
 	[ -n "$_rli_before" ] || return 0
 	_rli_c="${_rli_before#"${_rli_before%?}"}"
@@ -1900,7 +1891,6 @@ _rli_cursor_right() {
 	_rli_before="$_rli_before$_rli_c"
 }
 
-# _rli_cursor_home / _rli_cursor_end
 _rli_cursor_home() {
 	_rli_after="$_rli_before$_rli_after"
 	_rli_before=""
@@ -1911,12 +1901,6 @@ _rli_cursor_end() {
 	_rli_after=""
 }
 
-# _rli_redraw
-# Full-line redraw: return to column 0, erase to end of line, reprint the
-# prompt and buffer, then reposition the cursor by moving left len($after)
-# columns. Simple and robust at human typing speed - no need to diff
-# against the previous draw. Goes to stderr, same as the prompt/banner
-# (stdout stays clean for command output).
 _rli_redraw() {
 	printf '\r\033[K' >&2
 	printf 'headway $ %s%s' "$_rli_before" "$_rli_after" >&2
@@ -1925,15 +1909,6 @@ _rli_redraw() {
 	fi
 }
 
-# _rli_handle_esc
-# Reads and dispatches the byte(s) following an ESC that read_line_interactive
-# already consumed. Recognises arrow keys, Home/End (both single-letter and
-# numbered-tilde encodings, terminal-dependent), Delete, and Page Up/Down
-# (repurposed as 10-entry history jumps, since raw mode intercepts these
-# bytes before a terminal emulator's own scrollback ever sees them).
-# Unrecognised or partial sequences are silently discarded. Returns 1 only
-# on true EOF while reading a continuation byte; check $_rli_interrupted
-# after calling, same as the main loop does around every read.
 _rli_handle_esc() {
 	_rli_read_byte || return 1
 	[ "$_rli_interrupted" = "true" ] && return 0
@@ -1967,10 +1942,6 @@ _rli_handle_esc() {
 	esac
 }
 
-# _rli_cleanup
-# Restores the terminal to whatever mode it was in before
-# read_line_interactive touched it, and clears the INT trap. Called at
-# every exit path - normal Enter, EOF, Ctrl-D, Ctrl-C.
 _rli_cleanup() {
 	stty "$_rli_saved_stty" 2>/dev/null
 	trap - INT
@@ -1979,22 +1950,8 @@ _rli_cleanup() {
 # read_line_interactive
 # One interactively-edited line: arrow keys, Home/End, Backspace/Delete,
 # and Up/Down/PgUp/PgDn history all work. Prints the finished line to
-# stdout with no trailing newline (matching how it's consumed via command
-# substitution). Returns 0 on Enter, 1 on true EOF or Ctrl-D on an empty
-# line (same contract as `read -r` - the caller ends the session), or 130
-# on Ctrl-C (abort this line only, caller should reprompt).
-#
-# Raw mode is scoped to this one call, not the whole cmd_shell session:
-# $EDITOR (via cmd_edit) and the confirmation prompt (via cmd_delete) both run
-# from the same loop between line reads and need normal canonical-mode
-# terminal behaviour, so it must never leak past a single line.
-#
-# Ctrl-C is handled via a real SIGINT (stty here never touches isig, so
-# signal generation stays on) rather than reading byte 0x03 directly: the
-# trap only sets a flag, and every read checks it afterward, rather than
-# trying to `return` multiple stack frames from inside the trap itself,
-# which is not reliably portable across shells when the signal lands
-# while a nested read is blocked.
+# stdout with no trailing newline. Returns 0 on Enter, 1 on EOF/Ctrl-D on
+# an empty line, or 130 on Ctrl-C.
 read_line_interactive() {
 	_rli_before=""
 	_rli_after=""
@@ -2006,10 +1963,8 @@ read_line_interactive() {
 	_rli_hist_pos=$((_rli_hist_count + 1))
 	_rli_hist_saved=""
 
-	# printf '\n' alone would have its trailing newline stripped by
-	# command substitution, leaving $_rli_nl empty (same issue
-	# _rli_read_byte's sentinel trick solves) - append and strip a
-	# sentinel here too so the comparison below actually matches Enter.
+	# Command substitution strips trailing newlines; append and strip a
+	# sentinel so Enter can be compared as a real byte, not as empty text.
 	_rli_nl=$(printf '\nX')
 	_rli_nl="${_rli_nl%X}"
 	_rli_del=$(printf '\177')
@@ -2070,22 +2025,13 @@ read_line_interactive() {
 	printf '\n' >&2
 	printf '%s' "$_rli_before$_rli_after"
 }
-
-# cmd_shell
-# Starts an interactive session: repeatedly prompts for a line, splits it
-# into arguments the same way a shell command line would be, and runs it
-# through dispatch_cmd. On a real terminal, read_line_interactive gives
-# arrow-key cursor movement and Up/Down/PgUp/PgDn history (see its comment
-# for how); piped/non-tty input falls back to plain `read -r`, unchanged.
-# `exit` ends the session; EOF (Ctrl-D) does the same.
 # ---------------------------------------------------------------------------
 # Dispatch
 # ---------------------------------------------------------------------------
 
 # dispatch_cmd <command> [arguments...]
 # The single source of truth for mapping a command name to its cmd_*
-# function. Called only from cmd_shell's REPL loop - main() no longer
-# dispatches subcommands since headway has no one-shot mode.
+# function. Used by both one-shot command execution and cmd_shell's REPL.
 dispatch_cmd() {
 	cmd="${1:-}"
 	[ "$#" -gt 0 ] && shift
@@ -2112,6 +2058,8 @@ dispatch_cmd() {
 	archive) cmd_archive "$@" ;;
 	stats) cmd_stats "$@" ;;
 	check) cmd_check "$@" ;;
+	help) usage ;;
+	exit) usage_die "exit is only available inside the interactive shell" ;;
 	*)
 		err "unknown command: $cmd"
 		suggest_command "$cmd"
@@ -2183,37 +2131,14 @@ shell_welcome_group() {
 	done
 }
 
-# shell_welcome_more_count <rows> <today> <group>
-# Prints how many rows would remain after shell_welcome_group's first three.
-shell_welcome_more_count() {
-	_swm_rows="$1"
-	_swm_today="$2"
-	_swm_group="$3"
-	_swm_tab=$(printf '\t')
-
-	[ -n "$_swm_rows" ] || {
-		printf '0\n'
-		return 0
-	}
-
-	printf '%s\n' "$_swm_rows" | while IFS="$_swm_tab" read -r _swm_due _ _; do
-		case "$_swm_group" in
-		overdue)
-			expr "$_swm_due" '<' "$_swm_today" >/dev/null || continue
-			;;
-		today)
-			[ "$_swm_due" = "$_swm_today" ] || continue
-			;;
-		esac
-		printf '.\n'
-	done | awk 'END { extra = NR - 3; if (extra < 0) extra = 0; print extra }'
-}
-
-# shell_welcome_count <rows> <today> <group>
+# shell_welcome_count <rows> <today> <group> [skip]
+# Counts welcome rows for a group. With [skip], subtracts that many rows
+# from the count, floored at zero; used for the "... N more" summary.
 shell_welcome_count() {
 	_swc_rows="$1"
 	_swc_today="$2"
 	_swc_group="$3"
+	_swc_skip="${4:-0}"
 	_swc_tab=$(printf '\t')
 
 	[ -n "$_swc_rows" ] || {
@@ -2231,7 +2156,7 @@ shell_welcome_count() {
 			;;
 		esac
 		printf '.\n'
-	done | awk 'END { print NR + 0 }'
+	done | awk -v skip="$_swc_skip" 'END { n = NR - skip; if (n < 0) n = 0; print n }'
 }
 
 # shell_welcome_banner
@@ -2246,8 +2171,8 @@ shell_welcome_banner() {
 		_swb_rows=$(collect_view_rows today | sort -t "$_swb_tab" -k1,1)
 	fi
 	_swb_due_count=$(printf '%s\n' "$_swb_rows" | awk 'NF { n++ } END { print n + 0 }')
-	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue)
-	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today)
+	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue 0)
+	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today 0)
 	_swb_use_color=false
 	use_color_err && _swb_use_color=true
 
@@ -2286,7 +2211,7 @@ shell_welcome_banner() {
 				printf '  %s\n' "$_swb_header"
 			fi
 			shell_welcome_group "$_swb_rows" "$_swb_today" overdue "$_swb_use_color"
-			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" overdue)
+			_swb_more=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue 3)
 			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
 		fi
 
@@ -2298,7 +2223,7 @@ shell_welcome_banner() {
 				printf '  %s\n' "$_swb_header"
 			fi
 			shell_welcome_group "$_swb_rows" "$_swb_today" today "$_swb_use_color"
-			_swb_more=$(shell_welcome_more_count "$_swb_rows" "$_swb_today" today)
+			_swb_more=$(shell_welcome_count "$_swb_rows" "$_swb_today" today 3)
 			[ "$_swb_more" -gt 0 ] && printf "  … %s more — see 'today'\n" "$_swb_more"
 		fi
 	fi
@@ -2312,14 +2237,9 @@ shell_welcome_banner() {
 # get read_line_interactive; piped input falls back to plain read -r.
 cmd_shell() {
 	if [ -t 0 ]; then
-		# read_line_interactive runs inside a $(...) subshell (forked for
-		# the command substitution), so its own INT trap only protects
-		# that subshell. SIGINT is delivered to the whole foreground
-		# process group, so without a trap here too, this outer process
-		# would die to the default disposition before it ever saw the
-		# subshell's result. Ignoring it here is what makes Ctrl-C abort
-		# only the current line being typed, not the whole session -
-		# matching how interactive REPLs (bash, python, etc.) behave.
+		# SIGINT is delivered to the whole foreground process group; the
+		# raw-mode reader handles it inside command substitution, so the
+		# outer REPL ignores it and inspects the reader's status instead.
 		trap '' INT
 		shell_welcome_banner >&2
 	fi
@@ -2327,11 +2247,6 @@ cmd_shell() {
 	while :; do
 		if [ -t 0 ]; then
 			printf 'headway $ ' >&2
-			# Deliberately not `if ! line=$(read_line_interactive); then`:
-			# `!` negates the exit status, so a $? read afterward would
-			# see the negated 0/1 boolean, never read_line_interactive's
-			# real 130 (Ctrl-C) vs 1 (EOF) distinction. Capturing it via
-			# `|| _sh_rc=$?` keeps the real code intact.
 			_sh_rc=0
 			line=$(read_line_interactive) || _sh_rc=$?
 			if [ "$_sh_rc" -ne 0 ]; then
@@ -2364,6 +2279,7 @@ cmd_shell() {
 		_sh_old_ifs="$IFS"
 		IFS="$US"
 		set -f
+		# shellcheck disable=SC2086
 		set -- $_sh_tokens
 		set +f
 		IFS="$_sh_old_ifs"
@@ -2372,10 +2288,6 @@ cmd_shell() {
 
 		case "$1" in
 		exit) break ;;
-		help)
-			usage
-			continue
-			;;
 		esac
 
 		# Run each command in a subshell: a failing command calls die(),
@@ -2404,11 +2316,12 @@ usage() {
 headway $HEADWAY_VERSION - a shell-based todo.txt task manager.
 
 Usage: headway              start the interactive shell
+       headway <command>    run one command and exit
        headway --help       print this help and exit
        headway --version    print the version and exit
 
-headway runs as a shell: launch it with \`headway\`, then type commands
-at the prompt. There is no one-shot command mode.
+Run \`headway\` with no arguments for the interactive shell, or pass any
+command directly, e.g. \`headway add "Book flights"\`.
 
 Every command below accepts \`--help\` for its own usage line.
 
@@ -2461,19 +2374,26 @@ Shell:
 EOF
 }
 
+init_runtime() {
+	load_config
+	detect_date_flavor
+}
+
 main() {
-	# headway is a shell, not a one-shot CLI. The only outer-level options
-	# are --help and --version; no arguments launches the shell; anything
-	# else is a usage error.
+	# No arguments launches the shell; arguments run a single command
+	# through the same dispatcher the shell uses.
 	if [ "$#" -eq 0 ]; then
-		load_config
-		detect_date_flavor
+		init_runtime
 		cmd_shell
 		return
 	fi
 
 	if [ "$#" -eq 1 ]; then
 		case "$1" in
+		help)
+			usage
+			return 0
+			;;
 		--help)
 			usage
 			return 0
@@ -2482,12 +2402,11 @@ main() {
 			printf 'headway %s\n' "$HEADWAY_VERSION"
 			return 0
 			;;
-		esac
+	esac
 	fi
 
-	err "headway takes no command-line arguments"
-	err "run 'headway' to start the shell, 'headway --help' for help"
-	exit 2
+	init_runtime
+	dispatch_cmd "$@"
 }
 
 # Allow this script to be sourced as a library (e.g. by tests that want to

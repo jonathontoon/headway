@@ -1,6 +1,7 @@
 #!/bin/sh
 # Tests for the color theme: use_color/use_color_err gating, colorize_line
 # field wrapping, and THEME_* config precedence.
+# shellcheck disable=SC2030,SC2031
 
 set -eu
 
