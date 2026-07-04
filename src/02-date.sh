@@ -1,10 +1,5 @@
-# ---------------------------------------------------------------------------
-# Date flavor detection
-# ---------------------------------------------------------------------------
-
-# detect_date_flavor
 # Probes the installed `date` implementation once and sets DATE_FLAVOR to
-# "gnu" or "bsd" so date arithmetic helpers can branch on it consistently.
+# "gnu", "bsd", or "busybox" so date arithmetic helpers can branch on it.
 detect_date_flavor() {
 	if date -d "1 day" "+%Y-%m-%d" >/dev/null 2>&1; then
 		DATE_FLAVOR="gnu"
@@ -17,16 +12,10 @@ detect_date_flavor() {
 	fi
 }
 
-# today
-# Prints today's date as YYYY-MM-DD. Flavor-independent: both GNU and BSD
-# date support a bare `+FORMAT` invocation with no other arguments.
 today() {
 	date "+%Y-%m-%d"
 }
 
-# greeting
-# Prints "Good morning"/"Good afternoon"/"Good evening" based on the local
-# hour. Flavor-independent, same as today().
 greeting() {
 	hour=$(date "+%H")
 	if [ "$hour" -lt 12 ]; then
@@ -38,7 +27,6 @@ greeting() {
 	fi
 }
 
-# date_weekday_name <YYYY-MM-DD>
 # Prints the lowercase full weekday name (e.g. "monday", "sunday") for the
 # given date. Flavor-specific because BSD `date` cannot parse a bare
 # YYYY-MM-DD with `-d`, and BusyBox `date` needs the -u/-d combination.
@@ -50,7 +38,6 @@ date_weekday_name() {
 	esac
 }
 
-# date_to_day_number <YYYY-MM-DD>
 # Converts a Gregorian calendar date to a day number using integer
 # arithmetic only. Avoids spawning date(1) for display-only relative hints.
 date_to_day_number() {
@@ -104,7 +91,6 @@ next_weekday_date() {
 	date_add_days "$_nwd_today" "$_nwd_delta"
 }
 
-# bsd_signed_offset <offset>
 # Prepends `+` to an unsigned offset so BSD `date -v` reads it as a delta
 # rather than an absolute-field set (`-v1d` sets day-of-month to 1;
 # `-v+1d` adds one day). Passes explicitly-signed offsets through
@@ -116,7 +102,6 @@ bsd_signed_offset() {
 	esac
 }
 
-# date_add_days <YYYY-MM-DD> <signed-offset>
 date_add_days() {
 	base="$1"
 	offset="$2"
@@ -134,7 +119,6 @@ date_add_days() {
 	esac
 }
 
-# date_add_months <YYYY-MM-DD> <signed-offset>
 # Known v0 limitation: uses the underlying date tool's native month
 # arithmetic as-is, with no end-of-month clamping.
 date_add_months() {
@@ -166,7 +150,6 @@ date_add_months() {
 	esac
 }
 
-# date_add_years <YYYY-MM-DD> <signed-offset>
 date_add_years() {
 	base="$1"
 	offset="$2"
@@ -187,8 +170,6 @@ date_add_years() {
 	esac
 }
 
-# is_valid_date <value>
-# Validates strict YYYY-MM-DD shape and that the date tool accepts it.
 is_valid_date() {
 	case "$1" in
 	[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
@@ -201,7 +182,6 @@ is_valid_date() {
 	esac
 }
 
-# validate_due_date <value>
 # Resolves allowed date words (today, tomorrow, weekday names) or validates a
 # literal YYYY-MM-DD date. Numeric relative forms are deliberately rejected so
 # TODO_FILE only ever stores explicit dates.

@@ -61,7 +61,6 @@ assert_file_contains() {
 	fi
 }
 
-# setup_sandbox
 # Creates an isolated tmp dir, points TODO_FILE/DONE_FILE inside it, and
 # disables interactive prompts so tests run unattended.
 setup_sandbox() {
@@ -78,7 +77,6 @@ teardown_sandbox() {
 	[ -n "${SANDBOX:-}" ] && rm -rf "$SANDBOX"
 }
 
-# report_and_exit
 # Prints the pass/fail tally for this test file and exits non-zero if
 # anything failed, so run.sh can aggregate results across subprocesses.
 report_and_exit() {

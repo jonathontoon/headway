@@ -1,8 +1,3 @@
-# ---------------------------------------------------------------------------
-# Listing / views
-# ---------------------------------------------------------------------------
-
-# collect_task_rows
 # Prints one "id<TAB>raw-line" row per non-blank todo.txt line, where id is
 # the 1-indexed line number (blank lines still advance it, matching
 # resolve_id). The interactive shell keeps this output cached so read-only
@@ -12,13 +7,10 @@ collect_task_rows() {
 	awk -v tab="$(printf '\t')" '$0 != "" { print NR tab $0 }' "$TODO_FILE"
 }
 
-# cached_task_rows_active
-# True when cmd_shell has preloaded TODO_FILE into HEADWAY_SHELL_TASK_ROWS.
 cached_task_rows_active() {
 	[ "${HEADWAY_SHELL_CACHE_ACTIVE:-false}" = "true" ] && [ -n "${HEADWAY_SHELL_TASK_ROWS:-}" ]
 }
 
-# HW_AWK_VIEWLIB
 # The awk function library shared by every view-rendering pass. Injected by
 # string concatenation ahead of a per-view main block (awk_view_pass), so the
 # tokenizer, colorizer, and due-hint logic exist exactly once. All functions
@@ -172,7 +164,6 @@ function due_hint(due_date,    label) {
 }
 '
 
-# HW_AWK_VIEW_MAIN
 # Main block for flat views (list/inbox/today/upcoming/someday/logbook):
 # selects rows by <which>, applies the filter, and prints
 # "sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line".
@@ -207,7 +198,6 @@ HW_AWK_VIEW_MAIN='
 }
 '
 
-# HW_AWK_GROUPED_MAIN
 # Main block for the grouped list: buckets every incomplete task
 # (1 Overdue, 2 Due today, 3 Upcoming, 4 Inbox, 5 Someday) and prints
 # "bucket<TAB>sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line".
@@ -235,7 +225,6 @@ HW_AWK_GROUPED_MAIN='
 }
 '
 
-# awk_view_pass <main> <src> <which> <filter> <today> <today_day> <color_on> [file]
 # Runs one awk pass composed of HW_AWK_VIEWLIB plus <main>. <src> is "rows"
 # (collect_task_rows output arrives on stdin) or "file" (raw todo.txt lines
 # are read from [file]) - either way it is a single process, so the shell
@@ -254,7 +243,6 @@ awk_view_pass() {
 		"$HW_AWK_VIEWLIB$1" ${8:+"$8"}
 }
 
-# collect_view_rows <which> [filter] [color_on]
 # Prints one "sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line"
 # row per matching task. <which> is one of: list, inbox, today, upcoming,
 # someday, logbook. `display` is the colorized rendering (verbatim `raw`
@@ -277,7 +265,6 @@ collect_view_rows() {
 	fi
 }
 
-# collect_grouped_rows [today] [color_on]
 # Prints one
 # "bucket<TAB>sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line"
 # row for every incomplete task - see HW_AWK_GROUPED_MAIN for the bucket
@@ -296,7 +283,6 @@ collect_grouped_rows() {
 	fi
 }
 
-# emit_row <id> <display> <hint>
 # Prints "<id>: <display><hint>" (or just "<display><hint>" when
 # SHOW_IDS=false). <display> and <hint> arrive already fully rendered
 # (colorized when applicable) from collect_view_rows/collect_grouped_rows -
@@ -324,7 +310,6 @@ bucket_header() {
 	esac
 }
 
-# render_view <which> [filter]
 # Prints "<id>: <line>" for each task in view <which>, sorted ascending by
 # sortkey (today/upcoming: due date; logbook: completion date, descending;
 # everything else: file order).
@@ -351,7 +336,6 @@ render_view() {
 	done
 }
 
-# render_grouped_list
 # Emits every incomplete task, bucketed into Overdue / Due today /
 # Upcoming / Inbox / Someday sections. Section headers appear only when at least
 # two buckets have content - a list that happens to be all-inbox,

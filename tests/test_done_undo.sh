@@ -43,7 +43,7 @@ before2=$(line_at 2)
 assert_match "^2026-" "$before2" "sanity: task 2 has no priority marker yet"
 
 # Set a priority directly on the line so the round trip has something to
-# preserve through pri: (cmd_priority is implemented in a later step).
+# preserve through pri:.
 parse_line "$before2"
 P_PRIORITY="A"
 prioritized=$(format_line)

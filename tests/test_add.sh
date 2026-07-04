@@ -1,5 +1,5 @@
 #!/bin/sh
-# Tests for cmd_add / the `a` shorthand.
+# Tests for cmd_add.
 
 set -eu
 

@@ -47,7 +47,6 @@ tokenize_line() {
 	printf '%s' "$_tl_tokens"
 }
 
-# ---------------------------------------------------------------------------
 # Interactive line editing (read_line_interactive and helpers)
 #
 # A real line editor for the shell prompt - arrow-key cursor movement,
@@ -64,9 +63,7 @@ tokenize_line() {
 #
 # Only ever used when [ -t 0 ]; cmd_shell falls back to plain `read -r`
 # otherwise, unchanged.
-# ---------------------------------------------------------------------------
 
-# _rli_history_path
 # Resolves the history file path: $HEADWAY_HISTORY if set, otherwise a
 # sibling of the config file (same directory as HEADWAY_CONFIG's default,
 # ~/.config/headway/config -> ~/.config/headway/history). Prints the path.
@@ -79,9 +76,6 @@ _rli_history_path() {
 	fi
 }
 
-# _rli_history_count
-# Prints the number of entries currently in the history file (0 if it
-# doesn't exist yet).
 _rli_history_count() {
 	_rli_hf=$(_rli_history_path)
 	if [ -f "$_rli_hf" ]; then
@@ -91,15 +85,12 @@ _rli_history_count() {
 	fi
 }
 
-# _rli_history_at <n>
-# Prints the 1-based nth history entry, or nothing if out of range.
 _rli_history_at() {
 	_rli_hf=$(_rli_history_path)
 	[ -f "$_rli_hf" ] || return 0
 	sed -n "${1}p" "$_rli_hf" 2>/dev/null || true
 }
 
-# _rli_history_append <line>
 # Appends <line> to the history file (creating its directory if needed),
 # skipping an exact repeat of the immediately preceding entry. Fails soft
 # on any error - history is a convenience, never worth aborting the
@@ -116,7 +107,6 @@ _rli_history_append() {
 	printf '%s\n' "$_rli_line" >>"$_rli_hf" 2>/dev/null || true
 }
 
-# _rli_history_prev / _rli_history_next
 # Move one step back/forward through history, replacing the current
 # buffer with the recalled entry. The first step back from the
 # not-yet-submitted line stashes it in $_rli_hist_saved so stepping
@@ -143,8 +133,6 @@ _rli_history_next() {
 	_rli_after=""
 }
 
-# _rli_history_prev_n <n> / _rli_history_next_n <n>
-# Coarse history jumps (Page Up/Down): n single steps in a row.
 _rli_history_prev_n() {
 	_rli_n="$1"
 	while [ "$_rli_n" -gt 0 ]; do
@@ -161,7 +149,6 @@ _rli_history_next_n() {
 	done
 }
 
-# _rli_read_byte
 # Reads exactly one raw byte from stdin into $_rli_byte. Returns 1 on
 # true stream EOF (no byte read at all). A trailing sentinel defeats
 # command substitution's unconditional stripping of trailing newlines,
@@ -176,7 +163,6 @@ _rli_read_byte() {
 	_rli_byte="${_rli_raw%X}"
 }
 
-# _hw_tags_in_todo
 # Distinct @tag tokens present in TODO_FILE, sorted, one per line. Used
 # by _rli_tab for @-completion. Empty output if the file doesn't exist or
 # has no @tags.
@@ -193,7 +179,6 @@ _hw_tags_in_todo() {
 	}' "$TODO_FILE" | sort -u
 }
 
-# _rli_tab
 # Complete the partial token at end of $_rli_before against commands
 # (first token), projects (starts with +), or tags (starts with @). One
 # match: fill the buffer and add a trailing space. Multiple matches:
@@ -361,7 +346,6 @@ _rli_cleanup() {
 	trap - INT
 }
 
-# read_line_interactive
 # One interactively-edited line: arrow keys, Home/End, Backspace/Delete,
 # and Up/Down/PgUp/PgDn history all work. Prints the finished line to
 # stdout with no trailing newline. Returns 0 on Enter, 1 on EOF/Ctrl-D on

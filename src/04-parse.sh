@@ -1,13 +1,8 @@
-# ---------------------------------------------------------------------------
-# Todo-line parsing / formatting
-# ---------------------------------------------------------------------------
-
 # US is the internal field delimiter used to pass parsed fields between the
 # awk tokenizer and the shell. It is the ASCII unit separator (0x1F), which
 # never legitimately appears in task text, and is never written to disk.
 US=$(printf '\037')
 
-# parse_line <raw todo.txt line>
 # Sets globals: P_DONE, P_COMPLETION_DATE, P_PRIORITY, P_CREATION_DATE,
 # P_DESC, P_PROJECTS, P_TAGS, P_DUE, P_REPEAT, P_PRI_EXT.
 #
@@ -84,7 +79,6 @@ $_pl_out
 EOF
 }
 
-# format_line
 # Reassembles the P_* globals (as set by parse_line, or populated directly)
 # into a single canonical todo.txt line. Always emits fields in the same
 # order, so output stays diff-stable regardless of input field order.
@@ -114,7 +108,6 @@ format_line() {
 	printf '%s\n' "$_fl_out"
 }
 
-# sgr_wrap <sgr-code> <text>
 # Wraps <text> in the given ANSI SGR escape (and a reset), or prints it
 # unwrapped if <sgr-code> is empty (e.g. THEME_DESC's default).
 sgr_wrap() {
@@ -127,7 +120,6 @@ sgr_wrap() {
 	fi
 }
 
-# colorize_line <raw-line>
 # Returns a display-only colorized rendering of a todo.txt line, built
 # from the same P_* fields parse_line/format_line use. Never writes
 # anything to disk - callers gate this behind use_color()/use_color_err()
@@ -178,7 +170,6 @@ colorize_line() {
 	printf '%s\n' "$_cl_out"
 }
 
-# report_change <verb> <id> <raw-line>
 # Prints the standard "<verb> <id>: <line>" confirmation that every
 # mutating command emits on success, colorising the line when use_color
 # is active. Single source of truth for that shape so `added`/`edited`/
@@ -189,7 +180,6 @@ report_change() {
 	printf '%s %s: %s\n' "$1" "$2" "$_rc_display"
 }
 
-# resolve_id <id>
 # Validates that <id> is a positive integer within the current line count
 # of TODO_FILE. Task IDs are simply 1-indexed line numbers - they are NOT
 # stable across edits (a delete/archive above an id shifts everything
@@ -204,13 +194,10 @@ resolve_id() {
 	printf '%s\n' "$id"
 }
 
-# line_at <id>
-# Prints the raw line at 1-indexed line number <id> in TODO_FILE.
 line_at() {
 	sed -n "$1"p "$TODO_FILE"
 }
 
-# replace_line_at <id> <new-line>
 # Atomically rewrites TODO_FILE with line number <id> replaced by
 # <new-line>, leaving every other line untouched.
 replace_line_at() {
@@ -220,4 +207,3 @@ replace_line_at() {
 	{ if (NR == id) print newline; else print $0 }
 	' "$TODO_FILE" | safe_write "$TODO_FILE"
 }
-

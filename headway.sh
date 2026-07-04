@@ -11,10 +11,6 @@ set -eu
 
 HEADWAY_VERSION="0.1.0"
 
-# ---------------------------------------------------------------------------
-# Defaults
-# ---------------------------------------------------------------------------
-
 TODO_FILE_DEFAULT="$HOME/todo.txt"
 DONE_FILE_DEFAULT="$HOME/done.txt"
 EDITOR_DEFAULT="vi"
@@ -32,10 +28,6 @@ THEME_DATE_DEFAULT="2"
 THEME_DESC_DEFAULT=""
 THEME_REPEAT_DEFAULT="1;34"
 THEME_DONE_DEFAULT="2;9"
-# ---------------------------------------------------------------------------
-# Generic helpers
-# ---------------------------------------------------------------------------
-
 err() {
 	printf 'headway: %s\n' "$1" >&2
 }
@@ -45,29 +37,19 @@ die() {
 	exit 1
 }
 
-# usage_die <msg>
-# Same shape as die() but exits 2 - the POSIX/GNU convention for usage
-# errors ("you called headway wrong"), distinct from exit 1 for runtime
-# errors ("headway understood you but the request could not be honoured").
-# Scripts can branch on the two.
+# Exit 2 for usage errors, distinct from exit 1 for runtime failures.
 usage_die() {
 	err "$1"
 	exit 2
 }
 
-# headway_commands
 # Command names recognized by the interactive shell. Kept in one place so
 # typo suggestions and tab completion cannot drift from each other.
 headway_commands() {
 	printf '%s\n' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
 }
 
-# require_todo_file
-# Bails early with a friendly hint when TODO_FILE has never been created.
-# Called from id-referencing commands (complete, undo, edit, due, priority,
-# tag, clear, delete, show) where the alternative is a raw awk failure from
-# resolve_id. Exits 1: the user pointed at a specific task that cannot
-# exist in a nonexistent file, so this is a runtime error, not empty state.
+# Friendly error for id-referencing commands before resolve_id reaches awk.
 require_todo_file() {
 	if [ ! -f "$TODO_FILE" ]; then
 		err "no tasks yet - try 'headway add \"...\"'"
@@ -75,7 +57,6 @@ require_todo_file() {
 	fi
 }
 
-# suggest_command <bad>
 # Prints "did you mean '<X>'?" for the closest known command by edit
 # distance, iff a good enough match exists (distance <= 2). Silent when
 # nothing is close. Uses awk (POSIX-only features) so it stays inside the
@@ -115,7 +96,6 @@ suggest_command() {
 	return 0
 }
 
-# expand_tilde <value>
 # Expands a single leading "~" or "~/..." to $HOME. Needed because a value
 # arriving via an environment variable (rather than literally written in a
 # sourced shell file) is never tilde-expanded by the shell automatically.
@@ -133,7 +113,6 @@ expand_tilde() {
 	esac
 }
 
-# use_color
 # Returns success (0) if colored output should be used, based on the
 # COLOR config value ("auto"/"true"/"false"), the NO_COLOR convention
 # (https://no-color.org - any non-empty value disables color while
@@ -150,7 +129,6 @@ use_color() {
 	esac
 }
 
-# use_color_err
 # Same as use_color(), but for output written to stderr (fd 2) - stdout
 # and stderr can be redirected independently, so each needs its own tty
 # check when COLOR=auto.
@@ -165,7 +143,6 @@ use_color_err() {
 	esac
 }
 
-# safe_write <target-file>
 # Reads the desired full file content from stdin and atomically replaces
 # <target-file> with it. Never uses `sed -i` (GNU/BSD flag incompatibility);
 # always writes to a fresh tempfile in the same directory as the target
@@ -182,13 +159,8 @@ safe_write() {
 		die "failed to replace $target"
 	fi
 }
-# ---------------------------------------------------------------------------
-# Date flavor detection
-# ---------------------------------------------------------------------------
-
-# detect_date_flavor
 # Probes the installed `date` implementation once and sets DATE_FLAVOR to
-# "gnu" or "bsd" so date arithmetic helpers can branch on it consistently.
+# "gnu", "bsd", or "busybox" so date arithmetic helpers can branch on it.
 detect_date_flavor() {
 	if date -d "1 day" "+%Y-%m-%d" >/dev/null 2>&1; then
 		DATE_FLAVOR="gnu"
@@ -201,16 +173,10 @@ detect_date_flavor() {
 	fi
 }
 
-# today
-# Prints today's date as YYYY-MM-DD. Flavor-independent: both GNU and BSD
-# date support a bare `+FORMAT` invocation with no other arguments.
 today() {
 	date "+%Y-%m-%d"
 }
 
-# greeting
-# Prints "Good morning"/"Good afternoon"/"Good evening" based on the local
-# hour. Flavor-independent, same as today().
 greeting() {
 	hour=$(date "+%H")
 	if [ "$hour" -lt 12 ]; then
@@ -222,7 +188,6 @@ greeting() {
 	fi
 }
 
-# date_weekday_name <YYYY-MM-DD>
 # Prints the lowercase full weekday name (e.g. "monday", "sunday") for the
 # given date. Flavor-specific because BSD `date` cannot parse a bare
 # YYYY-MM-DD with `-d`, and BusyBox `date` needs the -u/-d combination.
@@ -234,7 +199,6 @@ date_weekday_name() {
 	esac
 }
 
-# date_to_day_number <YYYY-MM-DD>
 # Converts a Gregorian calendar date to a day number using integer
 # arithmetic only. Avoids spawning date(1) for display-only relative hints.
 date_to_day_number() {
@@ -288,7 +252,6 @@ next_weekday_date() {
 	date_add_days "$_nwd_today" "$_nwd_delta"
 }
 
-# bsd_signed_offset <offset>
 # Prepends `+` to an unsigned offset so BSD `date -v` reads it as a delta
 # rather than an absolute-field set (`-v1d` sets day-of-month to 1;
 # `-v+1d` adds one day). Passes explicitly-signed offsets through
@@ -300,7 +263,6 @@ bsd_signed_offset() {
 	esac
 }
 
-# date_add_days <YYYY-MM-DD> <signed-offset>
 date_add_days() {
 	base="$1"
 	offset="$2"
@@ -318,7 +280,6 @@ date_add_days() {
 	esac
 }
 
-# date_add_months <YYYY-MM-DD> <signed-offset>
 # Known v0 limitation: uses the underlying date tool's native month
 # arithmetic as-is, with no end-of-month clamping.
 date_add_months() {
@@ -350,7 +311,6 @@ date_add_months() {
 	esac
 }
 
-# date_add_years <YYYY-MM-DD> <signed-offset>
 date_add_years() {
 	base="$1"
 	offset="$2"
@@ -371,8 +331,6 @@ date_add_years() {
 	esac
 }
 
-# is_valid_date <value>
-# Validates strict YYYY-MM-DD shape and that the date tool accepts it.
 is_valid_date() {
 	case "$1" in
 	[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
@@ -385,7 +343,6 @@ is_valid_date() {
 	esac
 }
 
-# validate_due_date <value>
 # Resolves allowed date words (today, tomorrow, weekday names) or validates a
 # literal YYYY-MM-DD date. Numeric relative forms are deliberately rejected so
 # TODO_FILE only ever stores explicit dates.
@@ -413,11 +370,6 @@ validate_due_date() {
 		;;
 	esac
 }
-# ---------------------------------------------------------------------------
-# Config loading
-# ---------------------------------------------------------------------------
-
-# load_config
 # Precedence (highest wins): environment variables > config file >
 # built-in defaults. The config file is a local file the user controls
 # (same trust model as ~/.bashrc), so it is dot-sourced directly rather
@@ -454,16 +406,11 @@ load_config() {
 	TODO_FILE=$(expand_tilde "$TODO_FILE")
 	DONE_FILE=$(expand_tilde "$DONE_FILE")
 }
-# ---------------------------------------------------------------------------
-# Todo-line parsing / formatting
-# ---------------------------------------------------------------------------
-
 # US is the internal field delimiter used to pass parsed fields between the
 # awk tokenizer and the shell. It is the ASCII unit separator (0x1F), which
 # never legitimately appears in task text, and is never written to disk.
 US=$(printf '\037')
 
-# parse_line <raw todo.txt line>
 # Sets globals: P_DONE, P_COMPLETION_DATE, P_PRIORITY, P_CREATION_DATE,
 # P_DESC, P_PROJECTS, P_TAGS, P_DUE, P_REPEAT, P_PRI_EXT.
 #
@@ -540,7 +487,6 @@ $_pl_out
 EOF
 }
 
-# format_line
 # Reassembles the P_* globals (as set by parse_line, or populated directly)
 # into a single canonical todo.txt line. Always emits fields in the same
 # order, so output stays diff-stable regardless of input field order.
@@ -570,7 +516,6 @@ format_line() {
 	printf '%s\n' "$_fl_out"
 }
 
-# sgr_wrap <sgr-code> <text>
 # Wraps <text> in the given ANSI SGR escape (and a reset), or prints it
 # unwrapped if <sgr-code> is empty (e.g. THEME_DESC's default).
 sgr_wrap() {
@@ -583,7 +528,6 @@ sgr_wrap() {
 	fi
 }
 
-# colorize_line <raw-line>
 # Returns a display-only colorized rendering of a todo.txt line, built
 # from the same P_* fields parse_line/format_line use. Never writes
 # anything to disk - callers gate this behind use_color()/use_color_err()
@@ -634,7 +578,6 @@ colorize_line() {
 	printf '%s\n' "$_cl_out"
 }
 
-# report_change <verb> <id> <raw-line>
 # Prints the standard "<verb> <id>: <line>" confirmation that every
 # mutating command emits on success, colorising the line when use_color
 # is active. Single source of truth for that shape so `added`/`edited`/
@@ -645,7 +588,6 @@ report_change() {
 	printf '%s %s: %s\n' "$1" "$2" "$_rc_display"
 }
 
-# resolve_id <id>
 # Validates that <id> is a positive integer within the current line count
 # of TODO_FILE. Task IDs are simply 1-indexed line numbers - they are NOT
 # stable across edits (a delete/archive above an id shifts everything
@@ -660,13 +602,10 @@ resolve_id() {
 	printf '%s\n' "$id"
 }
 
-# line_at <id>
-# Prints the raw line at 1-indexed line number <id> in TODO_FILE.
 line_at() {
 	sed -n "$1"p "$TODO_FILE"
 }
 
-# replace_line_at <id> <new-line>
 # Atomically rewrites TODO_FILE with line number <id> replaced by
 # <new-line>, leaving every other line untouched.
 replace_line_at() {
@@ -676,12 +615,6 @@ replace_line_at() {
 	{ if (NR == id) print newline; else print $0 }
 	' "$TODO_FILE" | safe_write "$TODO_FILE"
 }
-
-# ---------------------------------------------------------------------------
-# Listing / views
-# ---------------------------------------------------------------------------
-
-# collect_task_rows
 # Prints one "id<TAB>raw-line" row per non-blank todo.txt line, where id is
 # the 1-indexed line number (blank lines still advance it, matching
 # resolve_id). The interactive shell keeps this output cached so read-only
@@ -691,13 +624,10 @@ collect_task_rows() {
 	awk -v tab="$(printf '\t')" '$0 != "" { print NR tab $0 }' "$TODO_FILE"
 }
 
-# cached_task_rows_active
-# True when cmd_shell has preloaded TODO_FILE into HEADWAY_SHELL_TASK_ROWS.
 cached_task_rows_active() {
 	[ "${HEADWAY_SHELL_CACHE_ACTIVE:-false}" = "true" ] && [ -n "${HEADWAY_SHELL_TASK_ROWS:-}" ]
 }
 
-# HW_AWK_VIEWLIB
 # The awk function library shared by every view-rendering pass. Injected by
 # string concatenation ahead of a per-view main block (awk_view_pass), so the
 # tokenizer, colorizer, and due-hint logic exist exactly once. All functions
@@ -851,7 +781,6 @@ function due_hint(due_date,    label) {
 }
 '
 
-# HW_AWK_VIEW_MAIN
 # Main block for flat views (list/inbox/today/upcoming/someday/logbook):
 # selects rows by <which>, applies the filter, and prints
 # "sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line".
@@ -886,7 +815,6 @@ HW_AWK_VIEW_MAIN='
 }
 '
 
-# HW_AWK_GROUPED_MAIN
 # Main block for the grouped list: buckets every incomplete task
 # (1 Overdue, 2 Due today, 3 Upcoming, 4 Inbox, 5 Someday) and prints
 # "bucket<TAB>sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line".
@@ -914,7 +842,6 @@ HW_AWK_GROUPED_MAIN='
 }
 '
 
-# awk_view_pass <main> <src> <which> <filter> <today> <today_day> <color_on> [file]
 # Runs one awk pass composed of HW_AWK_VIEWLIB plus <main>. <src> is "rows"
 # (collect_task_rows output arrives on stdin) or "file" (raw todo.txt lines
 # are read from [file]) - either way it is a single process, so the shell
@@ -933,7 +860,6 @@ awk_view_pass() {
 		"$HW_AWK_VIEWLIB$1" ${8:+"$8"}
 }
 
-# collect_view_rows <which> [filter] [color_on]
 # Prints one "sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line"
 # row per matching task. <which> is one of: list, inbox, today, upcoming,
 # someday, logbook. `display` is the colorized rendering (verbatim `raw`
@@ -956,7 +882,6 @@ collect_view_rows() {
 	fi
 }
 
-# collect_grouped_rows [today] [color_on]
 # Prints one
 # "bucket<TAB>sortkey<TAB>id<TAB>due-or--<TAB>display<TAB>hint<TAB>raw-line"
 # row for every incomplete task - see HW_AWK_GROUPED_MAIN for the bucket
@@ -975,7 +900,6 @@ collect_grouped_rows() {
 	fi
 }
 
-# emit_row <id> <display> <hint>
 # Prints "<id>: <display><hint>" (or just "<display><hint>" when
 # SHOW_IDS=false). <display> and <hint> arrive already fully rendered
 # (colorized when applicable) from collect_view_rows/collect_grouped_rows -
@@ -1003,7 +927,6 @@ bucket_header() {
 	esac
 }
 
-# render_view <which> [filter]
 # Prints "<id>: <line>" for each task in view <which>, sorted ascending by
 # sortkey (today/upcoming: due date; logbook: completion date, descending;
 # everything else: file order).
@@ -1030,7 +953,6 @@ render_view() {
 	done
 }
 
-# render_grouped_list
 # Emits every incomplete task, bucketed into Overdue / Due today /
 # Upcoming / Inbox / Someday sections. Section headers appear only when at least
 # two buckets have content - a list that happens to be all-inbox,
@@ -1068,15 +990,6 @@ render_grouped_list() {
 		emit_row "$_rgl_rid" "$_rgl_display" "$_rgl_hint"
 	done
 }
-# ---------------------------------------------------------------------------
-# Commands
-# ---------------------------------------------------------------------------
-
-# cmd_add <text> [+Project] [due:DATE] [@tag] [repeat:FREQ]
-# Validates any due: date before writing, sets the creation date to today,
-# and appends the new canonical line to TODO_FILE. Project/tag/due/repeat
-# tokens may appear anywhere in <text>; everything else becomes the
-# description.
 cmd_add() {
 	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
 	[ "$#" -ge 1 ] || usage_die "$_u"
@@ -1101,7 +1014,7 @@ cmd_add() {
 	id=$(awk 'END { print NR }' "$TODO_FILE")
 	report_change "added" "$id" "$new_line"
 }
-# cmd_complete <id> [<id>...]
+
 # Marks one or more tasks done: for each, priority (if any) moves to a
 # trailing pri: extension, and the completion date is stamped alongside the
 # original creation date. If a task carries repeat:daily|weekly|monthly|yearly,
@@ -1164,10 +1077,6 @@ cmd_complete() {
 	done
 }
 
-# cmd_undo <id> [<id>...]
-# Reverses cmd_complete: restores the priority marker from pri: (if any) and
-# clears the completion date. Byte-identical to the pre-done line. Accepts
-# multiple ids; pre-validates all of them before mutating any.
 cmd_undo() {
 	_u='usage: headway undo <id> [<id>...]'
 	[ "$#" -ge 1 ] || usage_die "$_u"
@@ -1192,7 +1101,7 @@ cmd_undo() {
 		report_change "undone" "$id" "$new_line"
 	done
 }
-# cmd_edit <id> [text]
+
 # With [text], replaces the task's line with it directly (verbatim, same
 # as the $EDITOR path below - no due-date validation or field re-formatting).
 # Without it, opens the task's raw line in $EDITOR via a
@@ -1225,7 +1134,6 @@ cmd_edit() {
 	report_change "edited" "$id" "$new"
 }
 
-# cmd_due <id> <DATE>
 # DATE accepts YYYY-MM-DD, today, tomorrow, or a weekday name. Use
 # `clear due <id>` to remove a due date.
 cmd_due() {
@@ -1241,10 +1149,6 @@ cmd_due() {
 	report_change "due" "$id" "$new_line"
 }
 
-# (cmd_move was removed - its set-a-task's-project role is now the
-# id-shaped form of cmd_project below.)
-
-# cmd_priority <id> <A-Z>
 # Targets the (A) slot for active tasks, or the pri: extension for
 # already-completed ones, since a done line has no (A) position.
 # Use `clear priority <id>` to remove a priority.
@@ -1269,7 +1173,6 @@ cmd_priority() {
 	report_change "priority" "$id" "$new_line"
 }
 
-# cmd_tag <id> @tag [@tag...]
 # Adds one or more tags. Idempotent per tag - if the task already has
 # one of the listed tags, it's a silent no-op for that tag. Use
 # `clear tags <id>` to wipe all tags, or `clear tags <id> @tag` to
@@ -1305,9 +1208,6 @@ cmd_tag() {
 	report_change "tagged" "$id" "$new_line"
 }
 
-# cmd_clear <due|priority|tags|project> <id> [<id>...]
-# cmd_clear tags <id> @tag [@tag...]
-#
 # Empties a field on one or more tasks. Any trailing @-prefixed arg
 # is treated as a specific tag to remove and requires field=tags plus
 # exactly one id; without them, `clear tags` wipes every tag on every
@@ -1391,7 +1291,6 @@ cmd_clear() {
 	done
 }
 
-# cmd_delete <id> [<id>...]
 # Deletes one or more tasks permanently. Prompts for confirmation unless
 # CONFIRM_DELETE=false in the config; declining or piping EOF to the
 # prompt cancels (the safe default), never deletes.
@@ -1457,7 +1356,7 @@ cmd_delete() {
 	done <"$_cd_sorted"
 	rm -f "$_cd_sorted"
 }
-# _cs_field <padded-label> <value> [value-theme]
+
 # Prints one cmd_show detail line. Dims the label via THEME_DATE - the
 # same "metadata" role it plays everywhere else. The value gets
 # [value-theme] (e.g. THEME_PROJECT, THEME_DUE) so it matches how the
@@ -1480,7 +1379,6 @@ _cs_field() {
 	printf '%s%s\n' "$_csf_label" "$_csf_value"
 }
 
-# cmd_show <id>
 # Prints a labelled detail block for a single task - the inverse of the
 # one-liner render_view uses. Handy when the task line is long enough to
 # wrap in a normal listing, or when you want the field names spelled out
@@ -1514,7 +1412,6 @@ cmd_show() {
 	return 0
 }
 
-# cmd_list [+Project|@tag|"keyword"]
 # With no filter, prints tasks grouped into Overdue / Due today / Upcoming
 # / Someday (headers appear only if two or more of those buckets have
 # entries). With a filter, prints a flat list - a targeted query wants
@@ -1527,7 +1424,6 @@ cmd_list() {
 	fi
 }
 
-# cmd_view <view-name> [filter]
 # Shared implementation for the simple view commands (inbox, today,
 # upcoming, someday, logbook), dispatched by name from dispatch_cmd.
 cmd_view() {
@@ -1535,7 +1431,7 @@ cmd_view() {
 	shift
 	render_view "$_cv_name" "${1:-}"
 }
-# _list_projects
+
 # Plain, uncolored list of distinct +Project tokens carried by incomplete
 # tasks, one per line, sorted alphabetically. The shared data source
 # behind cmd_projects (the user-facing command) as well as internal
@@ -1554,10 +1450,6 @@ _list_projects() {
 	}' "$TODO_FILE" | sort -u
 }
 
-# cmd_projects
-# Lists the distinct +Project tokens carried by incomplete tasks, one per
-# line, sorted alphabetically - colorized via THEME_PROJECT like +Project
-# tokens are everywhere else they appear, when use_color() allows it.
 cmd_projects() {
 	_cp_use_color=false
 	use_color && _cp_use_color=true
@@ -1571,9 +1463,6 @@ cmd_projects() {
 	done
 }
 
-# cmd_project +Project        (view: list tasks in a project)
-# cmd_project <id> +Project   (set: assign a task to a project)
-#
 # Dispatches on the shape of the first argument: `+X` means view, a
 # numeric id means set. Use `clear project <id>` to remove a task's
 # project.
@@ -1605,7 +1494,7 @@ cmd_project() {
 	replace_line_at "$id" "$new_line"
 	report_change "project" "$id" "$new_line"
 }
-# cmd_archive
+
 # Moves every completed ("x ...") line out of TODO_FILE and appends it to
 # DONE_FILE, preserving DONE_FILE's existing content. Both files are
 # rewritten atomically via safe_write.
@@ -1634,7 +1523,6 @@ cmd_archive() {
 	printf 'archived %s completed task(s)\n' "$count"
 }
 
-# _stat_field <label> <value>
 # Prints one cmd_stats summary line, dimming the label via THEME_DATE -
 # the same "metadata" role it plays everywhere else - when use_color()
 # allows it. Reads $_st_use_color from cmd_stats's scope.
@@ -1646,9 +1534,6 @@ _stat_field() {
 	fi
 }
 
-# cmd_stats
-# Summary counts: active vs. done totals, a count per view, and a count
-# per project (across incomplete tasks).
 cmd_stats() {
 	_st_use_color=false
 	use_color && _st_use_color=true
@@ -1697,8 +1582,6 @@ EOF
 	fi
 }
 
-# cmd_check
-# _check_report <line-no> <message>
 # Emits one cmd_check diagnostic to stderr as "headway: line <N>: <message>"
 # - the same "headway: " prefix every other error uses - dimming just the
 # "line N" locator (reusing THEME_DATE, the same treatment metadata gets
@@ -1833,7 +1716,6 @@ tokenize_line() {
 	printf '%s' "$_tl_tokens"
 }
 
-# ---------------------------------------------------------------------------
 # Interactive line editing (read_line_interactive and helpers)
 #
 # A real line editor for the shell prompt - arrow-key cursor movement,
@@ -1850,9 +1732,7 @@ tokenize_line() {
 #
 # Only ever used when [ -t 0 ]; cmd_shell falls back to plain `read -r`
 # otherwise, unchanged.
-# ---------------------------------------------------------------------------
 
-# _rli_history_path
 # Resolves the history file path: $HEADWAY_HISTORY if set, otherwise a
 # sibling of the config file (same directory as HEADWAY_CONFIG's default,
 # ~/.config/headway/config -> ~/.config/headway/history). Prints the path.
@@ -1865,9 +1745,6 @@ _rli_history_path() {
 	fi
 }
 
-# _rli_history_count
-# Prints the number of entries currently in the history file (0 if it
-# doesn't exist yet).
 _rli_history_count() {
 	_rli_hf=$(_rli_history_path)
 	if [ -f "$_rli_hf" ]; then
@@ -1877,15 +1754,12 @@ _rli_history_count() {
 	fi
 }
 
-# _rli_history_at <n>
-# Prints the 1-based nth history entry, or nothing if out of range.
 _rli_history_at() {
 	_rli_hf=$(_rli_history_path)
 	[ -f "$_rli_hf" ] || return 0
 	sed -n "${1}p" "$_rli_hf" 2>/dev/null || true
 }
 
-# _rli_history_append <line>
 # Appends <line> to the history file (creating its directory if needed),
 # skipping an exact repeat of the immediately preceding entry. Fails soft
 # on any error - history is a convenience, never worth aborting the
@@ -1902,7 +1776,6 @@ _rli_history_append() {
 	printf '%s\n' "$_rli_line" >>"$_rli_hf" 2>/dev/null || true
 }
 
-# _rli_history_prev / _rli_history_next
 # Move one step back/forward through history, replacing the current
 # buffer with the recalled entry. The first step back from the
 # not-yet-submitted line stashes it in $_rli_hist_saved so stepping
@@ -1929,8 +1802,6 @@ _rli_history_next() {
 	_rli_after=""
 }
 
-# _rli_history_prev_n <n> / _rli_history_next_n <n>
-# Coarse history jumps (Page Up/Down): n single steps in a row.
 _rli_history_prev_n() {
 	_rli_n="$1"
 	while [ "$_rli_n" -gt 0 ]; do
@@ -1947,7 +1818,6 @@ _rli_history_next_n() {
 	done
 }
 
-# _rli_read_byte
 # Reads exactly one raw byte from stdin into $_rli_byte. Returns 1 on
 # true stream EOF (no byte read at all). A trailing sentinel defeats
 # command substitution's unconditional stripping of trailing newlines,
@@ -1962,7 +1832,6 @@ _rli_read_byte() {
 	_rli_byte="${_rli_raw%X}"
 }
 
-# _hw_tags_in_todo
 # Distinct @tag tokens present in TODO_FILE, sorted, one per line. Used
 # by _rli_tab for @-completion. Empty output if the file doesn't exist or
 # has no @tags.
@@ -1979,7 +1848,6 @@ _hw_tags_in_todo() {
 	}' "$TODO_FILE" | sort -u
 }
 
-# _rli_tab
 # Complete the partial token at end of $_rli_before against commands
 # (first token), projects (starts with +), or tags (starts with @). One
 # match: fill the buffer and add a trailing space. Multiple matches:
@@ -2147,7 +2015,6 @@ _rli_cleanup() {
 	trap - INT
 }
 
-# read_line_interactive
 # One interactively-edited line: arrow keys, Home/End, Backspace/Delete,
 # and Up/Down/PgUp/PgDn history all work. Prints the finished line to
 # stdout with no trailing newline. Returns 0 on Enter, 1 on EOF/Ctrl-D on
@@ -2225,11 +2092,6 @@ read_line_interactive() {
 	printf '\n' >&2
 	printf '%s' "$_rli_before$_rli_after"
 }
-# ---------------------------------------------------------------------------
-# Dispatch
-# ---------------------------------------------------------------------------
-
-# dispatch_cmd <command> [arguments...]
 # The single source of truth for mapping a command name to its cmd_*
 # function. Used by both one-shot command execution and cmd_shell's REPL.
 dispatch_cmd() {
@@ -2265,8 +2127,6 @@ dispatch_cmd() {
 	esac
 }
 
-# shell_cache_refresh
-# Refreshes the parsed task rows inherited by subshell-dispatched commands.
 shell_cache_refresh() {
 	if [ -f "$TODO_FILE" ]; then
 		HEADWAY_SHELL_TASK_ROWS=$(collect_task_rows)
@@ -2275,8 +2135,6 @@ shell_cache_refresh() {
 	fi
 }
 
-# shell_command_mutates <command>
-# True for REPL commands that can change TODO_FILE or DONE_FILE.
 shell_command_mutates() {
 	case "$1" in
 	add | complete | undo | edit | due | priority | tag | clear | delete | project | archive)
@@ -2288,8 +2146,6 @@ shell_command_mutates() {
 	esac
 }
 
-# shell_open_count
-# Prints the number of open (not completed) tasks in TODO_FILE.
 shell_open_count() {
 	if cached_task_rows_active; then
 		# Cached rows are "id<TAB>raw-line"; a prefix test on the first
@@ -2303,10 +2159,6 @@ shell_open_count() {
 	awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE"
 }
 
-# shell_welcome_task_line <id> <raw-line> <use-color>
-# Prints one indented task line in the same logical shape as render_view:
-# "<id>: <date> <description> [+project] [due:date] [@tag]". The optional
-# color treatment reuses existing THEME_* values and is display-only.
 shell_welcome_task_line() {
 	_swtl_id="$1"
 	_swtl_raw="$2"
@@ -2326,7 +2178,6 @@ shell_welcome_task_line() {
 	fi
 }
 
-# shell_welcome_group <rows> <today> <group> <use-color>
 # Prints up to three overdue or due-today task lines from tab-delimited
 # collect_view_rows output. Extra rows collapse into "... N more — see
 # 'today'" to keep the startup banner short.
@@ -2357,7 +2208,6 @@ shell_welcome_group() {
 	done
 }
 
-# shell_welcome_count <rows> <today> <group> [skip]
 # Counts welcome rows for a group. With [skip], subtracts that many rows
 # from the count, floored at zero; used for the "... N more" summary.
 shell_welcome_count() {
@@ -2385,8 +2235,6 @@ shell_welcome_count() {
 	done | awk -v skip="$_swc_skip" 'END { n = NR - skip; if (n < 0) n = 0; print n }'
 }
 
-# shell_welcome_banner
-# Prints the interactive shell welcome message before the first prompt.
 shell_welcome_banner() {
 	_swb_today=$(today)
 	_swb_active=0
@@ -2459,7 +2307,6 @@ shell_welcome_banner() {
 	printf '\n%s\n\n' "$_swb_hint"
 }
 
-# cmd_shell
 # Starts an interactive session, tokenizes each line without evaluating it
 # as shell code, and dispatches the resulting command. Interactive terminals
 # get read_line_interactive; piped input falls back to plain read -r.
@@ -2541,10 +2388,6 @@ cmd_shell() {
 		fi
 	done
 }
-# ---------------------------------------------------------------------------
-# Usage
-# ---------------------------------------------------------------------------
-
 usage() {
 	cat <<EOF
 headway $HEADWAY_VERSION - a shell-based todo.txt task manager.

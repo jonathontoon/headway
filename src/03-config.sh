@@ -1,8 +1,3 @@
-# ---------------------------------------------------------------------------
-# Config loading
-# ---------------------------------------------------------------------------
-
-# load_config
 # Precedence (highest wins): environment variables > config file >
 # built-in defaults. The config file is a local file the user controls
 # (same trust model as ~/.bashrc), so it is dot-sourced directly rather

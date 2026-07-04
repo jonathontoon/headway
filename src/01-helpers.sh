@@ -1,7 +1,3 @@
-# ---------------------------------------------------------------------------
-# Generic helpers
-# ---------------------------------------------------------------------------
-
 err() {
 	printf 'headway: %s\n' "$1" >&2
 }
@@ -11,29 +7,19 @@ die() {
 	exit 1
 }
 
-# usage_die <msg>
-# Same shape as die() but exits 2 - the POSIX/GNU convention for usage
-# errors ("you called headway wrong"), distinct from exit 1 for runtime
-# errors ("headway understood you but the request could not be honoured").
-# Scripts can branch on the two.
+# Exit 2 for usage errors, distinct from exit 1 for runtime failures.
 usage_die() {
 	err "$1"
 	exit 2
 }
 
-# headway_commands
 # Command names recognized by the interactive shell. Kept in one place so
 # typo suggestions and tab completion cannot drift from each other.
 headway_commands() {
 	printf '%s\n' "add complete undo edit due priority tag clear delete show list inbox today upcoming someday logbook projects project archive stats check help exit"
 }
 
-# require_todo_file
-# Bails early with a friendly hint when TODO_FILE has never been created.
-# Called from id-referencing commands (complete, undo, edit, due, priority,
-# tag, clear, delete, show) where the alternative is a raw awk failure from
-# resolve_id. Exits 1: the user pointed at a specific task that cannot
-# exist in a nonexistent file, so this is a runtime error, not empty state.
+# Friendly error for id-referencing commands before resolve_id reaches awk.
 require_todo_file() {
 	if [ ! -f "$TODO_FILE" ]; then
 		err "no tasks yet - try 'headway add \"...\"'"
@@ -41,7 +27,6 @@ require_todo_file() {
 	fi
 }
 
-# suggest_command <bad>
 # Prints "did you mean '<X>'?" for the closest known command by edit
 # distance, iff a good enough match exists (distance <= 2). Silent when
 # nothing is close. Uses awk (POSIX-only features) so it stays inside the
@@ -81,7 +66,6 @@ suggest_command() {
 	return 0
 }
 
-# expand_tilde <value>
 # Expands a single leading "~" or "~/..." to $HOME. Needed because a value
 # arriving via an environment variable (rather than literally written in a
 # sourced shell file) is never tilde-expanded by the shell automatically.
@@ -99,7 +83,6 @@ expand_tilde() {
 	esac
 }
 
-# use_color
 # Returns success (0) if colored output should be used, based on the
 # COLOR config value ("auto"/"true"/"false"), the NO_COLOR convention
 # (https://no-color.org - any non-empty value disables color while
@@ -116,7 +99,6 @@ use_color() {
 	esac
 }
 
-# use_color_err
 # Same as use_color(), but for output written to stderr (fd 2) - stdout
 # and stderr can be redirected independently, so each needs its own tty
 # check when COLOR=auto.
@@ -131,7 +113,6 @@ use_color_err() {
 	esac
 }
 
-# safe_write <target-file>
 # Reads the desired full file content from stdin and atomically replaces
 # <target-file> with it. Never uses `sed -i` (GNU/BSD flag incompatibility);
 # always writes to a fresh tempfile in the same directory as the target

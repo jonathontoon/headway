@@ -11,10 +11,6 @@ set -eu
 
 HEADWAY_VERSION="0.1.0"
 
-# ---------------------------------------------------------------------------
-# Defaults
-# ---------------------------------------------------------------------------
-
 TODO_FILE_DEFAULT="$HOME/todo.txt"
 DONE_FILE_DEFAULT="$HOME/done.txt"
 EDITOR_DEFAULT="vi"

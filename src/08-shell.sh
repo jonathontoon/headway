@@ -1,8 +1,3 @@
-# ---------------------------------------------------------------------------
-# Dispatch
-# ---------------------------------------------------------------------------
-
-# dispatch_cmd <command> [arguments...]
 # The single source of truth for mapping a command name to its cmd_*
 # function. Used by both one-shot command execution and cmd_shell's REPL.
 dispatch_cmd() {
@@ -38,8 +33,6 @@ dispatch_cmd() {
 	esac
 }
 
-# shell_cache_refresh
-# Refreshes the parsed task rows inherited by subshell-dispatched commands.
 shell_cache_refresh() {
 	if [ -f "$TODO_FILE" ]; then
 		HEADWAY_SHELL_TASK_ROWS=$(collect_task_rows)
@@ -48,8 +41,6 @@ shell_cache_refresh() {
 	fi
 }
 
-# shell_command_mutates <command>
-# True for REPL commands that can change TODO_FILE or DONE_FILE.
 shell_command_mutates() {
 	case "$1" in
 	add | complete | undo | edit | due | priority | tag | clear | delete | project | archive)
@@ -61,8 +52,6 @@ shell_command_mutates() {
 	esac
 }
 
-# shell_open_count
-# Prints the number of open (not completed) tasks in TODO_FILE.
 shell_open_count() {
 	if cached_task_rows_active; then
 		# Cached rows are "id<TAB>raw-line"; a prefix test on the first
@@ -76,10 +65,6 @@ shell_open_count() {
 	awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE"
 }
 
-# shell_welcome_task_line <id> <raw-line> <use-color>
-# Prints one indented task line in the same logical shape as render_view:
-# "<id>: <date> <description> [+project] [due:date] [@tag]". The optional
-# color treatment reuses existing THEME_* values and is display-only.
 shell_welcome_task_line() {
 	_swtl_id="$1"
 	_swtl_raw="$2"
@@ -99,7 +84,6 @@ shell_welcome_task_line() {
 	fi
 }
 
-# shell_welcome_group <rows> <today> <group> <use-color>
 # Prints up to three overdue or due-today task lines from tab-delimited
 # collect_view_rows output. Extra rows collapse into "... N more — see
 # 'today'" to keep the startup banner short.
@@ -130,7 +114,6 @@ shell_welcome_group() {
 	done
 }
 
-# shell_welcome_count <rows> <today> <group> [skip]
 # Counts welcome rows for a group. With [skip], subtracts that many rows
 # from the count, floored at zero; used for the "... N more" summary.
 shell_welcome_count() {
@@ -158,8 +141,6 @@ shell_welcome_count() {
 	done | awk -v skip="$_swc_skip" 'END { n = NR - skip; if (n < 0) n = 0; print n }'
 }
 
-# shell_welcome_banner
-# Prints the interactive shell welcome message before the first prompt.
 shell_welcome_banner() {
 	_swb_today=$(today)
 	_swb_active=0
@@ -232,7 +213,6 @@ shell_welcome_banner() {
 	printf '\n%s\n\n' "$_swb_hint"
 }
 
-# cmd_shell
 # Starts an interactive session, tokenizes each line without evaluating it
 # as shell code, and dispatches the resulting command. Interactive terminals
 # get read_line_interactive; piped input falls back to plain read -r.

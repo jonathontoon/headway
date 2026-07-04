@@ -1,12 +1,3 @@
-# ---------------------------------------------------------------------------
-# Commands
-# ---------------------------------------------------------------------------
-
-# cmd_add <text> [+Project] [due:DATE] [@tag] [repeat:FREQ]
-# Validates any due: date before writing, sets the creation date to today,
-# and appends the new canonical line to TODO_FILE. Project/tag/due/repeat
-# tokens may appear anywhere in <text>; everything else becomes the
-# description.
 cmd_add() {
 	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
 	[ "$#" -ge 1 ] || usage_die "$_u"
@@ -31,7 +22,7 @@ cmd_add() {
 	id=$(awk 'END { print NR }' "$TODO_FILE")
 	report_change "added" "$id" "$new_line"
 }
-# cmd_complete <id> [<id>...]
+
 # Marks one or more tasks done: for each, priority (if any) moves to a
 # trailing pri: extension, and the completion date is stamped alongside the
 # original creation date. If a task carries repeat:daily|weekly|monthly|yearly,
@@ -94,10 +85,6 @@ cmd_complete() {
 	done
 }
 
-# cmd_undo <id> [<id>...]
-# Reverses cmd_complete: restores the priority marker from pri: (if any) and
-# clears the completion date. Byte-identical to the pre-done line. Accepts
-# multiple ids; pre-validates all of them before mutating any.
 cmd_undo() {
 	_u='usage: headway undo <id> [<id>...]'
 	[ "$#" -ge 1 ] || usage_die "$_u"
@@ -122,7 +109,7 @@ cmd_undo() {
 		report_change "undone" "$id" "$new_line"
 	done
 }
-# cmd_edit <id> [text]
+
 # With [text], replaces the task's line with it directly (verbatim, same
 # as the $EDITOR path below - no due-date validation or field re-formatting).
 # Without it, opens the task's raw line in $EDITOR via a
@@ -155,7 +142,6 @@ cmd_edit() {
 	report_change "edited" "$id" "$new"
 }
 
-# cmd_due <id> <DATE>
 # DATE accepts YYYY-MM-DD, today, tomorrow, or a weekday name. Use
 # `clear due <id>` to remove a due date.
 cmd_due() {
@@ -171,10 +157,6 @@ cmd_due() {
 	report_change "due" "$id" "$new_line"
 }
 
-# (cmd_move was removed - its set-a-task's-project role is now the
-# id-shaped form of cmd_project below.)
-
-# cmd_priority <id> <A-Z>
 # Targets the (A) slot for active tasks, or the pri: extension for
 # already-completed ones, since a done line has no (A) position.
 # Use `clear priority <id>` to remove a priority.
@@ -199,7 +181,6 @@ cmd_priority() {
 	report_change "priority" "$id" "$new_line"
 }
 
-# cmd_tag <id> @tag [@tag...]
 # Adds one or more tags. Idempotent per tag - if the task already has
 # one of the listed tags, it's a silent no-op for that tag. Use
 # `clear tags <id>` to wipe all tags, or `clear tags <id> @tag` to
@@ -235,9 +216,6 @@ cmd_tag() {
 	report_change "tagged" "$id" "$new_line"
 }
 
-# cmd_clear <due|priority|tags|project> <id> [<id>...]
-# cmd_clear tags <id> @tag [@tag...]
-#
 # Empties a field on one or more tasks. Any trailing @-prefixed arg
 # is treated as a specific tag to remove and requires field=tags plus
 # exactly one id; without them, `clear tags` wipes every tag on every
@@ -321,7 +299,6 @@ cmd_clear() {
 	done
 }
 
-# cmd_delete <id> [<id>...]
 # Deletes one or more tasks permanently. Prompts for confirmation unless
 # CONFIRM_DELETE=false in the config; declining or piping EOF to the
 # prompt cancels (the safe default), never deletes.
@@ -387,7 +364,7 @@ cmd_delete() {
 	done <"$_cd_sorted"
 	rm -f "$_cd_sorted"
 }
-# _cs_field <padded-label> <value> [value-theme]
+
 # Prints one cmd_show detail line. Dims the label via THEME_DATE - the
 # same "metadata" role it plays everywhere else. The value gets
 # [value-theme] (e.g. THEME_PROJECT, THEME_DUE) so it matches how the
@@ -410,7 +387,6 @@ _cs_field() {
 	printf '%s%s\n' "$_csf_label" "$_csf_value"
 }
 
-# cmd_show <id>
 # Prints a labelled detail block for a single task - the inverse of the
 # one-liner render_view uses. Handy when the task line is long enough to
 # wrap in a normal listing, or when you want the field names spelled out
@@ -444,7 +420,6 @@ cmd_show() {
 	return 0
 }
 
-# cmd_list [+Project|@tag|"keyword"]
 # With no filter, prints tasks grouped into Overdue / Due today / Upcoming
 # / Someday (headers appear only if two or more of those buckets have
 # entries). With a filter, prints a flat list - a targeted query wants
@@ -457,7 +432,6 @@ cmd_list() {
 	fi
 }
 
-# cmd_view <view-name> [filter]
 # Shared implementation for the simple view commands (inbox, today,
 # upcoming, someday, logbook), dispatched by name from dispatch_cmd.
 cmd_view() {
@@ -465,7 +439,7 @@ cmd_view() {
 	shift
 	render_view "$_cv_name" "${1:-}"
 }
-# _list_projects
+
 # Plain, uncolored list of distinct +Project tokens carried by incomplete
 # tasks, one per line, sorted alphabetically. The shared data source
 # behind cmd_projects (the user-facing command) as well as internal
@@ -484,10 +458,6 @@ _list_projects() {
 	}' "$TODO_FILE" | sort -u
 }
 
-# cmd_projects
-# Lists the distinct +Project tokens carried by incomplete tasks, one per
-# line, sorted alphabetically - colorized via THEME_PROJECT like +Project
-# tokens are everywhere else they appear, when use_color() allows it.
 cmd_projects() {
 	_cp_use_color=false
 	use_color && _cp_use_color=true
@@ -501,9 +471,6 @@ cmd_projects() {
 	done
 }
 
-# cmd_project +Project        (view: list tasks in a project)
-# cmd_project <id> +Project   (set: assign a task to a project)
-#
 # Dispatches on the shape of the first argument: `+X` means view, a
 # numeric id means set. Use `clear project <id>` to remove a task's
 # project.
@@ -535,7 +502,7 @@ cmd_project() {
 	replace_line_at "$id" "$new_line"
 	report_change "project" "$id" "$new_line"
 }
-# cmd_archive
+
 # Moves every completed ("x ...") line out of TODO_FILE and appends it to
 # DONE_FILE, preserving DONE_FILE's existing content. Both files are
 # rewritten atomically via safe_write.
@@ -564,7 +531,6 @@ cmd_archive() {
 	printf 'archived %s completed task(s)\n' "$count"
 }
 
-# _stat_field <label> <value>
 # Prints one cmd_stats summary line, dimming the label via THEME_DATE -
 # the same "metadata" role it plays everywhere else - when use_color()
 # allows it. Reads $_st_use_color from cmd_stats's scope.
@@ -576,9 +542,6 @@ _stat_field() {
 	fi
 }
 
-# cmd_stats
-# Summary counts: active vs. done totals, a count per view, and a count
-# per project (across incomplete tasks).
 cmd_stats() {
 	_st_use_color=false
 	use_color && _st_use_color=true
@@ -627,8 +590,6 @@ EOF
 	fi
 }
 
-# cmd_check
-# _check_report <line-no> <message>
 # Emits one cmd_check diagnostic to stderr as "headway: line <N>: <message>"
 # - the same "headway: " prefix every other error uses - dimming just the
 # "line N" locator (reusing THEME_DATE, the same treatment metadata gets
