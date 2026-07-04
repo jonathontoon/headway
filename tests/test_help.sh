@@ -1,6 +1,6 @@
 #!/bin/sh
-# Tests for the outer surface: --help, --version, one-shot commands,
-# invalid arguments, and per-command --help.
+# Tests for the outer surface: help, --version, one-shot commands,
+# invalid arguments, and leading-dash task text.
 
 set -eu
 
@@ -17,13 +17,13 @@ code=$?
 assert_exit_code "0" "$code" "--version: exit 0"
 assert_match "^headway [0-9]+\.[0-9]+\.[0-9]+$" "$out" "--version: prints 'headway <semver>'"
 
-# --- outer surface: --help --------------------------------------------------
+# --- outer surface: help ----------------------------------------------------
 
 code=0
-out=$($HW --help 2>&1) || code=$?
-assert_exit_code "0" "$code" "--help: exit 0"
-assert_match "Usage: headway" "$out" "--help: prints usage"
-assert_match "shell-based" "$out" "--help: frames headway as a shell"
+out=$($HW help 2>&1) || code=$?
+assert_exit_code "0" "$code" "help: exit 0"
+assert_match "Usage: headway" "$out" "help: prints usage"
+assert_match "shell-based" "$out" "help: frames headway as a shell"
 
 # --- outer surface: one-shot commands --------------------------------------
 
@@ -36,8 +36,11 @@ assert_file_contains "$TODO_FILE" "Direct capture \+CLI" "one-shot add: writes T
 out=$($HW list 2>&1)
 assert_match "^1: .*Direct capture \+CLI" "$out" "one-shot list: prints existing task"
 
-out=$($HW add --help 2>&1)
-assert_match "^usage: headway add" "$out" "one-shot add --help: prints command usage"
+code=0
+out=$($HW add --help 2>&1) || code=$?
+assert_exit_code "0" "$code" "one-shot add --help: exit 0"
+assert_match "added [0-9]+: .*--help" "$out" "one-shot add --help: treats --help as task text"
+assert_file_contains "$TODO_FILE" ".*--help" "one-shot add --help: writes literal task text"
 
 out=$($HW help 2>&1)
 assert_match "Usage: headway" "$out" "one-shot help: prints top-level usage"
@@ -51,7 +54,7 @@ assert_match "Usage: headway" "$out" "one-shot help with broken config: prints u
 
 # --- outer surface: invalid flags/commands are rejected ---------------------
 
-for bad in -h -v -V --yes -y foo; do
+for bad in --help -h -v -V --yes -y foo; do
 	code=0
 	out=$($HW "$bad" 2>&1) || code=$?
 	assert_exit_code "2" "$code" "$bad: rejected with exit 2"
@@ -68,31 +71,25 @@ out=$($HW exit 2>&1) || code=$?
 assert_exit_code "2" "$code" "one-shot exit: rejected with exit 2"
 assert_match "exit is only available inside the interactive shell" "$out" "one-shot exit: names shell-only command"
 
-# --- outer surface: extra args after --help / --version also rejected ------
-
-code=0
-$HW --help extra >/dev/null 2>&1 || code=$?
-assert_exit_code "2" "$code" "--help extra: exit 2"
+# --- outer surface: extra args after --version also rejected ----------------
 
 code=0
 $HW --version --help >/dev/null 2>&1 || code=$?
 assert_exit_code "2" "$code" "--version --help: exit 2"
 
-# --- in-shell: every command accepts --help --------------------------------
+# --- in-shell: help prints the command list --------------------------------
 
-for cmd in add complete undo edit due priority tag clear delete show list inbox today \
-	upcoming someday logbook projects project archive stats check; do
-	out=$(printf '%s --help\nexit\n' "$cmd" | $HW 2>&1)
-	assert_match "^usage: headway $cmd" "$out" "in-shell $cmd --help: prints subcommand usage"
-done
+out=$(printf 'help\nexit\n' | $HW 2>&1)
+assert_match "Usage: headway" "$out" "in-shell help: prints usage"
 
-# --- in-shell: -h is no longer a shortcut ----------------------------------
+# --- in-shell: leading-dash text is ordinary task text ----------------------
 
-# `add -h` treats "-h" as task text (adds "-h" as a task), doesn't print help.
-out=$(printf 'add -h\nlist\nexit\n' | $HW 2>&1)
+# `add -h` and `add --help` treat the dash-prefixed token as task text.
+out=$(printf 'add -h\nadd --help\nlist\nexit\n' | $HW 2>&1)
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^usage: headway add' || true)" \
 	"in-shell add -h: does not print help (no short-flag shortcut)"
 assert_match "added [0-9]+: .*-h" "$out" "in-shell add -h: treats -h as task text"
+assert_match "added [0-9]+: .*--help" "$out" "in-shell add --help: treats --help as task text"
 
 # --- in-shell: usage errors exit 2 (via return code from shell subshell) ---
 # The shell's REPL keeps running through failures, so we test by watching for

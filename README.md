@@ -145,7 +145,7 @@ headway $ inbox
 headway $ exit
 ```
 
-Both forms use the same commands and output. `headway --help` and `headway --version` are handled at the outer level; `headway help` prints the command list.
+Both forms use the same commands and output. `headway help` prints the command list; `headway --version` prints the version.
 
 ---
 
@@ -163,7 +163,7 @@ Launch `headway` and you're at the `headway $` prompt. The shell has real line e
 
 Each line is split the same way a shell command line is, so quoting works as expected — `add "Buy milk and eggs"` treats the whole quoted string as one argument. Piped/non-interactive input (`headway < script.txt`) falls back to plain line-at-a-time reading, unaffected by the raw-mode editor.
 
-Every command accepts `--help` for its own usage line.
+Use `help` to print the command list.
 
 ---
 

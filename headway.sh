@@ -923,7 +923,6 @@ render_grouped_list() {
 # everything else becomes the description.
 cmd_add() {
 	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 	parse_line "$*"
 	P_DONE=false
@@ -958,7 +957,6 @@ cmd_add() {
 # the file is never left half-updated.
 cmd_complete() {
 	_u='usage: headway complete <id> [<id>...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 	require_todo_file
 
@@ -1016,7 +1014,6 @@ cmd_complete() {
 # multiple ids; pre-validates all of them before mutating any.
 cmd_undo() {
 	_u='usage: headway undo <id> [<id>...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 	require_todo_file
 
@@ -1048,7 +1045,6 @@ cmd_undo() {
 # unchanged) rather than deleting the task.
 cmd_edit() {
 	_u='usage: headway edit <id> [text]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
@@ -1078,7 +1074,6 @@ cmd_edit() {
 # Use `clear due <id>` to remove a due date.
 cmd_due() {
 	_u='usage: headway due <id> <date>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
@@ -1099,7 +1094,6 @@ cmd_due() {
 # Use `clear priority <id>` to remove a priority.
 cmd_priority() {
 	_u='usage: headway priority <id> <A-Z>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
@@ -1126,7 +1120,6 @@ cmd_priority() {
 # remove specific tag(s).
 cmd_tag() {
 	_u='usage: headway tag <id> @tag [@tag...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
@@ -1167,7 +1160,6 @@ cmd_tag() {
 cmd_clear() {
 	_u='usage: headway clear <due|priority|tags|project> <id> [<id>...]
        headway clear tags <id> @tag [@tag...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 2 ] || usage_die "$_u"
 
 	_cc_field="$1"
@@ -1255,7 +1247,6 @@ cmd_clear() {
 # higher line number doesn't invalidate a lower one.
 cmd_delete() {
 	_u='usage: headway delete <id> [<id>...]'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 	require_todo_file
 
@@ -1319,7 +1310,6 @@ cmd_delete() {
 # rather than encoded as +Project / @tag / due: / repeat:.
 cmd_show() {
 	_u='usage: headway show <id>'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
@@ -1350,7 +1340,6 @@ cmd_show() {
 # entries). With a filter, prints a flat list - a targeted query wants
 # its results contiguous, not carved into sections.
 cmd_list() {
-	case "${1:-}" in --help) printf 'usage: headway list [+Project|@tag|"keyword"]\n'; return 0 ;; esac
 	if [ "$#" -ge 1 ] && [ -n "$1" ]; then
 		render_view "list" "$1"
 	else
@@ -1360,11 +1349,10 @@ cmd_list() {
 
 # cmd_view <view-name> [filter]
 # Shared implementation for simple view commands whose command name,
-# render_view name, and help line all match.
+# render_view name, and optional filter handling all match.
 cmd_view() {
 	_cv_name="$1"
 	shift
-	case "${1:-}" in --help) printf 'usage: headway %s [+Project|@tag|"keyword"]\n' "$_cv_name"; return 0 ;; esac
 	render_view "$_cv_name" "${1:-}"
 }
 
@@ -1391,7 +1379,6 @@ cmd_logbook() {
 # Lists the distinct +Project tokens carried by incomplete tasks, one per
 # line, sorted alphabetically.
 cmd_projects() {
-	case "${1:-}" in --help) printf 'usage: headway projects\n'; return 0 ;; esac
 	[ -f "$TODO_FILE" ] || return 0
 	awk '
 	{
@@ -1413,7 +1400,6 @@ cmd_projects() {
 cmd_project() {
 	_u='usage: headway project +Project              (list tasks in project)
        headway project <id> +Project      (assign task to project)'
-	case "${1:-}" in --help) printf '%s\n' "$_u"; return 0 ;; esac
 	[ "$#" -ge 1 ] || usage_die "$_u"
 
 	case "$1" in
@@ -1444,7 +1430,6 @@ cmd_project() {
 # DONE_FILE, preserving DONE_FILE's existing content. Both files are
 # rewritten atomically via safe_write.
 cmd_archive() {
-	case "${1:-}" in --help) printf 'usage: headway archive\n'; return 0 ;; esac
 	[ -f "$TODO_FILE" ] || return 0
 	archived=$(awk '/^x /' "$TODO_FILE")
 	if [ -z "$archived" ]; then
@@ -1473,7 +1458,6 @@ cmd_archive() {
 # Summary counts: active vs. done totals, a count per view, and a count
 # per project (across incomplete tasks).
 cmd_stats() {
-	case "${1:-}" in --help) printf 'usage: headway stats\n'; return 0 ;; esac
 	if [ ! -f "$TODO_FILE" ]; then
 		printf 'tasks:    0 active, 0 done (0 total)\n'
 		return 0
@@ -1513,7 +1497,6 @@ EOF
 # values outside daily/weekly/monthly/yearly, and completed lines missing
 # either date.
 cmd_check() {
-	case "${1:-}" in --help) printf 'usage: headway check\n'; return 0 ;; esac
 	[ -f "$TODO_FILE" ] || die "no such file: $TODO_FILE"
 	problems=0
 	id=0
@@ -2317,13 +2300,10 @@ headway $HEADWAY_VERSION - a shell-based todo.txt task manager.
 
 Usage: headway              start the interactive shell
        headway <command>    run one command and exit
-       headway --help       print this help and exit
        headway --version    print the version and exit
 
 Run \`headway\` with no arguments for the interactive shell, or pass any
 command directly, e.g. \`headway add "Book flights"\`.
-
-Every command below accepts \`--help\` for its own usage line.
 
 Task IDs are the task's current line number in TODO_FILE. They are NOT
 stable across edits - deleting or archiving a task shifts the IDs of
@@ -2394,15 +2374,11 @@ main() {
 			usage
 			return 0
 			;;
-		--help)
-			usage
-			return 0
-			;;
 		--version)
 			printf 'headway %s\n' "$HEADWAY_VERSION"
 			return 0
 			;;
-	esac
+		esac
 	fi
 
 	init_runtime

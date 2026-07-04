@@ -247,22 +247,27 @@ assert_exit_code "0" "$code" "main: no-args exit code 0 after 'exit'"
 assert_match "added 1: .*Buy milk \+Errands due:2026-07-10" "$out" "main: no-args add ran inside the session"
 assert_match "1: .*Buy milk \+Errands" "$out" "main: no-args list ran in the same session"
 
-# --- `main --help` and `main --version` still work at the outer level -------
+# --- `main help` and `main --version` still work at the outer level ---------
 
 teardown_sandbox
 setup_sandbox
 HEADWAY_LIB_ONLY=true
 . ./headway.sh
 
-out=$(main --help)
+out=$(main help)
 code=$?
-assert_exit_code "0" "$code" "main --help: exit code 0"
-assert_match "Usage: headway" "$out" "main --help: prints usage"
+assert_exit_code "0" "$code" "main help: exit code 0"
+assert_match "Usage: headway" "$out" "main help: prints usage"
 
 out=$(main --version)
 code=$?
 assert_exit_code "0" "$code" "main --version: exit code 0"
 assert_match "^headway [0-9]+\\.[0-9]+\\.[0-9]+$" "$out" "main --version: prints 'headway <semver>'"
+
+code=0
+out=$(main --help 2>&1) || code=$?
+assert_exit_code "2" "$code" "main --help: rejected with exit 2"
+assert_match "unknown command: --help" "$out" "main --help: names unknown command"
 
 # --- `main` can run one-shot commands --------------------------------------
 

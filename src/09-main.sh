@@ -8,13 +8,10 @@ headway $HEADWAY_VERSION - a shell-based todo.txt task manager.
 
 Usage: headway              start the interactive shell
        headway <command>    run one command and exit
-       headway --help       print this help and exit
        headway --version    print the version and exit
 
 Run \`headway\` with no arguments for the interactive shell, or pass any
 command directly, e.g. \`headway add "Book flights"\`.
-
-Every command below accepts \`--help\` for its own usage line.
 
 Task IDs are the task's current line number in TODO_FILE. They are NOT
 stable across edits - deleting or archiving a task shifts the IDs of
@@ -85,15 +82,11 @@ main() {
 			usage
 			return 0
 			;;
-		--help)
-			usage
-			return 0
-			;;
 		--version)
 			printf 'headway %s\n' "$HEADWAY_VERSION"
 			return 0
 			;;
-	esac
+		esac
 	fi
 
 	init_runtime
