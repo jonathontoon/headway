@@ -77,7 +77,7 @@ SHOW_IDS=true
 load_config
 detect_date_flavor
 
-cmd_add "Call the accountant due:today @calls" >/dev/null
+cmd_add "Call the accountant due:$(today) @calls" >/dev/null
 out=$(shell_welcome_banner)
 assert_match "1 task due\\." "$out" "welcome: singular due count"
 assert_match "^  1: $(today) Call the accountant due:$(today) @calls" "$out" "welcome: due task uses view row format"
@@ -95,7 +95,7 @@ SHOW_IDS=false
 load_config
 detect_date_flavor
 
-cmd_add "No id please due:today" >/dev/null
+cmd_add "No id please due:$(today)" >/dev/null
 out=$(shell_welcome_banner)
 assert_match "^  $(today) No id please due:$(today)$" "$out" "welcome: SHOW_IDS=false omits task id"
 assert_eq "0" "$(printf '%s\n' "$out" | grep -c '^  1:')" "welcome: SHOW_IDS=false has no id prefix"
@@ -117,10 +117,10 @@ cmd_add "Overdue one due:$yesterday_d" >/dev/null
 cmd_add "Overdue two due:$yesterday_d" >/dev/null
 cmd_add "Overdue three due:$yesterday_d" >/dev/null
 cmd_add "Overdue four due:$yesterday_d" >/dev/null
-cmd_add "Today one due:today" >/dev/null
-cmd_add "Today two due:today" >/dev/null
-cmd_add "Today three due:today" >/dev/null
-cmd_add "Today four due:today" >/dev/null
+cmd_add "Today one due:$today_d" >/dev/null
+cmd_add "Today two due:$today_d" >/dev/null
+cmd_add "Today three due:$today_d" >/dev/null
+cmd_add "Today four due:$today_d" >/dev/null
 out=$(shell_welcome_banner)
 assert_match "8 tasks due\\." "$out" "welcome: due count combines overdue and due today"
 assert_match "^  Overdue$" "$out" "welcome: overdue header appears when both groups are non-empty"

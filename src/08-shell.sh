@@ -87,7 +87,7 @@ shell_welcome_group() {
 
 	[ -n "$_swg_rows" ] || return 0
 
-	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _swg_due _swg_id _swg_raw; do
+	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _ _swg_id _swg_due _swg_raw; do
 		case "$_swg_group" in
 		overdue)
 			expr "$_swg_due" '<' "$_swg_today" >/dev/null || continue
@@ -119,7 +119,7 @@ shell_welcome_count() {
 		return 0
 	}
 
-	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _swc_due _ _; do
+	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _ _ _swc_due _; do
 		case "$_swc_group" in
 		overdue)
 			expr "$_swc_due" '<' "$_swc_today" >/dev/null || continue

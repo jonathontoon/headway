@@ -50,8 +50,8 @@ detect_date_flavor
 
 cmd_add "urgent" >/dev/null
 cmd_add "not so urgent" >/dev/null
-cmd_due 1 today >/dev/null
-cmd_due 2 tomorrow >/dev/null
+cmd_due 1 "$(today)" >/dev/null
+cmd_due 2 "$(date_add_days "$(today)" 1)" >/dev/null
 
 view_out=$(cmd_today)
 assert_match "due:$(today) \\(today\\)" "$view_out" "view: today hint in due-line"
@@ -80,7 +80,7 @@ cmd_add "due today" >/dev/null
 cmd_add "future" >/dev/null
 cmd_add "later +Home" >/dev/null
 cmd_due 3 "$yesterday_d" >/dev/null
-cmd_due 4 today >/dev/null
+cmd_due 4 "$today_d" >/dev/null
 cmd_due 5 "$future_d" >/dev/null
 
 list_out=$(cmd_list)

@@ -3,10 +3,10 @@
 # ---------------------------------------------------------------------------
 
 # cmd_add <text> [+Project] [due:DATE] [@tag] [repeat:FREQ]
-# Resolves any due: shorthand to a real YYYY-MM-DD before writing, sets
-# the creation date to today, and appends the new canonical line to
-# TODO_FILE. Project/tag/due/repeat tokens may appear anywhere in <text>;
-# everything else becomes the description.
+# Validates any due: date before writing, sets the creation date to today,
+# and appends the new canonical line to TODO_FILE. Project/tag/due/repeat
+# tokens may appear anywhere in <text>; everything else becomes the
+# description.
 cmd_add() {
 	_u='usage: headway add "text [+Project] [due:DATE] [@tag]"'
 	[ "$#" -ge 1 ] || usage_die "$_u"
@@ -22,7 +22,7 @@ cmd_add() {
 		# command is itself the LHS of &&/||/if/while in an ancestor
 		# context, so callers further up the stack cannot be trusted
 		# to preserve it.
-		P_DUE=$(resolve_date_shorthand "$P_DUE") || exit 1
+		P_DUE=$(validate_due_date "$P_DUE") || exit 1
 	fi
 	[ -n "$P_DESC" ] || die "task description cannot be empty"
 
@@ -124,8 +124,8 @@ cmd_undo() {
 }
 # cmd_edit <id> [text]
 # With [text], replaces the task's line with it directly (verbatim, same
-# as the $EDITOR path below - no due-date shorthand resolution or field
-# re-formatting). Without it, opens the task's raw line in $EDITOR via a
+# as the $EDITOR path below - no due-date validation or field re-formatting).
+# Without it, opens the task's raw line in $EDITOR via a
 # scratch tempfile, then writes back whatever the editor leaves behind.
 # Either way, an empty result aborts the edit (the task is left
 # unchanged) rather than deleting the task.
@@ -156,14 +156,14 @@ cmd_edit() {
 }
 
 # cmd_due <id> <DATE>
-# DATE accepts the same shorthand as `add` (today/+Nd/literal YYYY-MM-DD).
-# Use `clear due <id>` to remove a due date.
+# DATE accepts YYYY-MM-DD, today, tomorrow, or a weekday name. Use
+# `clear due <id>` to remove a due date.
 cmd_due() {
 	_u='usage: headway due <id> <date>'
 	[ "$#" -ge 2 ] || usage_die "$_u"
 	require_todo_file
 	id=$(resolve_id "$1") || exit 1
-	new_due=$(resolve_date_shorthand "$2") || exit 1
+	new_due=$(validate_due_date "$2") || exit 1
 	parse_line "$(line_at "$id")"
 	P_DUE="$new_due"
 	new_line=$(format_line)

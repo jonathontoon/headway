@@ -18,9 +18,21 @@ cmd_due 1 2026-08-01 >/dev/null
 line1=$(line_at 1)
 assert_match "due:2026-08-01" "$line1" "due: literal date applied"
 
+cmd_due 1 "$(today)" >/dev/null
+line1=$(line_at 1)
+assert_match "due:$(today)" "$line1" "due: literal current date applied"
+
 cmd_due 1 today >/dev/null
 line1=$(line_at 1)
-assert_match "due:$(today)" "$line1" "due: today shorthand resolves"
+assert_match "due:$(today)" "$line1" "due: today resolves"
+
+cmd_due 1 tomorrow >/dev/null
+line1=$(line_at 1)
+assert_match "due:$(date_add_days "$(today)" 1)" "$line1" "due: tomorrow resolves"
+
+code=0
+(cmd_due 1 +3d >/dev/null 2>&1) || code=$?
+assert_exit_code "1" "$code" "due: numeric relative date is rejected"
 
 code=0
 (cmd_due 1 not-a-date >/dev/null 2>&1) || code=$?

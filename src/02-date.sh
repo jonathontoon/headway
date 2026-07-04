@@ -50,6 +50,73 @@ date_weekday_name() {
 	esac
 }
 
+# date_to_day_number <YYYY-MM-DD>
+# Converts a Gregorian calendar date to a day number using integer
+# arithmetic only. Avoids spawning date(1) for display-only relative hints.
+date_to_day_number() {
+	_dtdn_y=${1%%-*}
+	_dtdn_rest=${1#*-}
+	_dtdn_m=${_dtdn_rest%%-*}
+	_dtdn_d=${_dtdn_rest#*-}
+	_dtdn_y=${_dtdn_y#0}
+	_dtdn_m=${_dtdn_m#0}
+	_dtdn_d=${_dtdn_d#0}
+	[ -n "$_dtdn_m" ] || _dtdn_m=0
+	[ -n "$_dtdn_d" ] || _dtdn_d=0
+
+	if [ "$_dtdn_m" -le 2 ]; then
+		_dtdn_y=$((_dtdn_y - 1))
+	fi
+	_dtdn_era=$((_dtdn_y / 400))
+	_dtdn_yoe=$((_dtdn_y - _dtdn_era * 400))
+	if [ "$_dtdn_m" -gt 2 ]; then
+		_dtdn_mp=$((_dtdn_m - 3))
+	else
+		_dtdn_mp=$((_dtdn_m + 9))
+	fi
+	_dtdn_doy=$(((153 * _dtdn_mp + 2) / 5 + _dtdn_d - 1))
+	_dtdn_doe=$((_dtdn_yoe * 365 + _dtdn_yoe / 4 - _dtdn_yoe / 100 + _dtdn_doy))
+	printf '%s\n' $((_dtdn_era * 146097 + _dtdn_doe - 719468))
+}
+
+weekday_name_from_day_number() {
+	_wnd_idx=$((($1 + 4) % 7))
+	case "$_wnd_idx" in
+	0) printf 'sunday\n' ;;
+	1) printf 'monday\n' ;;
+	2) printf 'tuesday\n' ;;
+	3) printf 'wednesday\n' ;;
+	4) printf 'thursday\n' ;;
+	5) printf 'friday\n' ;;
+	*) printf 'saturday\n' ;;
+	esac
+}
+
+weekday_index() {
+	case "$1" in
+	sunday) printf '0\n' ;;
+	monday) printf '1\n' ;;
+	tuesday) printf '2\n' ;;
+	wednesday) printf '3\n' ;;
+	thursday) printf '4\n' ;;
+	friday) printf '5\n' ;;
+	saturday) printf '6\n' ;;
+	*) return 1 ;;
+	esac
+}
+
+next_weekday_date() {
+	_nwd_target=$(weekday_index "$1") || return 1
+	_nwd_today=$(today)
+	_nwd_today_day=$(date_to_day_number "$_nwd_today")
+	_nwd_today_idx=$(((_nwd_today_day + 4) % 7))
+	_nwd_delta=$((_nwd_target - _nwd_today_idx))
+	if [ "$_nwd_delta" -le 0 ]; then
+		_nwd_delta=$((_nwd_delta + 7))
+	fi
+	date_add_days "$_nwd_today" "$_nwd_delta"
+}
+
 # format_due_hint <YYYY-MM-DD>
 # Emits a short relative label for a due date compared to today. Returns:
 #   "yesterday"           for due == today - 1
@@ -65,27 +132,32 @@ date_weekday_name() {
 # the raw todo.txt is never touched.
 format_due_hint() {
 	_fdh_date="$1"
-	_fdh_today=$(today)
+	_fdh_today="${HEADWAY_TODAY:-$(today)}"
 	if [ "$_fdh_date" = "$_fdh_today" ]; then
 		printf 'today\n'
 		return 0
 	fi
-	if [ "$_fdh_date" = "$(date_add_days "$_fdh_today" -1)" ]; then
+
+	_fdh_date_day=$(date_to_day_number "$_fdh_date") || return 0
+	if [ -n "${HEADWAY_TODAY_DAY:-}" ]; then
+		_fdh_today_day="$HEADWAY_TODAY_DAY"
+	else
+		_fdh_today_day=$(date_to_day_number "$_fdh_today") || return 0
+	fi
+	_fdh_delta=$((_fdh_date_day - _fdh_today_day))
+
+	if [ "$_fdh_delta" -eq -1 ]; then
 		printf 'yesterday\n'
 		return 0
 	fi
-	if [ "$_fdh_date" = "$(date_add_days "$_fdh_today" 1)" ]; then
+	if [ "$_fdh_delta" -eq 1 ]; then
 		printf 'tomorrow\n'
 		return 0
 	fi
-	_fdh_i=2
-	while [ "$_fdh_i" -le 7 ]; do
-		if [ "$_fdh_date" = "$(date_add_days "$_fdh_today" "$_fdh_i")" ]; then
-			date_weekday_name "$_fdh_date"
-			return 0
-		fi
-		_fdh_i=$((_fdh_i + 1))
-	done
+	if [ "$_fdh_delta" -ge 2 ] && [ "$_fdh_delta" -le 7 ]; then
+		weekday_name_from_day_number "$_fdh_date_day"
+		return 0
+	fi
 }
 
 # bsd_signed_offset <offset>
@@ -185,11 +257,11 @@ is_valid_date() {
 	esac
 }
 
-# resolve_date_shorthand <value>
-# Maps "today", "+Nd" and a literal YYYY-MM-DD to a real YYYY-MM-DD date.
-# Anything else is rejected (non-zero exit, nothing printed) so callers
-# never write a relative keyword to disk.
-resolve_date_shorthand() {
+# validate_due_date <value>
+# Resolves allowed date words (today, tomorrow, weekday names) or validates a
+# literal YYYY-MM-DD date. Numeric relative forms are deliberately rejected so
+# TODO_FILE only ever stores explicit dates.
+validate_due_date() {
 	input="$1"
 	case "$input" in
 	today)
@@ -198,9 +270,8 @@ resolve_date_shorthand() {
 	tomorrow)
 		date_add_days "$(today)" 1
 		;;
-	+[0-9]*d)
-		n=$(expr "$input" : '+\([0-9]*\)d')
-		date_add_days "$(today)" "$n"
+	sunday | monday | tuesday | wednesday | thursday | friday | saturday)
+		next_weekday_date "$input"
 		;;
 	[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
 		if is_valid_date "$input"; then

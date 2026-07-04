@@ -18,7 +18,7 @@ yesterday_d=$(date_add_days "$today_d" -1)
 
 cmd_add "Book flights to Lisbon" >/dev/null
 cmd_add "Write project brief +Apollo due:$future_d @deepwork" >/dev/null
-cmd_add "Call the accountant due:today @calls" >/dev/null
+cmd_add "Call the accountant due:$today_d @calls" >/dev/null
 cmd_add "Pay overdue invoice due:$yesterday_d +Bills" >/dev/null
 cmd_add "Follow up +Apollo" >/dev/null
 cmd_add "Submit meter reading due:$future_d" >/dev/null
@@ -57,7 +57,7 @@ assert_eq "" "$(printf '%s\n' "$inbox_out" | grep "Submit meter reading" || true
 
 today_out=$(cmd_today)
 assert_eq "2" "$(printf '%s\n' "$today_out" | wc -l | tr -d ' ')" "today: due-today + overdue = 2"
-assert_match "^3: .*Call the accountant" "$today_out" "today: due:today task present"
+assert_match "^3: .*Call the accountant" "$today_out" "today: due-today task present"
 assert_match "^4: .*Pay overdue invoice" "$today_out" "today: overdue task present"
 
 # --- upcoming: future-dated tasks ------------------------------------------

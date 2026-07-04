@@ -204,8 +204,7 @@ Both `complete` and `undo` accept multiple ids in one call. All ids are validate
 ```bash
 edit <id>                        # open task in $EDITOR
 edit <id> <text>                 # replace task line directly, no editor
-due <id> YYYY-MM-DD              # set or update due date
-due <id> today                   # convenience shorthand — writes today's actual date
+due <id> <DATE>                  # set or update due date
 priority <id> A                  # set priority A–Z
 tag <id> @tagname [@tag...]      # add one or more tags
 project <id> +Project            # assign task to a project
@@ -224,6 +223,8 @@ clear project <id> [<id>...]     # clear project
 ```
 
 `delete` and `clear` accept multiple ids in one call. `delete` removes in descending id order so renumbering doesn't invalidate later ids in the same call. Set `CONFIRM_DELETE=false` in your config to skip the confirmation prompt.
+
+Dates are written as explicit `YYYY-MM-DD` values. Input accepts a literal date, `today`, `tomorrow`, or a weekday name such as `monday`; numeric relative forms such as `+3d` or `2d+` are rejected.
 
 ### Listing and filtering
 

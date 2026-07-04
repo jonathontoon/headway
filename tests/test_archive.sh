@@ -13,7 +13,7 @@ detect_date_flavor
 
 cmd_add "Book flights to Lisbon" >/dev/null
 cmd_add "Write project brief +Apollo due:2026-07-10" >/dev/null
-cmd_add "Call the accountant due:today" >/dev/null
+cmd_add "Call the accountant due:$(today)" >/dev/null
 cmd_complete 3 >/dev/null
 
 # --- archive moves completed tasks out of TODO_FILE -------------------------
