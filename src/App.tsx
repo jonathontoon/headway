@@ -1,121 +1,141 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
+const prompt = 'headway@localhost:~$'
+
+type TerminalEntry = {
+  readonly id: number
+  readonly command: string
+  readonly output?: string
+}
+
+function formatValue(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined'
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+function runCommand(command: string): string | undefined {
+  const trimmedCommand = command.trim()
+
+  if (trimmedCommand === '') {
+    return undefined
+  }
+
+  if (trimmedCommand === 'help') {
+    return 'Commands: help, clear, echo <text>. JavaScript expressions also work.'
+  }
+
+  if (trimmedCommand.startsWith('echo ')) {
+    return trimmedCommand.slice(5)
+  }
+
+  try {
+    const evaluate = Function(`"use strict"; return (${trimmedCommand})`)
+    return formatValue(evaluate())
+  } catch (error) {
+    return error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+  }
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [entries, setEntries] = useState<readonly TerminalEntry[]>([])
+  const [command, setCommand] = useState('')
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null)
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (command.trim() === 'clear') {
+      setEntries([])
+      setCommand('')
+      setHistoryIndex(null)
+      return
+    }
+
+    setEntries((currentEntries) => [
+      ...currentEntries,
+      {
+        id: currentEntries.length,
+        command,
+        output: runCommand(command),
+      },
+    ])
+    setCommand('')
+    setHistoryIndex(null)
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    const commands = entries.map((entry) => entry.command).filter(Boolean)
+
+    if (commands.length === 0) {
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      const nextIndex =
+        historyIndex === null ? commands.length - 1 : Math.max(0, historyIndex - 1)
+      setHistoryIndex(nextIndex)
+      setCommand(commands[nextIndex])
+      return
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+
+      if (historyIndex === null || historyIndex === commands.length - 1) {
+        setHistoryIndex(null)
+        setCommand('')
+        return
+      }
+
+      const nextIndex = historyIndex + 1
+      setHistoryIndex(nextIndex)
+      setCommand(commands[nextIndex])
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+    <main className="terminal" aria-label="Terminal prompt">
+      {entries.map((entry) => (
+        <div className="terminal-entry" key={entry.id}>
+          <p className="terminal-line">
+            <span className="prompt">{prompt}</span>
+            <span className="command"> {entry.command}</span>
           </p>
+          {entry.output !== undefined && (
+            <p className="terminal-output">{entry.output}</p>
+          )}
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      ))}
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <form className="terminal-line terminal-form" onSubmit={handleSubmit}>
+        <label className="prompt" htmlFor="terminal-command">
+          {prompt}
+        </label>
+        <input
+          id="terminal-command"
+          aria-label="Terminal command"
+          autoComplete="off"
+          autoFocus
+          className="terminal-input"
+          value={command}
+          onChange={(event) => setCommand(event.currentTarget.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </form>
+    </main>
   )
 }
 
