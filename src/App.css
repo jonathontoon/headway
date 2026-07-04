@@ -1,7 +1,6 @@
 .terminal {
-  display: flex;
+  display: block;
   min-height: 100svh;
-  align-items: flex-start;
   padding: 24px;
   box-sizing: border-box;
 }
@@ -13,16 +12,36 @@
   white-space: pre-wrap;
 }
 
+.terminal-entry {
+  margin: 0 0 8px;
+}
+
 .prompt,
-.command {
+.command,
+.terminal-output,
+.terminal-input {
   color: #fff;
 }
 
-.cursor {
-  display: inline-block;
-  width: 0.65em;
-  height: 1em;
-  margin-left: 0.15em;
-  background: #fff;
-  vertical-align: -0.15em;
+.terminal-output {
+  margin: 0;
+  font: 16px/1.5 var(--mono);
+  white-space: pre-wrap;
+}
+
+.terminal-form {
+  display: flex;
+  align-items: baseline;
+}
+
+.terminal-input {
+  flex: 1;
+  min-width: 8ch;
+  margin: 0 0 0 1ch;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: #000;
+  caret-color: #fff;
+  font: inherit;
 }
