@@ -42,9 +42,37 @@ dispatch_cmd() {
 	esac
 }
 
+# shell_cache_refresh
+# Refreshes the parsed task rows inherited by subshell-dispatched commands.
+shell_cache_refresh() {
+	if [ -f "$TODO_FILE" ]; then
+		HEADWAY_SHELL_TASK_ROWS=$(collect_task_rows)
+	else
+		HEADWAY_SHELL_TASK_ROWS=""
+	fi
+}
+
+# shell_command_mutates <command>
+# True for REPL commands that can change TODO_FILE or DONE_FILE.
+shell_command_mutates() {
+	case "$1" in
+	add | complete | undo | edit | due | priority | tag | clear | delete | project | archive)
+		return 0
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
 # shell_open_count
 # Prints the number of open (not completed) tasks in TODO_FILE.
 shell_open_count() {
+	if cached_task_rows_active; then
+		printf '%s\n' "$HEADWAY_SHELL_TASK_ROWS" | awk -F "$(printf '\t')" '$2 != "true" { n++ } END { print n + 0 }'
+		return 0
+	fi
+
 	[ -f "$TODO_FILE" ] || return 0
 
 	awk '{ if (substr($0, 1, 2) != "x ") n++ } END { print n + 0 }' "$TODO_FILE"
@@ -87,7 +115,7 @@ shell_welcome_group() {
 
 	[ -n "$_swg_rows" ] || return 0
 
-	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _ _swg_id _swg_due _swg_raw; do
+	printf '%s\n' "$_swg_rows" | while IFS="$_swg_tab" read -r _ _swg_id _swg_due _ _ _swg_raw; do
 		case "$_swg_group" in
 		overdue)
 			expr "$_swg_due" '<' "$_swg_today" >/dev/null || continue
@@ -119,7 +147,7 @@ shell_welcome_count() {
 		return 0
 	}
 
-	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _ _ _swc_due _; do
+	printf '%s\n' "$_swc_rows" | while IFS="$_swc_tab" read -r _ _ _swc_due _ _ _; do
 		case "$_swc_group" in
 		overdue)
 			expr "$_swc_due" '<' "$_swc_today" >/dev/null || continue
@@ -138,16 +166,18 @@ shell_welcome_banner() {
 	_swb_today=$(today)
 	_swb_active=0
 	[ -f "$TODO_FILE" ] && _swb_active=$(shell_open_count)
+	_swb_use_color=false
+	use_color_err && _swb_use_color=true
+	_swb_color_on=0
+	[ "$_swb_use_color" = "true" ] && _swb_color_on=1
 	_swb_rows=""
 	if [ -f "$TODO_FILE" ]; then
 		_swb_tab=$(printf '\t')
-		_swb_rows=$(collect_view_rows today | sort -t "$_swb_tab" -k1,1)
+		_swb_rows=$(collect_view_rows today "" "$_swb_color_on" | sort -t "$_swb_tab" -k1,1)
 	fi
 	_swb_due_count=$(printf '%s\n' "$_swb_rows" | awk 'NF { n++ } END { print n + 0 }')
 	_swb_overdue_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" overdue 0)
 	_swb_today_count=$(shell_welcome_count "$_swb_rows" "$_swb_today" today 0)
-	_swb_use_color=false
-	use_color_err && _swb_use_color=true
 
 	_swb_version="headway v$HEADWAY_VERSION"
 	_swb_hint='Type "help" for commands, "exit" to leave.'
@@ -209,6 +239,9 @@ shell_welcome_banner() {
 # as shell code, and dispatches the resulting command. Interactive terminals
 # get read_line_interactive; piped input falls back to plain read -r.
 cmd_shell() {
+	HEADWAY_SHELL_CACHE_ACTIVE=true
+	shell_cache_refresh
+
 	if [ -t 0 ]; then
 		# SIGINT is delivered to the whole foreground process group; the
 		# raw-mode reader handles it inside command substitution, so the
@@ -278,5 +311,8 @@ cmd_shell() {
 		set +e
 		(set -eu; dispatch_cmd "$@")
 		set -e
+		if shell_command_mutates "$1"; then
+			shell_cache_refresh
+		fi
 	done
 }
