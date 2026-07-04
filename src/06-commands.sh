@@ -341,16 +341,14 @@ cmd_delete() {
 	# Tempfile rather than a shell var because command substitution
 	# eats trailing newlines, which would collapse tab-and-newline-
 	# separated rows into one glued blob.
-	_cd_pairs=$(mktemp) || die "mktemp failed"
+	_cd_sorted=$(mktemp) || die "mktemp failed"
 	_cd_tab=$(printf '\t')
 	for _cd_arg in "$@"; do
-		_cd_id=$(resolve_id "$_cd_arg") || { rm -f "$_cd_pairs"; exit 1; }
+		_cd_id=$(resolve_id "$_cd_arg") || { rm -f "$_cd_sorted"; exit 1; }
 		_cd_raw=$(line_at "$_cd_id")
-		printf '%s\t%s\n' "$_cd_id" "$_cd_raw" >>"$_cd_pairs"
+		printf '%s\t%s\n' "$_cd_id" "$_cd_raw" >>"$_cd_sorted"
 	done
-	_cd_sorted=$(mktemp) || { rm -f "$_cd_pairs"; die "mktemp failed"; }
-	sort -t "$_cd_tab" -k1,1 -n -r "$_cd_pairs" >"$_cd_sorted"
-	rm -f "$_cd_pairs"
+	sort -t "$_cd_tab" -k1,1 -n -r -o "$_cd_sorted" "$_cd_sorted"
 
 	# Confirm the whole batch at once (single prompt is easier to reason
 	# about than N prompts). CONFIRM_DELETE=false skips this.
@@ -460,32 +458,12 @@ cmd_list() {
 }
 
 # cmd_view <view-name> [filter]
-# Shared implementation for simple view commands whose command name,
-# render_view name, and optional filter handling all match.
+# Shared implementation for the simple view commands (inbox, today,
+# upcoming, someday, logbook), dispatched by name from dispatch_cmd.
 cmd_view() {
 	_cv_name="$1"
 	shift
 	render_view "$_cv_name" "${1:-}"
-}
-
-cmd_inbox() {
-	cmd_view "inbox" "$@"
-}
-
-cmd_today() {
-	cmd_view "today" "$@"
-}
-
-cmd_upcoming() {
-	cmd_view "upcoming" "$@"
-}
-
-cmd_someday() {
-	cmd_view "someday" "$@"
-}
-
-cmd_logbook() {
-	cmd_view "logbook" "$@"
 }
 # _list_projects
 # Plain, uncolored list of distinct +Project tokens carried by incomplete

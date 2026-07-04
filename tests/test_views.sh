@@ -47,7 +47,7 @@ assert_match "^Someday$"   "$list_out" "list: Someday section header present"
 
 # --- inbox: tasks with no project or due date -----------------------------
 
-inbox_out=$(cmd_inbox)
+inbox_out=$(cmd_view inbox)
 assert_eq "1" "$(printf '%s\n' "$inbox_out" | wc -l | tr -d ' ')" "inbox: one task has no project or due date"
 assert_match "^1: .*Book flights to Lisbon" "$inbox_out" "inbox: plain undated task present"
 assert_eq "" "$(printf '%s\n' "$inbox_out" | grep "Call the accountant" || true)" "inbox: due-today projectless task excluded"
@@ -55,28 +55,28 @@ assert_eq "" "$(printf '%s\n' "$inbox_out" | grep "Submit meter reading" || true
 
 # --- today: due today, plus overdue ---------------------------------------
 
-today_out=$(cmd_today)
+today_out=$(cmd_view today)
 assert_eq "2" "$(printf '%s\n' "$today_out" | wc -l | tr -d ' ')" "today: due-today + overdue = 2"
 assert_match "^3: .*Call the accountant" "$today_out" "today: due-today task present"
 assert_match "^4: .*Pay overdue invoice" "$today_out" "today: overdue task present"
 
 # --- upcoming: future-dated tasks ------------------------------------------
 
-upcoming_out=$(cmd_upcoming)
+upcoming_out=$(cmd_view upcoming)
 assert_eq "2" "$(printf '%s\n' "$upcoming_out" | wc -l | tr -d ' ')" "upcoming: two future-dated tasks"
 assert_match "^2: .*Write project brief" "$upcoming_out" "upcoming: future task present"
 assert_match "^6: .*Submit meter reading" "$upcoming_out" "upcoming: future projectless task present"
 
 # --- someday: no due date, with a project ----------------------------------
 
-someday_out=$(cmd_someday)
+someday_out=$(cmd_view someday)
 assert_eq "1" "$(printf '%s\n' "$someday_out" | wc -l | tr -d ' ')" "someday: one projected task has no due date"
 assert_eq "" "$(printf '%s\n' "$someday_out" | grep "Book flights to Lisbon" || true)" "someday: projectless undated task excluded"
 assert_match "^5: .*Follow up" "$someday_out" "someday: project task with no due present"
 
 # --- logbook: completed tasks, most recent completion first ---------------
 
-logbook_out=$(cmd_logbook)
+logbook_out=$(cmd_view logbook)
 assert_eq "2" "$(printf '%s\n' "$logbook_out" | wc -l | tr -d ' ')" "logbook: two completed tasks"
 first_line=$(printf '%s\n' "$logbook_out" | sed -n 1p)
 second_line=$(printf '%s\n' "$logbook_out" | sed -n 2p)
@@ -85,20 +85,20 @@ assert_match "^7: .*Archive old emails" "$second_line" "logbook: older completed
 
 # --- filtering: +Project ----------------------------------------------------
 
-someday_apollo=$(cmd_someday "+Apollo")
+someday_apollo=$(cmd_view someday "+Apollo")
 assert_eq "1" "$(printf '%s\n' "$someday_apollo" | wc -l | tr -d ' ')" "someday +Apollo: one match"
 assert_match "^5: .*Follow up" "$someday_apollo" "someday +Apollo: correct task"
 
 # +Apo must not match +Apollo (whole-token filter, not substring)
-someday_apo=$(cmd_someday "+Apo")
+someday_apo=$(cmd_view someday "+Apo")
 assert_eq "" "$someday_apo" "someday +Apo: no match (not a whole-token prefix)"
 
 # --- filtering: @tag --------------------------------------------------------
 
-upcoming_deepwork=$(cmd_upcoming "@deepwork")
+upcoming_deepwork=$(cmd_view upcoming "@deepwork")
 assert_match "^2: .*Write project brief" "$upcoming_deepwork" "upcoming @deepwork: correct task"
 
-today_apollo=$(cmd_today "+Apollo")
+today_apollo=$(cmd_view today "+Apollo")
 assert_eq "" "$today_apollo" "today +Apollo: no overlap, empty result"
 
 # --- filtering: keyword (full-text search) ----------------------------------
@@ -111,7 +111,7 @@ assert_match "^3: .*Call the accountant" "$list_keyword" "list keyword: correct 
 
 EMPTY_TODO=$(mktemp)
 TODO_FILE="$EMPTY_TODO"
-empty_out=$(cmd_today)
+empty_out=$(cmd_view today)
 assert_eq "" "$empty_out" "today on empty file: no output, no error"
 rm -f "$EMPTY_TODO"
 

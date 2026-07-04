@@ -79,19 +79,6 @@ date_to_day_number() {
 	printf '%s\n' $((_dtdn_era * 146097 + _dtdn_doe - 719468))
 }
 
-weekday_name_from_day_number() {
-	_wnd_idx=$((($1 + 4) % 7))
-	case "$_wnd_idx" in
-	0) printf 'sunday\n' ;;
-	1) printf 'monday\n' ;;
-	2) printf 'tuesday\n' ;;
-	3) printf 'wednesday\n' ;;
-	4) printf 'thursday\n' ;;
-	5) printf 'friday\n' ;;
-	*) printf 'saturday\n' ;;
-	esac
-}
-
 weekday_index() {
 	case "$1" in
 	sunday) printf '0\n' ;;
@@ -115,49 +102,6 @@ next_weekday_date() {
 		_nwd_delta=$((_nwd_delta + 7))
 	fi
 	date_add_days "$_nwd_today" "$_nwd_delta"
-}
-
-# format_due_hint <YYYY-MM-DD>
-# Emits a short relative label for a due date compared to today. Returns:
-#   "yesterday"           for due == today - 1
-#   "today"               for due == today
-#   "tomorrow"            for due == today + 1
-#   "monday".."sunday"    for due in today+2..today+7 (the next occurrence
-#                         of that weekday; when today's own weekday name
-#                         would apply it points seven days out, never at
-#                         today - "today" already covers same-day)
-# Anything else: prints nothing.
-#
-# Display-only. Callers wrap the returned label in parens after due:DATE;
-# the raw todo.txt is never touched.
-format_due_hint() {
-	_fdh_date="$1"
-	_fdh_today="${HEADWAY_TODAY:-$(today)}"
-	if [ "$_fdh_date" = "$_fdh_today" ]; then
-		printf 'today\n'
-		return 0
-	fi
-
-	_fdh_date_day=$(date_to_day_number "$_fdh_date") || return 0
-	if [ -n "${HEADWAY_TODAY_DAY:-}" ]; then
-		_fdh_today_day="$HEADWAY_TODAY_DAY"
-	else
-		_fdh_today_day=$(date_to_day_number "$_fdh_today") || return 0
-	fi
-	_fdh_delta=$((_fdh_date_day - _fdh_today_day))
-
-	if [ "$_fdh_delta" -eq -1 ]; then
-		printf 'yesterday\n'
-		return 0
-	fi
-	if [ "$_fdh_delta" -eq 1 ]; then
-		printf 'tomorrow\n'
-		return 0
-	fi
-	if [ "$_fdh_delta" -ge 2 ] && [ "$_fdh_delta" -le 7 ]; then
-		weekday_name_from_day_number "$_fdh_date_day"
-		return 0
-	fi
 }
 
 # bsd_signed_offset <offset>

@@ -21,11 +21,7 @@ dispatch_cmd() {
 	delete) cmd_delete "$@" ;;
 	show) cmd_show "$@" ;;
 	list) cmd_list "$@" ;;
-	inbox) cmd_inbox "$@" ;;
-	today) cmd_today "$@" ;;
-	upcoming) cmd_upcoming "$@" ;;
-	someday) cmd_someday "$@" ;;
-	logbook) cmd_logbook "$@" ;;
+	inbox | today | upcoming | someday | logbook) cmd_view "$cmd" "$@" ;;
 	projects) cmd_projects "$@" ;;
 	project) cmd_project "$@" ;;
 	archive) cmd_archive "$@" ;;
@@ -69,7 +65,9 @@ shell_command_mutates() {
 # Prints the number of open (not completed) tasks in TODO_FILE.
 shell_open_count() {
 	if cached_task_rows_active; then
-		printf '%s\n' "$HEADWAY_SHELL_TASK_ROWS" | awk -F "$(printf '\t')" '$2 != "true" { n++ } END { print n + 0 }'
+		# Cached rows are "id<TAB>raw-line"; a prefix test on the first
+		# tab-segment of raw is enough to spot completed tasks.
+		printf '%s\n' "$HEADWAY_SHELL_TASK_ROWS" | awk -F "$(printf '\t')" 'substr($2, 1, 2) != "x " { n++ } END { print n + 0 }'
 		return 0
 	fi
 

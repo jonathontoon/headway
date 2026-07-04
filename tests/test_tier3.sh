@@ -12,33 +12,44 @@ HEADWAY_LIB_ONLY=true
 . ./headway.sh
 detect_date_flavor
 
-# --- format_due_hint: expected labels for the labelled window --------------
+# --- due-date hints: expected labels for the labelled window ----------------
+# Exercised end-to-end through the rendered list, since the hint labels are
+# computed inside the view awk pass (due_hint_label in HW_AWK_VIEWLIB).
 
 t=$(today)
-assert_eq "today"     "$(format_due_hint "$t")"                           "hint: today"
-assert_eq "yesterday" "$(format_due_hint "$(date_add_days "$t" -1)")"     "hint: yesterday"
-assert_eq "tomorrow"  "$(format_due_hint "$(date_add_days "$t" 1)")"      "hint: tomorrow"
+cmd_add "task m1 due:$(date_add_days "$t" -1)" >/dev/null
+cmd_add "task p0 due:$t" >/dev/null
+cmd_add "task p1 due:$(date_add_days "$t" 1)" >/dev/null
+i=2
+while [ "$i" -le 7 ]; do
+	cmd_add "task p$i due:$(date_add_days "$t" "$i")" >/dev/null
+	i=$((i + 1))
+done
+cmd_add "task m2 due:$(date_add_days "$t" -2)" >/dev/null
+cmd_add "task p8 due:$(date_add_days "$t" 8)" >/dev/null
+cmd_add "task p30 due:$(date_add_days "$t" 30)" >/dev/null
+
+list_out=$(cmd_list)
+assert_match "task m1 due:$(date_add_days "$t" -1) \\(yesterday\\)" "$list_out" "hint: yesterday"
+assert_match "task p0 due:$t \\(today\\)" "$list_out" "hint: today"
+assert_match "task p1 due:$(date_add_days "$t" 1) \\(tomorrow\\)" "$list_out" "hint: tomorrow"
 
 # +2..+7: weekday name. Verify by comparing against date_weekday_name for
-# each offset - the label is that weekday's lowercase name.
+# each offset - the label is that weekday's lowercase name. At +7 (same
+# weekday name as today) the label still appears - "monday" a week from
+# Monday, not empty.
 i=2
 while [ "$i" -le 7 ]; do
 	d=$(date_add_days "$t" "$i")
 	expected=$(date_weekday_name "$d")
-	assert_eq "$expected" "$(format_due_hint "$d")" "hint: +${i}d -> $expected"
+	assert_match "task p$i due:$d \\($expected\\)" "$list_out" "hint: +${i}d -> $expected"
 	i=$((i + 1))
 done
 
-# The weekday one week out (same weekday name as today) still labels -
-# "monday" a week from Monday, not empty.
-plus7=$(date_add_days "$t" 7)
-today_dow=$(date_weekday_name "$t")
-assert_eq "$today_dow" "$(format_due_hint "$plus7")" "hint: today+7 uses same weekday name"
-
-# Outside the labelled window: no hint.
-assert_eq "" "$(format_due_hint "$(date_add_days "$t" -2)")" "hint: -2d has no label"
-assert_eq "" "$(format_due_hint "$(date_add_days "$t" 8)")"  "hint: +8d has no label"
-assert_eq "" "$(format_due_hint "$(date_add_days "$t" 30)")" "hint: +30d has no label"
+# Outside the labelled window: no hint - due:DATE ends the line.
+assert_match "task m2 due:$(date_add_days "$t" -2)\$" "$list_out" "hint: -2d has no label"
+assert_match "task p8 due:$(date_add_days "$t" 8)\$" "$list_out" "hint: +8d has no label"
+assert_match "task p30 due:$(date_add_days "$t" 30)\$" "$list_out" "hint: +30d has no label"
 
 # --- hints appear in view output alongside due:DATE ------------------------
 
@@ -53,7 +64,7 @@ cmd_add "not so urgent" >/dev/null
 cmd_due 1 "$(today)" >/dev/null
 cmd_due 2 "$(date_add_days "$(today)" 1)" >/dev/null
 
-view_out=$(cmd_today)
+view_out=$(cmd_view today)
 assert_match "due:$(today) \\(today\\)" "$view_out" "view: today hint in due-line"
 
 # --- render_grouped_list: headers only when 2+ buckets are populated -------
