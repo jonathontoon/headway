@@ -78,16 +78,47 @@
     @apply flex items-baseline;
   }
 
-  .terminal-input {
+  .terminal-input-wrapper {
+    position: relative;
     flex: 1;
     min-width: 8ch;
     margin: 0 0 0 1ch;
+  }
+
+  .terminal-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
     padding: 0;
     border: 0;
     outline: 0;
-    @apply bg-terminal-background;
-    caret-color: var(--color3);
+    background: transparent;
+    color: transparent;
+    caret-color: transparent;
     font: inherit;
+  }
+
+  .terminal-input-display {
+    position: relative;
+    display: block;
+    white-space: pre;
+    pointer-events: none;
+  }
+
+  .terminal-cursor {
+    color: var(--color3);
+    animation: terminal-cursor-blink 1s step-end infinite;
+  }
+
+  @keyframes terminal-cursor-blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
   }
 }
 
