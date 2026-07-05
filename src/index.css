@@ -34,14 +34,25 @@
 @layer components {
   .terminal {
     @apply block min-h-screen p-6 box-border;
+    display: block;
+    min-height: 100svh;
+    padding: 24px;
   }
 
   .terminal-line {
-    @apply m-0 text-terminal-foreground font-mono text-base leading-relaxed whitespace-pre-wrap;
+    @apply m-0 text-terminal-foreground whitespace-pre-wrap;
+    font-family:
+      Departure Mono,
+      SFMono-Regular,
+      Consolas,
+      Liberation Mono,
+      monospace;
+    font-size: 16px;
+    line-height: 1.5;
   }
 
   .terminal-entry {
-    @apply mb-2;
+    margin: 0 0 8px;
   }
 
   .prompt,
@@ -52,7 +63,15 @@
   }
 
   .terminal-output {
-    @apply m-0 font-mono text-base leading-relaxed whitespace-pre-wrap;
+    @apply m-0 whitespace-pre-wrap;
+    font-family:
+      Departure Mono,
+      SFMono-Regular,
+      Consolas,
+      Liberation Mono,
+      monospace;
+    font-size: 16px;
+    line-height: 1.5;
   }
 
   .terminal-form {
@@ -60,7 +79,13 @@
   }
 
   .terminal-input {
-    @apply flex-1 min-w-fit m-0 ml-1 p-0 border-0 outline-0 bg-terminal-background;
+    flex: 1;
+    min-width: 8ch;
+    margin: 0 0 0 1ch;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    @apply bg-terminal-background;
     caret-color: #ffffff;
     font: inherit;
   }
