@@ -10,7 +10,9 @@ describe("App Component", () => {
     render(<App />);
     expect(screen.getByLabelText("Terminal prompt")).toBeInTheDocument();
     expect(screen.getByLabelText("Terminal command")).toHaveFocus();
-    const bootOutput = document.querySelector(".terminal-output");
+    const bootOutput = document.querySelector(
+      '[data-testid="terminal-output"]',
+    );
     expect(bootOutput?.textContent).toContain("headway v0.1.0");
     expect(bootOutput?.textContent).toContain(
       "Type 'help' for all available commands.",
@@ -24,10 +26,10 @@ describe("App Component", () => {
     fireEvent.change(input, { target: { value: "list +GarageSale" } });
     fireEvent.submit(input.closest("form")!);
 
-    const promptEls = document.querySelectorAll(".prompt");
+    const promptEls = document.querySelectorAll('[data-testid="prompt"]');
     expect(promptEls).toHaveLength(2);
     promptEls.forEach((el) => expect(el.textContent).toBe("~$"));
-    const commandEl = document.querySelector(".command");
+    const commandEl = document.querySelector('[data-testid="command"]');
     expect(commandEl?.textContent?.trim()).toBe("list +GarageSale");
     expect(
       screen.getAllByText(/Schedule Goodwill pickup/).length,
@@ -41,12 +43,16 @@ describe("App Component", () => {
 
     fireEvent.change(input, { target: { value: "echo hello" } });
     fireEvent.submit(form);
-    const outputEls = document.querySelectorAll(".terminal-output");
+    const outputEls = document.querySelectorAll(
+      '[data-testid="terminal-output"]',
+    );
     expect(outputEls[outputEls.length - 1]?.textContent).toBe("→ hello");
 
     fireEvent.change(input, { target: { value: "clear" } });
     fireEvent.submit(form);
-    expect(document.querySelector(".terminal-output")).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-testid="terminal-output"]'),
+    ).not.toBeInTheDocument();
   });
 
   it("reports unknown commands instead of evaluating JavaScript", () => {
@@ -56,7 +62,9 @@ describe("App Component", () => {
     fireEvent.change(input, { target: { value: "1 + 1" } });
     fireEvent.submit(input.closest("form")!);
 
-    const outputEl = document.querySelectorAll(".terminal-output")[1];
+    const outputEl = document.querySelectorAll(
+      '[data-testid="terminal-output"]',
+    )[1];
     expect(outputEl?.textContent).toBe(
       "→ 1 is not a recognized command. Type 'help' for all available commands.",
     );

@@ -37,8 +37,8 @@ export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
   return (
     <>
-      <span className="term-prompt-tilde">{head}</span>
-      <span className="term-prompt-dollar">{rest.join("")}</span>
+      <span className="text-terminal-6">{head}</span>
+      <span className="text-terminal-3">{rest.join("")}</span>
     </>
   );
 }
@@ -46,11 +46,11 @@ export function formatPromptSymbol(prompt: string): ReactNode {
 function priorityClassName(letter: string): string | undefined {
   switch (letter.toUpperCase()) {
     case "A":
-      return "term-error";
+      return "text-terminal-1";
     case "B":
-      return "term-warning";
+      return "text-terminal-11";
     case "C":
-      return "term-success";
+      return "text-terminal-2";
     default:
       return undefined;
   }
@@ -60,14 +60,14 @@ function renderTaskFragments(text: string, today: string): ReactNode {
   return text.split(TASK_FRAGMENT_PATTERN).map((part, i) => {
     if (part.startsWith("+")) {
       return (
-        <span key={i} className="term-project">
+        <span key={i} className="text-terminal-6">
           {part}
         </span>
       );
     }
     if (part.startsWith("@")) {
       return (
-        <span key={i} className="term-context">
+        <span key={i} className="text-terminal-6">
           {part}
         </span>
       );
@@ -77,10 +77,10 @@ function renderTaskFragments(text: string, today: string): ReactNode {
       const date = dueMatch[1];
       const className =
         date < today
-          ? "term-due-overdue"
+          ? "text-terminal-1"
           : date === today
-            ? "term-due-today"
-            : "term-due-future";
+            ? "text-terminal-11"
+            : "text-terminal-5";
       return (
         <span key={i} className={className}>
           {part}
@@ -100,8 +100,8 @@ function renderTaskLine(
   const priorityClass = priority ? priorityClassName(priority) : undefined;
 
   return (
-    <div key={key} className="terminal-row">
-      <span className="term-muted">{id}.</span>{" "}
+    <div key={key} className="block whitespace-pre-wrap">
+      <span className="text-terminal-8">{id}.</span>{" "}
       {priority && <span className={priorityClass}>({priority}) </span>}
       {renderTaskFragments(rest, today)}
     </div>
@@ -109,20 +109,22 @@ function renderTaskLine(
 }
 
 function statLabelClassName(label: string): string | undefined {
-  if (label.startsWith("+")) return "term-project";
-  if (label === "overdue") return "term-error";
-  if (label === "due today") return "term-warning";
-  if (label === "on the horizon") return "term-due-future";
-  if (label === "parked in someday") return "term-project";
-  if (label.startsWith("wrapped up")) return "term-success";
+  if (label.startsWith("+")) return "text-terminal-6";
+  if (label === "overdue") return "text-terminal-1";
+  if (label === "due today") return "text-terminal-11";
+  if (label === "on the horizon") return "text-terminal-5";
+  if (label === "parked in someday") return "text-terminal-6";
+  if (label.startsWith("wrapped up")) return "text-terminal-2";
   return undefined;
 }
 
 function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
   const [, count, label] = match;
   return (
-    <div key={key} className="terminal-row">
-      <span className={`term-count ${statLabelClassName(label) ?? ""}`}>
+    <div key={key} className="block whitespace-pre-wrap">
+      <span
+        className={`inline-block min-w-[2ch] text-right ${statLabelClassName(label) ?? ""}`}
+      >
         {count}
       </span>{" "}
       <span>{label}</span>
@@ -133,7 +135,7 @@ function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
 function renderHelpCommandSegment(segment: string): ReactNode {
   return segment.split(HELP_ARG_PATTERN).map((part, i) =>
     part.startsWith("<") || part.startsWith('"') ? (
-      <span key={i} className="term-project">
+      <span key={i} className="text-terminal-6">
         {part}
       </span>
     ) : (
@@ -145,11 +147,11 @@ function renderHelpCommandSegment(segment: string): ReactNode {
 function renderHelpRow(match: RegExpMatchArray, key: number): ReactNode {
   const [, command, description] = match;
   return (
-    <div key={key} className="terminal-row terminal-row--help">
-      <span className="term-help-command term-command-accent">
+    <div key={key} className="flex gap-4 whitespace-pre-wrap">
+      <span className="min-w-[290px] text-terminal-3">
         {renderHelpCommandSegment(command)}
       </span>
-      <span className="term-muted">{description}</span>
+      <span className="text-terminal-8">{description}</span>
     </div>
   );
 }
@@ -159,9 +161,9 @@ function renderBootBanner(line: string, key: number): ReactNode {
   const [arrow, ...rest] = words;
   const version = rest.pop();
   return (
-    <div key={key} className="terminal-row">
-      <span className="term-command-accent">{arrow}</span> {rest.join(" ")}{" "}
-      <span className="term-project">{version}</span>
+    <div key={key} className="block whitespace-pre-wrap">
+      <span className="text-terminal-3">{arrow}</span> {rest.join(" ")}{" "}
+      <span className="text-terminal-6">{version}</span>
     </div>
   );
 }
@@ -169,18 +171,18 @@ function renderBootBanner(line: string, key: number): ReactNode {
 function renderGreeting(line: string, key: number): ReactNode {
   const parts = line.split(/(\d+ overdue tasks?|\d+ due today)/);
   return (
-    <div key={key} className="terminal-row">
+    <div key={key} className="block whitespace-pre-wrap">
       {parts.map((part, i) => {
         if (/^\d+ overdue tasks?$/.test(part)) {
           return (
-            <span key={i} className="term-error">
+            <span key={i} className="text-terminal-1">
               {part}
             </span>
           );
         }
         if (/^\d+ due today$/.test(part)) {
           return (
-            <span key={i} className="term-warning">
+            <span key={i} className="text-terminal-11">
               {part}
             </span>
           );
@@ -193,7 +195,10 @@ function renderGreeting(line: string, key: number): ReactNode {
 
 function renderSecondaryLine(line: string, key: number): ReactNode {
   return (
-    <div key={key} className="terminal-row term-muted term-indent">
+    <div
+      key={key}
+      className="block whitespace-pre-wrap text-terminal-8 pl-[2ch]"
+    >
       {line}
     </div>
   );
@@ -201,7 +206,10 @@ function renderSecondaryLine(line: string, key: number): ReactNode {
 
 function renderUrlLine(line: string, key: number): ReactNode {
   return (
-    <div key={key} className="terminal-row term-project term-indent">
+    <div
+      key={key}
+      className="block whitespace-pre-wrap text-terminal-6 pl-[2ch]"
+    >
       {line}
     </div>
   );
@@ -211,7 +219,7 @@ function renderWithHeart(line: string): ReactNode {
   if (!HEART_PATTERN.test(line)) return line;
   return line.split(HEART_PATTERN).map((part, i) =>
     part === "♥" ? (
-      <span key={i} className="term-error">
+      <span key={i} className="text-terminal-1">
         {part}
       </span>
     ) : (
@@ -223,20 +231,20 @@ function renderWithHeart(line: string): ReactNode {
 function renderMessageLine(line: string, key: number): ReactNode {
   let colorClass = "";
   if (line.startsWith("Error:")) {
-    colorClass = "term-error";
+    colorClass = "text-terminal-1";
   } else if (line.startsWith("Warning:")) {
-    colorClass = "term-warning";
+    colorClass = "text-terminal-11";
   } else if (
     SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix)) ||
     line === "Opened in $EDITOR."
   ) {
-    colorClass = "term-success";
+    colorClass = "text-terminal-2";
   } else if (MUTED_PATTERN.test(line)) {
-    colorClass = "term-muted";
+    colorClass = "text-terminal-8";
   }
 
   return (
-    <div key={key} className={`terminal-row ${colorClass}`}>
+    <div key={key} className={`block whitespace-pre-wrap ${colorClass}`}>
       {"→ "}
       {renderWithHeart(line)}
     </div>
@@ -248,11 +256,14 @@ export function formatOutput(output: string): ReactNode {
 
   return output.split("\n").map((line, i) => {
     if (line === "") {
-      return <div key={i} className="term-gap" aria-hidden="true" />;
+      return <div key={i} className="h-[0.5em]" aria-hidden="true" />;
     }
     if (SECTION_HEADERS.has(line)) {
       return (
-        <div key={i} className="terminal-row term-muted term-header">
+        <div
+          key={i}
+          className="block whitespace-pre-wrap text-terminal-8 mt-[0.5em]"
+        >
           {line}
         </div>
       );
@@ -276,7 +287,7 @@ export function formatOutput(output: string): ReactNode {
 
     if (line === "Type 'help' for all available commands.") {
       return (
-        <div key={i} className="terminal-row term-muted">
+        <div key={i} className="block whitespace-pre-wrap text-terminal-8">
           {line}
         </div>
       );

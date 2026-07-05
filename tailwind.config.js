@@ -34,6 +34,15 @@ export default {
           15: "var(--color15)",
         },
       },
+      keyframes: {
+        "terminal-cursor-blink": {
+          "0%, 50%": { opacity: 1 },
+          "50.01%, 100%": { opacity: 0 },
+        },
+      },
+      animation: {
+        "terminal-cursor-blink": "terminal-cursor-blink 1s step-end infinite",
+      },
     },
   },
   plugins: [],

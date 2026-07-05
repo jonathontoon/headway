@@ -12,7 +12,10 @@ export function Terminal() {
   }
 
   return (
-    <main className="terminal" aria-label="Terminal prompt">
+    <main
+      className="block min-h-svh p-6 box-border"
+      aria-label="Terminal prompt"
+    >
       <TerminalHistory entries={state.entries} />
       <TerminalCommandForm
         command={state.command}

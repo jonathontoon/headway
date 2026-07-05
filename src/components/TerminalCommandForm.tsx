@@ -49,18 +49,25 @@ export function TerminalCommandForm({
   const after = command.slice(cursorPosition + 1);
 
   return (
-    <form className="terminal-line terminal-form" onSubmit={onSubmit}>
-      <label className="prompt" htmlFor="terminal-command">
+    <form
+      className="m-0 text-terminal-foreground whitespace-pre-wrap font-mono text-[13px] leading-[1.9] flex items-baseline"
+      onSubmit={onSubmit}
+    >
+      <label
+        data-testid="prompt"
+        className="text-terminal-foreground"
+        htmlFor="terminal-command"
+      >
         {formatPromptSymbol(TERMINAL_PROMPT)}
       </label>
-      <div className="terminal-input-wrapper">
+      <div className="relative flex-1 min-w-[8ch] ml-[1ch]">
         <input
           ref={inputRef}
           id="terminal-command"
           aria-label="Terminal command"
           autoComplete="off"
           autoFocus
-          className="terminal-input"
+          className="absolute inset-0 w-full p-0 border-0 outline-0 bg-transparent text-transparent caret-transparent [font:inherit]"
           value={command}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={handleKeyDown}
@@ -68,9 +75,14 @@ export function TerminalCommandForm({
           onClick={syncCursorPosition}
           onSelect={syncCursorPosition}
         />
-        <span className="terminal-input-display" aria-hidden="true">
+        <span
+          className="relative block whitespace-pre pointer-events-none"
+          aria-hidden="true"
+        >
           {before}
-          <span className="terminal-cursor">█</span>
+          <span className="text-terminal-3 animate-terminal-cursor-blink">
+            █
+          </span>
           {after}
         </span>
       </div>
