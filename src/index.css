@@ -1,22 +1,197 @@
-:root {
-  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
-
-  font: 16px/1.5 var(--mono);
-  letter-spacing: 0;
-  color-scheme: dark;
-  color: #fff;
-  background: #000;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@font-face {
+  font-family: "Departure Mono";
+  src:
+    url("/fonts/DepartureMono-Regular.woff2") format("woff2"),
+    url("/fonts/DepartureMono-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
 }
 
-#root {
-  min-height: 100svh;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply font-mono text-base leading-relaxed text-terminal-foreground bg-terminal-background;
+    letter-spacing: 0;
+    color-scheme: dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply m-0 bg-terminal-background;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
 }
 
-body {
-  margin: 0;
-  background: #000;
+@layer components {
+  .terminal {
+    @apply block min-h-screen p-6 box-border;
+    display: block;
+    min-height: 100svh;
+    padding: 24px;
+  }
+
+  .terminal-line {
+    @apply m-0 text-terminal-foreground whitespace-pre-wrap;
+    font-family:
+      Departure Mono,
+      SFMono-Regular,
+      Consolas,
+      Liberation Mono,
+      monospace;
+    font-size: 13px;
+    line-height: 1.9;
+  }
+
+  .terminal-entry {
+    margin: 0 0 8px;
+  }
+
+  .prompt,
+  .command,
+  .terminal-output,
+  .terminal-input {
+    @apply text-terminal-foreground;
+  }
+
+  .terminal-output {
+    @apply m-0 whitespace-pre-wrap;
+    font-family:
+      Departure Mono,
+      SFMono-Regular,
+      Consolas,
+      Liberation Mono,
+      monospace;
+    font-size: 13px;
+    line-height: 1.9;
+  }
+
+  .terminal-form {
+    @apply flex items-baseline;
+  }
+
+  .terminal-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 8ch;
+    margin: 0 0 0 1ch;
+  }
+
+  .terminal-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: transparent;
+    caret-color: transparent;
+    font: inherit;
+  }
+
+  .terminal-input-display {
+    position: relative;
+    display: block;
+    white-space: pre;
+    pointer-events: none;
+  }
+
+  .terminal-cursor {
+    color: var(--color3);
+    animation: terminal-cursor-blink 1s step-end infinite;
+  }
+
+  @keyframes terminal-cursor-blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+/* Terminal output formatting (see src/services/terminalFormat.tsx) */
+.terminal-row {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.terminal-row--help {
+  @apply flex gap-4;
+}
+
+.term-help-command {
+  min-width: 290px;
+}
+
+.term-header {
+  margin-top: 0.5em;
+}
+
+.term-indent {
+  padding-left: 2ch;
+}
+
+.term-gap {
+  height: 0.5em;
+}
+
+.term-count {
+  display: inline-block;
+  min-width: 2ch;
+  text-align: right;
+}
+
+.term-muted {
+  @apply text-terminal-8;
+}
+
+.term-success {
+  @apply text-terminal-2;
+}
+
+.term-warning {
+  @apply text-terminal-11;
+}
+
+.term-error {
+  @apply text-terminal-1;
+}
+
+.term-project,
+.term-context {
+  @apply text-terminal-6;
+}
+
+.term-due-overdue {
+  @apply text-terminal-1;
+}
+
+.term-due-today {
+  @apply text-terminal-11;
+}
+
+.term-due-future {
+  @apply text-terminal-5;
+}
+
+.term-prompt-tilde {
+  @apply text-terminal-6;
+}
+
+.term-prompt-dollar,
+.term-command-accent {
+  @apply text-terminal-3;
 }

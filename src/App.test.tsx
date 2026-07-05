@@ -1,36 +1,64 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import App from './App'
+import { fireEvent, render, screen } from "@testing-library/react";
+import App from "./App";
 
-describe('App Component', () => {
-  it('renders an editable terminal prompt', () => {
-    render(<App />)
-    expect(screen.getByLabelText('Terminal prompt')).toBeInTheDocument()
-    expect(screen.getByLabelText('Terminal command')).toHaveFocus()
-  })
+describe("App Component", () => {
+  beforeEach(() => {
+    localStorage.removeItem("headway-todos");
+  });
 
-  it('runs JavaScript expressions', () => {
-    render(<App />)
-    const input = screen.getByLabelText('Terminal command')
+  it("renders an editable terminal prompt", () => {
+    render(<App />);
+    expect(screen.getByLabelText("Terminal prompt")).toBeInTheDocument();
+    expect(screen.getByLabelText("Terminal command")).toHaveFocus();
+    const bootOutput = document.querySelector(".terminal-output");
+    expect(bootOutput?.textContent).toContain("headway v0.1.0");
+    expect(bootOutput?.textContent).toContain(
+      "Type 'help' for all available commands.",
+    );
+  });
 
-    fireEvent.change(input, { target: { value: '1 + 1' } })
-    fireEvent.submit(input.closest('form')!)
+  it("runs terminal task commands", () => {
+    render(<App />);
+    const input = screen.getByLabelText("Terminal command");
 
-    expect(screen.getAllByText('headway@localhost:~$')).toHaveLength(2)
-    expect(screen.getByText('1 + 1')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
-  })
+    fireEvent.change(input, { target: { value: "list +GarageSale" } });
+    fireEvent.submit(input.closest("form")!);
 
-  it('clears terminal entries', () => {
-    render(<App />)
-    const input = screen.getByLabelText('Terminal command')
-    const form = input.closest('form')!
+    const promptEls = document.querySelectorAll(".prompt");
+    expect(promptEls).toHaveLength(2);
+    promptEls.forEach((el) => expect(el.textContent).toBe("~$"));
+    const commandEl = document.querySelector(".command");
+    expect(commandEl?.textContent?.trim()).toBe("list +GarageSale");
+    expect(
+      screen.getAllByText(/Schedule Goodwill pickup/).length,
+    ).toBeGreaterThan(0);
+  });
 
-    fireEvent.change(input, { target: { value: 'echo hello' } })
-    fireEvent.submit(form)
-    expect(screen.getByText('hello')).toBeInTheDocument()
+  it("clears terminal entries", () => {
+    render(<App />);
+    const input = screen.getByLabelText("Terminal command");
+    const form = input.closest("form")!;
 
-    fireEvent.change(input, { target: { value: 'clear' } })
-    fireEvent.submit(form)
-    expect(screen.queryByText('hello')).not.toBeInTheDocument()
-  })
-})
+    fireEvent.change(input, { target: { value: "echo hello" } });
+    fireEvent.submit(form);
+    const outputEls = document.querySelectorAll(".terminal-output");
+    expect(outputEls[outputEls.length - 1]?.textContent).toBe("→ hello");
+
+    fireEvent.change(input, { target: { value: "clear" } });
+    fireEvent.submit(form);
+    expect(document.querySelector(".terminal-output")).not.toBeInTheDocument();
+  });
+
+  it("reports unknown commands instead of evaluating JavaScript", () => {
+    render(<App />);
+    const input = screen.getByLabelText("Terminal command");
+
+    fireEvent.change(input, { target: { value: "1 + 1" } });
+    fireEvent.submit(input.closest("form")!);
+
+    const outputEl = document.querySelectorAll(".terminal-output")[1];
+    expect(outputEl?.textContent).toBe(
+      "→ 1 is not a recognized command. Type 'help' for all available commands.",
+    );
+  });
+});

@@ -1,39 +1,38 @@
-export const terminalActionTypes = {
-  clear: 'terminal/clear',
-  submit: 'terminal/submit',
-  setCommand: 'terminal/setCommand',
-  navigateHistory: 'terminal/navigateHistory',
-} as const
-
 export type TerminalAction =
-  | { readonly type: typeof terminalActionTypes.clear }
+  | { readonly type: "clear" }
   | {
-      readonly type: typeof terminalActionTypes.submit
-      readonly command: string
-      readonly output?: string
+      readonly type: "submit";
+      readonly command: string;
+      readonly output?: string;
+      readonly todos: readonly string[];
     }
   | {
-      readonly type: typeof terminalActionTypes.setCommand
-      readonly command: string
+      readonly type: "setCommand";
+      readonly command: string;
     }
   | {
-      readonly type: typeof terminalActionTypes.navigateHistory
-      readonly direction: 'previous' | 'next'
-    }
+      readonly type: "navigateHistory";
+      readonly direction: "previous" | "next";
+    };
 
 export const terminalActions = {
-  clear: (): TerminalAction => ({ type: terminalActionTypes.clear }),
-  submit: (command: string, output?: string): TerminalAction => ({
-    type: terminalActionTypes.submit,
+  clear: (): TerminalAction => ({ type: "clear" }),
+  submit: (
+    command: string,
+    output: string | undefined,
+    todos: readonly string[],
+  ): TerminalAction => ({
+    type: "submit",
     command,
     output,
+    todos,
   }),
   setCommand: (command: string): TerminalAction => ({
-    type: terminalActionTypes.setCommand,
+    type: "setCommand",
     command,
   }),
-  navigateHistory: (direction: 'previous' | 'next'): TerminalAction => ({
-    type: terminalActionTypes.navigateHistory,
+  navigateHistory: (direction: "previous" | "next"): TerminalAction => ({
+    type: "navigateHistory",
     direction,
   }),
-}
+};
