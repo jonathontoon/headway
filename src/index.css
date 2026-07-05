@@ -1,5 +1,5 @@
 :root {
-  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --background: #000000;
   --foreground: #ffffff;
   --color0: #000000;

@@ -1,26 +1,25 @@
-import { highlight, highlightOutput } from '../services/syntaxHighlight'
-import { useTerminal } from '../hooks/useTerminal'
-
-const prompt = '~$'
+import { highlight, highlightOutput } from "../services/syntaxHighlight";
+import { useTerminal } from "../hooks/useTerminal";
+import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
 
 export function Terminal() {
-  const { state, setCommand, submitCommand, navigateHistory } = useTerminal()
+  const { state, setCommand, submitCommand, navigateHistory } = useTerminal();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    submitCommand()
+    event.preventDefault();
+    submitCommand();
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      navigateHistory('previous')
-      return
+    if (event.key === KEYBOARD_KEYS.arrowUp) {
+      event.preventDefault();
+      navigateHistory("previous");
+      return;
     }
 
-    if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      navigateHistory('next')
+    if (event.key === KEYBOARD_KEYS.arrowDown) {
+      event.preventDefault();
+      navigateHistory("next");
     }
   }
 
@@ -29,7 +28,7 @@ export function Terminal() {
       {state.entries.map((entry) => (
         <div className="terminal-entry" key={entry.id}>
           <p className="terminal-line">
-            <span className="prompt">{prompt}</span>
+            <span className="prompt">{TERMINAL_PROMPT}</span>
             <span className="command"> {highlight(entry.command)}</span>
           </p>
           {entry.output !== undefined && (
@@ -40,7 +39,7 @@ export function Terminal() {
 
       <form className="terminal-line terminal-form" onSubmit={handleSubmit}>
         <label className="prompt" htmlFor="terminal-command">
-          {prompt}
+          {TERMINAL_PROMPT}
         </label>
         <input
           id="terminal-command"
@@ -54,5 +53,5 @@ export function Terminal() {
         />
       </form>
     </main>
-  )
+  );
 }

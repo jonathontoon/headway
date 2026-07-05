@@ -1,8 +1,8 @@
-import './App.css'
-import './prism-terminal.css'
-import { Terminal } from './components/Terminal'
-import { ThemeProvider } from './store/theme/context'
-import { TerminalProvider } from './store/terminal/context'
+import "./App.css";
+import "./prism-terminal.css";
+import { Terminal } from "./components/Terminal";
+import { ThemeProvider } from "./store/theme/context";
+import { TerminalProvider } from "./store/terminal/context";
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
         <Terminal />
       </TerminalProvider>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;
