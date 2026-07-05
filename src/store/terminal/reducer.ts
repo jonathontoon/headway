@@ -1,27 +1,10 @@
-import { terminalActionTypes, type TerminalAction } from "./actions";
+import type { TerminalAction } from "./actions";
 import type { TerminalState } from "./types";
-import { SAMPLE_TODOS } from "../todos/storage";
 import {
   formatBootMessage,
   getLocalDate,
   getTimeGreeting,
 } from "../todos/summary";
-
-export const initialTerminalState: TerminalState = {
-  entries: [
-    {
-      id: 0,
-      output: formatBootMessage(
-        SAMPLE_TODOS,
-        getLocalDate(),
-        getTimeGreeting(),
-      ),
-    },
-  ],
-  command: "",
-  historyIndex: null,
-  todos: SAMPLE_TODOS,
-};
 
 export function createInitialTerminalState(
   todos: readonly string[],
@@ -93,13 +76,14 @@ export function terminalReducer(
   action: TerminalAction,
 ): TerminalState {
   switch (action.type) {
-    case terminalActionTypes.clear:
+    case "clear":
       return {
-        ...initialTerminalState,
+        ...state,
         entries: [],
-        todos: state.todos,
+        command: "",
+        historyIndex: null,
       };
-    case terminalActionTypes.submit:
+    case "submit":
       return {
         ...state,
         entries: [
@@ -114,23 +98,15 @@ export function terminalReducer(
         historyIndex: null,
         todos: action.todos,
       };
-    case terminalActionTypes.setCommand:
+    case "setCommand":
       return {
         ...state,
         command: action.command,
       };
-    case terminalActionTypes.navigateHistory:
+    case "navigateHistory":
       return navigateHistory(state, action.direction);
-    case terminalActionTypes.hydrateTodos:
-      return {
-        ...state,
-        todos: action.todos,
-        entries:
-          state.entries.length === 0
-            ? state.entries
-            : createInitialTerminalState(action.todos).entries,
-      };
-    default:
-      return state;
   }
+
+  const _exhaustive: never = action;
+  return _exhaustive;
 }

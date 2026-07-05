@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { TerminalEntry as TerminalEntryModel } from "../store/terminal/types";
 import { TerminalEntry } from "./TerminalEntry";
 
@@ -5,7 +6,9 @@ type TerminalHistoryProps = {
   readonly entries: readonly TerminalEntryModel[];
 };
 
-export function TerminalHistory({ entries }: TerminalHistoryProps) {
+export const TerminalHistory = memo(function TerminalHistory({
+  entries,
+}: TerminalHistoryProps) {
   return (
     <>
       {entries.map((entry) => (
@@ -17,4 +20,4 @@ export function TerminalHistory({ entries }: TerminalHistoryProps) {
       ))}
     </>
   );
-}
+});
