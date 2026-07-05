@@ -51,6 +51,48 @@ describe("handleThemeCommand", () => {
     expect(setTheme).toHaveBeenCalledWith("beta");
   });
 
+  it("explains the current theme color slots", () => {
+    const output = handleThemeCommand("theme test", {
+      themes,
+      currentTheme: {
+        name: "alpha",
+        mode: "dark",
+        background: "#000000",
+        foreground: "#ffffff",
+        colors: [
+          "#000000",
+          "#111111",
+          "#222222",
+          "#333333",
+          "#444444",
+          "#555555",
+          "#666666",
+          "#777777",
+          "#888888",
+          "#999999",
+          "#aaaaaa",
+          "#bbbbbb",
+          "#cccccc",
+          "#dddddd",
+          "#eeeeee",
+          "#ffffff",
+        ],
+      },
+      setTheme: vi.fn(),
+    });
+
+    expect(output).toContain("Theme alpha (dark)");
+    expect(output).toContain(
+      "background #000000: app background; source: theme background",
+    );
+    expect(output).toContain(
+      "color1 #111111: ANSI red; Headway use: errors, overdue dates, priority A, donation heart; source: theme palette color",
+    );
+    expect(output).toContain(
+      "color11 #bbbbbb: ANSI bright yellow; Headway use: warnings, due today, priority B; source: theme palette color",
+    );
+  });
+
   it("sets a random theme with the requested dark mode", () => {
     const setTheme = vi.fn();
 
@@ -99,7 +141,7 @@ describe("handleThemeCommand", () => {
     };
 
     expect(handleThemeCommand("theme beta", ctx)).toBe(
-      'Unsupported theme command. Use "theme", "theme set <name>", or "theme random <dark|light>".',
+      'Unsupported theme command. Use "theme", "theme set <name>", "theme random <dark|light>", or "theme test".',
     );
     expect(handleThemeCommand("theme random", ctx)).toBe(
       "Usage: theme random <dark|light>.",

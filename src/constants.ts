@@ -12,7 +12,12 @@ export const COMMANDS = {
 export const HELP_TEXT = [
   "TASKS",
   'add "text [+Project] [due:DATE] [@tag]" - add a task',
+  "edit <id> - open task in $EDITOR",
+  "edit <id> <text> - replace task line directly",
+  "show <id> - print full detail for one task",
   "delete <id> [<id>...] - delete permanently",
+  "",
+  "STATUS",
   "complete <id> [<id>...] - mark done (priority -> pri:A)",
   "undo <id> [<id>...] - unmark (restores priority)",
   "",
@@ -21,7 +26,7 @@ export const HELP_TEXT = [
   "priority <id> <A-Z> - set or update priority",
   "tag <id> @tag [@tag...] - add context tag(s)",
   "project <id> +Project - assign task to a project",
-  "clear <field> <id> [<id>...] - clear due, priority, tags, or project",
+  "clear due|priority|tags|project <id> [<id>...] - clear attributes",
   "",
   "VIEWS",
   'list [+Project|@tag|"keyword"] - list incomplete tasks',
@@ -34,9 +39,14 @@ export const HELP_TEXT = [
   "",
   "OTHER",
   "stats - summary counts",
+  "export - print canonical todo.txt",
+  "import <todo.txt lines> - replace stored tasks",
   "theme - print the current theme name",
   "theme set <name> - switch themes",
   "theme random <dark|light> - switch to a random theme with that mode",
+  "theme test - explain current theme color slots",
+  "clear - clear terminal output",
+  "echo <text> - print text",
   "donate - donation link",
 ].join("\n");
 
@@ -68,6 +78,8 @@ export const COMMAND_VERBS = [
   "archive",
   "projects",
   "stats",
+  "export",
+  "import",
   "theme",
   "echo",
   "donate",
@@ -84,5 +96,5 @@ export const THEME_ERROR_MESSAGES = {
   randomModeRequired: "Usage: theme random <dark|light>.",
   setNameRequired: "Usage: theme set <name>.",
   unsupportedThemeCommand:
-    'Unsupported theme command. Use "theme", "theme set <name>", or "theme random <dark|light>".',
+    'Unsupported theme command. Use "theme", "theme set <name>", "theme random <dark|light>", or "theme test".',
 } as const;

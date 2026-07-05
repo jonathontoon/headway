@@ -32,6 +32,29 @@ const GREETING_PATTERN = /^(Good morning|Good afternoon|Good evening)\./;
 const TASK_FRAGMENT_PATTERN = /(\+[\w-]+|@[\w-]+|due:\d{4}-\d{2}-\d{2})/g;
 const HELP_ARG_PATTERN = /(<[^>]+>|"[^"]*")/g;
 const HEART_PATTERN = /(♥)/;
+const THEME_BASE_COLOR_PATTERN =
+  /^(background|foreground) (#[0-9a-f]{6}): (.*)$/;
+const THEME_INDEXED_COLOR_PATTERN =
+  /^(color([0-9]|1[0-5])) (#[0-9a-f]{6}): (.*)$/;
+
+const TERMINAL_TEXT_CLASSES = [
+  "text-terminal-0",
+  "text-terminal-1",
+  "text-terminal-2",
+  "text-terminal-3",
+  "text-terminal-4",
+  "text-terminal-5",
+  "text-terminal-6",
+  "text-terminal-7",
+  "text-terminal-8",
+  "text-terminal-9",
+  "text-terminal-10",
+  "text-terminal-11",
+  "text-terminal-12",
+  "text-terminal-13",
+  "text-terminal-14",
+  "text-terminal-15",
+] as const;
 
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
@@ -123,7 +146,7 @@ function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
   return (
     <div key={key} className="block whitespace-pre-wrap">
       <span
-        className={`inline-block min-w-[3ch] text-right ${statLabelClassName(label) ?? ""}`}
+        className={`inline-block min-w-[2ch] text-right ${statLabelClassName(label) ?? ""}`}
       >
         {count}
       </span>{" "}
@@ -147,11 +170,8 @@ function renderHelpCommandSegment(segment: string): ReactNode {
 function renderHelpRow(match: RegExpMatchArray, key: number): ReactNode {
   const [, command, description] = match;
   return (
-    <div
-      key={key}
-      className="grid grid-cols-[290px_1fr] gap-4 whitespace-pre-wrap"
-    >
-      <span className="text-terminal-3">
+    <div key={key} className="flex gap-4 whitespace-pre-wrap">
+      <span className="min-w-[290px] text-terminal-3">
         {renderHelpCommandSegment(command)}
       </span>
       <span className="text-terminal-8">{description}</span>
@@ -231,6 +251,46 @@ function renderWithHeart(line: string): ReactNode {
   );
 }
 
+function renderColorSwatch(color: string): ReactNode {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block h-[1em] w-[2ch] align-[-0.12em] border border-terminal-8"
+      style={{ backgroundColor: color }}
+    />
+  );
+}
+
+function renderThemeBaseColorLine(
+  match: RegExpMatchArray,
+  key: number,
+): ReactNode {
+  const [, role, color, description] = match;
+  return (
+    <div key={key} className="block whitespace-pre-wrap">
+      {renderColorSwatch(color)} <span className="text-terminal-3">{role}</span>{" "}
+      <span className="text-terminal-8">{color}</span>: {description}
+    </div>
+  );
+}
+
+function renderThemeIndexedColorLine(
+  match: RegExpMatchArray,
+  key: number,
+): ReactNode {
+  const [, label, indexText, color, description] = match;
+  const index = Number(indexText);
+  return (
+    <div key={key} className="block whitespace-pre-wrap">
+      {renderColorSwatch(color)}{" "}
+      <span className={TERMINAL_TEXT_CLASSES[index]} data-testid={label}>
+        {label} sample
+      </span>{" "}
+      <span className="text-terminal-8">{color}</span>: {description}
+    </div>
+  );
+}
+
 function renderMessageLine(line: string, key: number): ReactNode {
   let colorClass = "";
   if (line.startsWith("Error:")) {
@@ -297,6 +357,16 @@ export function formatOutput(output: string): ReactNode {
     }
 
     if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
+
+    const themeBaseColorMatch = line.match(THEME_BASE_COLOR_PATTERN);
+    if (themeBaseColorMatch) {
+      return renderThemeBaseColorLine(themeBaseColorMatch, i);
+    }
+
+    const themeIndexedColorMatch = line.match(THEME_INDEXED_COLOR_PATTERN);
+    if (themeIndexedColorMatch) {
+      return renderThemeIndexedColorLine(themeIndexedColorMatch, i);
+    }
 
     return renderMessageLine(line, i);
   });

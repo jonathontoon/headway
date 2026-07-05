@@ -69,4 +69,19 @@ describe("App Component", () => {
       "→ 1 is not a recognized command. Type 'help' for all available commands.",
     );
   });
+
+  it("renders theme test colors", () => {
+    render(<App />);
+    const input = screen.getByLabelText("Terminal command");
+    const form = input.closest("form")!;
+
+    fireEvent.change(input, { target: { value: "theme set hyper" } });
+    fireEvent.submit(form);
+    fireEvent.change(input, { target: { value: "theme test" } });
+    fireEvent.submit(form);
+
+    expect(screen.getByTestId("color1")).toHaveClass("text-terminal-1");
+    expect(screen.getByTestId("color11")).toHaveClass("text-terminal-11");
+    expect(screen.getByText("background")).toBeInTheDocument();
+  });
 });

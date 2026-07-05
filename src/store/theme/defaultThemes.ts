@@ -4531,6 +4531,33 @@ export const DEFAULT_THEME_FAMILIES: readonly ThemeFamily[] = [
     },
   },
   {
+    name: "hyper",
+    dark: {
+      name: "hyper",
+      mode: "dark",
+      background: "#000000",
+      foreground: "#c8c8c8",
+      colors: [
+        "#2d3139",
+        "#e06c75",
+        "#14fa50",
+        "#e0c285",
+        "#52adf2",
+        "#d55fde",
+        "#57b6c2",
+        "#ffffff",
+        "#5c6370",
+        "#ef596f",
+        "#89ca78",
+        "#e5c07b",
+        "#6796e6",
+        "#c679dd",
+        "#2bbac5",
+        "#f8fafd",
+      ],
+    },
+  },
+  {
     name: "ibm-3270-high-contrast",
     dark: {
       name: "ibm-3270-high-contrast",

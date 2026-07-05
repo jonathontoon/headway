@@ -4,6 +4,35 @@ import path from "node:path";
 const GOGH_THEMES_URL =
   "https://raw.githubusercontent.com/Gogh-Co/Gogh/master/data/themes.json";
 const OUT_FILE = path.join(process.cwd(), "src/store/theme/defaultThemes.ts");
+const CUSTOM_THEME_FAMILIES = [
+  {
+    name: "hyper",
+    dark: {
+      name: "hyper",
+      mode: "dark",
+      background: "#000000",
+      foreground: "#c8c8c8",
+      colors: [
+        "#2d3139",
+        "#e06c75",
+        "#14fa50",
+        "#e0c285",
+        "#52adf2",
+        "#d55fde",
+        "#57b6c2",
+        "#ffffff",
+        "#5c6370",
+        "#ef596f",
+        "#89ca78",
+        "#e5c07b",
+        "#6796e6",
+        "#c679dd",
+        "#2bbac5",
+        "#f8fafd",
+      ],
+    },
+  },
+];
 
 function slugifyName(name) {
   return name
@@ -58,6 +87,60 @@ function parseGoghTheme(rawTheme) {
   };
 }
 
+function validateCustomTheme(theme) {
+  if (theme.name !== slugifyName(theme.name)) {
+    throw new Error(`Custom theme name must be slugified: ${theme.name}`);
+  }
+
+  for (const mode of ["dark", "light"]) {
+    const variant = theme[mode];
+    if (!variant) continue;
+
+    const colors = variant.colors ?? [];
+    const normalizedColors = colors.map(normalizeHex);
+
+    if (
+      variant.name !== theme.name ||
+      variant.mode !== mode ||
+      !normalizeHex(variant.background) ||
+      !normalizeHex(variant.foreground) ||
+      colors.length !== 16 ||
+      normalizedColors.some((color) => !color)
+    ) {
+      throw new Error(`Invalid custom ${mode} theme: ${theme.name}`);
+    }
+  }
+}
+
+function addTheme(families, theme) {
+  const modes = families.get(theme.name) ?? new Map();
+
+  if (modes.has(theme.mode)) {
+    return false;
+  }
+
+  modes.set(theme.mode, theme);
+  families.set(theme.name, modes);
+  return true;
+}
+
+function addCustomThemeFamilies(families, customFamilies) {
+  for (const customFamily of customFamilies) {
+    validateCustomTheme(customFamily);
+
+    if (families.has(customFamily.name)) {
+      throw new Error(
+        `Custom theme duplicates existing theme: ${customFamily.name}`,
+      );
+    }
+
+    for (const mode of ["dark", "light"]) {
+      const variant = customFamily[mode];
+      if (variant) addTheme(families, variant);
+    }
+  }
+}
+
 async function fetchText(url) {
   const response = await fetch(url, {
     headers: {
@@ -73,7 +156,7 @@ async function fetchText(url) {
 }
 
 function formatTheme(theme) {
-  const colors = theme.colors.map((color) => `      "${color}",`).join("\n");
+  const colors = theme.colors.map((color) => `        "${color}",`).join("\n");
 
   return `    ${theme.mode}: {
       name: "${theme.name}",
@@ -127,17 +210,14 @@ for (const rawTheme of goghThemes) {
     continue;
   }
 
-  const modes = families.get(parsed.name) ?? new Map();
-
-  if (modes.has(parsed.mode)) {
+  if (!addTheme(families, parsed)) {
     stats.skippedGoghThemes += 1;
     continue;
   }
-
-  modes.set(parsed.mode, parsed);
-  families.set(parsed.name, modes);
   stats.goghThemes += 1;
 }
+
+addCustomThemeFamilies(families, CUSTOM_THEME_FAMILIES);
 
 const sortedFamilies = [...families.entries()].sort(([a], [b]) =>
   a.localeCompare(b),
