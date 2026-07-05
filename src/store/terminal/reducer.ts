@@ -1,14 +1,48 @@
 import { terminalActionTypes, type TerminalAction } from "./actions";
 import type { TerminalState } from "./types";
+import { SAMPLE_TODOS } from "../todos/storage";
+import {
+  formatBootMessage,
+  getLocalDate,
+  getTimeGreeting,
+} from "../todos/summary";
 
 export const initialTerminalState: TerminalState = {
-  entries: [],
+  entries: [
+    {
+      id: 0,
+      output: formatBootMessage(
+        SAMPLE_TODOS,
+        getLocalDate(),
+        getTimeGreeting(),
+      ),
+    },
+  ],
   command: "",
   historyIndex: null,
+  todos: SAMPLE_TODOS,
 };
 
+export function createInitialTerminalState(
+  todos: readonly string[],
+): TerminalState {
+  return {
+    entries: [
+      {
+        id: 0,
+        output: formatBootMessage(todos, getLocalDate(), getTimeGreeting()),
+      },
+    ],
+    command: "",
+    historyIndex: null,
+    todos,
+  };
+}
+
 function getCommandHistory(state: TerminalState): readonly string[] {
-  return state.entries.map((entry) => entry.command).filter(Boolean);
+  return state.entries
+    .map((entry) => entry.command)
+    .filter((command): command is string => Boolean(command));
 }
 
 function navigateHistory(
@@ -60,7 +94,11 @@ export function terminalReducer(
 ): TerminalState {
   switch (action.type) {
     case terminalActionTypes.clear:
-      return initialTerminalState;
+      return {
+        ...initialTerminalState,
+        entries: [],
+        todos: state.todos,
+      };
     case terminalActionTypes.submit:
       return {
         ...state,
@@ -74,6 +112,7 @@ export function terminalReducer(
         ],
         command: "",
         historyIndex: null,
+        todos: action.todos,
       };
     case terminalActionTypes.setCommand:
       return {
@@ -82,6 +121,15 @@ export function terminalReducer(
       };
     case terminalActionTypes.navigateHistory:
       return navigateHistory(state, action.direction);
+    case terminalActionTypes.hydrateTodos:
+      return {
+        ...state,
+        todos: action.todos,
+        entries:
+          state.entries.length === 0
+            ? state.entries
+            : createInitialTerminalState(action.todos).entries,
+      };
     default:
       return state;
   }

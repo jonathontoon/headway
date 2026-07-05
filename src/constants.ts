@@ -10,8 +10,44 @@ export const COMMANDS = {
   themeImport: "theme import ",
 } as const;
 
-export const HELP_TEXT =
-  "Commands: help, clear, echo <text>, theme [name], theme import <alacritty-toml>. JavaScript expressions also work.";
+export const HELP_TEXT = [
+  "TASKS",
+  'add "text [+Project] [due:DATE] [@tag]" - add a task',
+  "edit <id> - open task in $EDITOR",
+  "edit <id> <text> - replace task line directly",
+  "show <id> - print full detail for one task",
+  "delete <id> [<id>...] - delete permanently",
+  "",
+  "STATUS",
+  "complete <id> [<id>...] - mark done (priority -> pri:A)",
+  "undo <id> [<id>...] - unmark (restores priority)",
+  "",
+  "ATTRIBUTES",
+  "due <id> <YYYY-MM-DD> - set or update due date",
+  "priority <id> <A-Z> - set or update priority",
+  "tag <id> @tag [@tag...] - add context tag(s)",
+  "project <id> +Project - assign task to a project",
+  "clear due|priority|tags|project <id> [<id>...] - clear attributes",
+  "",
+  "VIEWS",
+  'list [+Project|@tag|"keyword"] - list incomplete tasks',
+  "inbox - tasks with no due date and no project",
+  "today - due today, plus overdue",
+  "upcoming - future-dated tasks",
+  "someday - project tasks with no due date",
+  "archive - completed tasks",
+  "projects - list all projects",
+  "",
+  "OTHER",
+  "stats - summary counts",
+  "export - print canonical todo.txt",
+  "import <todo.txt lines> - replace stored tasks",
+  "theme [name] - list or switch themes",
+  "theme import <alacritty-toml> - import a theme",
+  "clear - clear terminal output",
+  "echo <text> - print text",
+  "donate - donation link",
+].join("\n");
 
 // Keyboard navigation
 export const KEYBOARD_KEYS = {
@@ -19,8 +55,6 @@ export const KEYBOARD_KEYS = {
   arrowDown: "ArrowDown",
 } as const;
 
-// Command parsing
-export const ECHO_COMMAND_PREFIX_LENGTH = 5; // 'echo '.length
 export const THEME_COMMAND_PREFIX_LENGTH = 6; // 'theme '.length
 export const THEME_IMPORT_COMMAND_PREFIX_LENGTH = 13; // 'theme import '.length
 

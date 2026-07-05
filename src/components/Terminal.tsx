@@ -27,10 +27,12 @@ export function Terminal() {
     <main className="terminal" aria-label="Terminal prompt">
       {state.entries.map((entry) => (
         <div className="terminal-entry" key={entry.id}>
-          <p className="terminal-line">
-            <span className="prompt">{TERMINAL_PROMPT}</span>
-            <span className="command"> {highlight(entry.command)}</span>
-          </p>
+          {entry.command !== undefined && (
+            <p className="terminal-line">
+              <span className="prompt">{TERMINAL_PROMPT}</span>
+              <span className="command"> {highlight(entry.command)}</span>
+            </p>
+          )}
           {entry.output !== undefined && (
             <p className="terminal-output">{highlightOutput(entry.output)}</p>
           )}

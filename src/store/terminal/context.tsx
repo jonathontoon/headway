@@ -1,13 +1,16 @@
 import { useMemo, useReducer, type PropsWithChildren } from "react";
 import { useTheme } from "../theme/themeContext";
 import { handleThemeCommand } from "../theme/themeCommand";
+import { runTodoCommand } from "../todos/commands";
+import { loadStoredTodos, storeTodos } from "../todos/storage";
 import { terminalActions } from "./actions";
-import { runCommand } from "./commands";
-import { initialTerminalState, terminalReducer } from "./reducer";
+import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
 
 export function TerminalProvider({ children }: PropsWithChildren) {
-  const [state, dispatch] = useReducer(terminalReducer, initialTerminalState);
+  const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
+    createInitialTerminalState(loadStoredTodos()),
+  );
   const { theme, themes, setTheme, importTheme } = useTheme();
 
   const store = useMemo<TerminalStore>(
@@ -31,12 +34,20 @@ export function TerminalProvider({ children }: PropsWithChildren) {
             setTheme,
             importTheme,
           });
-          dispatch(terminalActions.submit(state.command, output));
+          dispatch(terminalActions.submit(state.command, output, state.todos));
           return;
         }
 
+        const result = runTodoCommand(state.command, { todos: state.todos });
+        if (result.nextTodos !== state.todos) {
+          storeTodos(result.nextTodos);
+        }
         dispatch(
-          terminalActions.submit(state.command, runCommand(state.command)),
+          terminalActions.submit(
+            state.command,
+            result.output,
+            result.nextTodos,
+          ),
         );
       },
       navigateHistory(direction) {

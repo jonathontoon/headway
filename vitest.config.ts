@@ -7,6 +7,11 @@ export default mergeConfig(
     test: {
       globals: true,
       environment: "jsdom",
+      environmentOptions: {
+        jsdom: {
+          url: "http://localhost/",
+        },
+      },
       setupFiles: "./src/setupTests.ts",
     },
   }),
