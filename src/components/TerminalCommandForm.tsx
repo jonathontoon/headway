@@ -153,7 +153,7 @@ export function TerminalCommandForm({
 
   return (
     <form
-      className="m-0 text-terminal-foreground whitespace-pre-wrap font-mono text-[13px] leading-[1.9] flex items-baseline"
+      className="m-0 text-terminal-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9] flex items-baseline"
       onSubmit={onSubmit}
     >
       <label

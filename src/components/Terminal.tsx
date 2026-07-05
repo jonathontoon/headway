@@ -37,7 +37,7 @@ export function Terminal() {
 
   return (
     <main
-      className="block min-h-svh p-6 box-border"
+      className="block min-h-svh p-4 sm:p-6 md:p-8 box-border"
       aria-label="Terminal prompt"
       onContextMenu={handleContextMenu}
     >
