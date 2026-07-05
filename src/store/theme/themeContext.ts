@@ -5,7 +5,6 @@ export type ThemeStore = {
   readonly theme: Theme;
   readonly themes: readonly ThemeFamily[];
   readonly setTheme: (name: string) => void;
-  readonly importTheme: (theme: Theme) => void;
 };
 
 export const ThemeContext = createContext<ThemeStore | null>(null);

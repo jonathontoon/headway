@@ -57,12 +57,10 @@ function selectTheme(
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [themeName, setThemeName] = useState<string>(readStoredThemeName);
   const [mode, setMode] = useState<ThemeMode>(getPreferredMode);
-  const [customTheme, setCustomTheme] = useState<Theme | null>(null);
 
   const theme = useMemo<Theme>(() => {
-    if (customTheme) return customTheme;
     return selectTheme(DEFAULT_THEME_FAMILIES, themeName, mode);
-  }, [themeName, mode, customTheme]);
+  }, [themeName, mode]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
@@ -88,11 +86,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
       theme,
       themes: DEFAULT_THEME_FAMILIES,
       setTheme(name: string) {
-        setCustomTheme(null);
         setThemeName(name);
-      },
-      importTheme(imported: Theme) {
-        setCustomTheme(imported);
       },
     }),
     [theme],

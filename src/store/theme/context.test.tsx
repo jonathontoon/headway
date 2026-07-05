@@ -1,9 +1,12 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { ThemeProvider } from "./context";
+import { DEFAULT_THEME_FAMILIES } from "./defaultThemes";
 import { useTheme } from "./themeContext";
 
 const colorSchemeQuery = "(prefers-color-scheme: dark)";
 const listeners = new Set<(event: MediaQueryListEvent) => void>();
+const testTheme = DEFAULT_THEME_FAMILIES[0];
+const alternateTheme = DEFAULT_THEME_FAMILIES[1];
 let prefersDark = false;
 
 function installMatchMediaMock() {
@@ -48,8 +51,8 @@ function Probe() {
       <div data-testid="theme">
         {theme.name}:{theme.mode}
       </div>
-      <button type="button" onClick={() => setTheme("catppuccin")}>
-        Set Catppuccin
+      <button type="button" onClick={() => setTheme(alternateTheme.name)}>
+        Set Alternate
       </button>
     </>
   );
@@ -65,36 +68,40 @@ describe("ThemeProvider", () => {
   });
 
   it("applies the light palette from the browser preference", () => {
-    localStorage.setItem("headway-theme", "ayu");
+    localStorage.setItem("headway-theme", testTheme.name);
     render(
       <ThemeProvider>
         <Probe />
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("ayu:light");
+    expect(screen.getByTestId("theme")).toHaveTextContent(
+      `${testTheme.name}:light`,
+    );
     expect(
       document.documentElement.style.getPropertyValue("--background"),
-    ).toBe("#f8f9fa");
+    ).toBe(testTheme.light?.background);
   });
 
   it("applies the dark palette from the browser preference", () => {
     prefersDark = true;
-    localStorage.setItem("headway-theme", "ayu");
+    localStorage.setItem("headway-theme", testTheme.name);
     render(
       <ThemeProvider>
         <Probe />
       </ThemeProvider>,
     );
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("ayu:dark");
+    expect(screen.getByTestId("theme")).toHaveTextContent(
+      `${testTheme.name}:dark`,
+    );
     expect(
       document.documentElement.style.getPropertyValue("--background"),
-    ).toBe("#0b0e14");
+    ).toBe(testTheme.dark?.background);
   });
 
   it("updates the applied palette when the browser preference changes", () => {
-    localStorage.setItem("headway-theme", "ayu");
+    localStorage.setItem("headway-theme", testTheme.name);
     render(
       <ThemeProvider>
         <Probe />
@@ -103,10 +110,12 @@ describe("ThemeProvider", () => {
 
     act(() => setPreferredColorScheme(true));
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("ayu:dark");
+    expect(screen.getByTestId("theme")).toHaveTextContent(
+      `${testTheme.name}:dark`,
+    );
     expect(
       document.documentElement.style.getPropertyValue("--background"),
-    ).toBe("#0b0e14");
+    ).toBe(testTheme.dark?.background);
   });
 
   it("stores only the selected theme name", () => {
@@ -116,8 +125,8 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Set Catppuccin" }));
+    fireEvent.click(screen.getByRole("button", { name: "Set Alternate" }));
 
-    expect(localStorage.getItem("headway-theme")).toBe("catppuccin");
+    expect(localStorage.getItem("headway-theme")).toBe(alternateTheme.name);
   });
 });

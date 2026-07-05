@@ -21,55 +21,91 @@ const themes: readonly ThemeFamily[] = [
     name: "beta",
     dark: theme("beta", "dark"),
   },
+  {
+    name: "gamma",
+    light: theme("gamma", "light"),
+  },
 ];
 
 describe("handleThemeCommand", () => {
-  it("lists selectable theme names only and marks the current theme", () => {
+  it("returns the current theme name", () => {
     expect(
       handleThemeCommand("theme", {
         themes,
         currentTheme: theme("alpha", "dark"),
         setTheme: vi.fn(),
-        importTheme: vi.fn(),
       }),
-    ).toBe("* alpha\n  beta ");
+    ).toBe("alpha");
   });
 
-  it("switches by theme name without requiring a variant", () => {
+  it("sets a theme by name", () => {
     const setTheme = vi.fn();
 
     expect(
-      handleThemeCommand("theme beta", {
+      handleThemeCommand("theme set beta", {
         themes,
         currentTheme: theme("alpha", "dark"),
         setTheme,
-        importTheme: vi.fn(),
       }),
     ).toBe("Theme set to beta.");
     expect(setTheme).toHaveBeenCalledWith("beta");
   });
 
-  it("rejects manual variants", () => {
+  it("sets a random theme with the requested dark mode", () => {
+    const setTheme = vi.fn();
+
     expect(
-      handleThemeCommand("theme alpha dark", {
+      handleThemeCommand("theme random dark", {
         themes,
         currentTheme: theme("alpha", "dark"),
-        setTheme: vi.fn(),
-        importTheme: vi.fn(),
+        setTheme,
+        random: () => 0.75,
       }),
-    ).toBe(
-      "Manual theme variants are not supported. Light/dark follows your browser.",
-    );
+    ).toBe("Theme set to beta.");
+    expect(setTheme).toHaveBeenCalledWith("beta");
+  });
+
+  it("sets a random theme with the requested light mode", () => {
+    const setTheme = vi.fn();
+
+    expect(
+      handleThemeCommand("theme random light", {
+        themes,
+        currentTheme: theme("alpha", "dark"),
+        setTheme,
+        random: () => 0.75,
+      }),
+    ).toBe("Theme set to gamma.");
+    expect(setTheme).toHaveBeenCalledWith("gamma");
   });
 
   it("reports unknown theme names", () => {
     expect(
-      handleThemeCommand("theme missing", {
+      handleThemeCommand("theme set missing", {
         themes,
         currentTheme: theme("alpha", "dark"),
         setTheme: vi.fn(),
-        importTheme: vi.fn(),
       }),
-    ).toBe('Theme "missing" not found. Run "theme" to list available themes.');
+    ).toBe(
+      'Theme "missing" not found. Use "theme random dark" or "theme random light" to discover themes.',
+    );
+  });
+
+  it("rejects unsupported theme command shapes", () => {
+    const ctx = {
+      themes,
+      currentTheme: theme("alpha", "dark"),
+      setTheme: vi.fn(),
+    };
+
+    expect(handleThemeCommand("theme beta", ctx)).toBe(
+      'Unsupported theme command. Use "theme", "theme set <name>", or "theme random <dark|light>".',
+    );
+    expect(handleThemeCommand("theme random", ctx)).toBe(
+      "Usage: theme random <dark|light>.",
+    );
+    expect(handleThemeCommand("theme set", ctx)).toBe(
+      "Usage: theme set <name>.",
+    );
   });
 });

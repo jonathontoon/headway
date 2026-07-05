@@ -7,7 +7,6 @@ export const COMMANDS = {
   clear: "clear",
   echo: "echo ",
   theme: "theme",
-  themeImport: "theme import ",
 } as const;
 
 export const HELP_TEXT = [
@@ -42,8 +41,9 @@ export const HELP_TEXT = [
   "stats - summary counts",
   "export - print canonical todo.txt",
   "import <todo.txt lines> - replace stored tasks",
-  "theme [name] - list or switch themes; light/dark follows your browser",
-  "theme import <alacritty-toml> - import a theme",
+  "theme - print the current theme name",
+  "theme set <name> - switch themes",
+  "theme random <dark|light> - switch to a random theme with that mode",
   "clear - clear terminal output",
   "echo <text> - print text",
   "donate - donation link",
@@ -56,16 +56,14 @@ export const KEYBOARD_KEYS = {
 } as const;
 
 export const THEME_COMMAND_PREFIX_LENGTH = 6; // 'theme '.length
-export const THEME_IMPORT_COMMAND_PREFIX_LENGTH = 13; // 'theme import '.length
 
 // Theme command error messages
 export const THEME_ERROR_MESSAGES = {
-  invalidAlacrittyFormat:
-    "Error: could not parse theme. Paste an Alacritty .toml file from terminalcolors.com.",
   themeNotFound: (name: string) =>
-    `Theme "${name}" not found. Run "theme" to list available themes.`,
-  manualVariantsNotSupported:
-    "Manual theme variants are not supported. Light/dark follows your browser.",
+    `Theme "${name}" not found. Use "theme random dark" or "theme random light" to discover themes.`,
   themeSetWithoutVariant: (name: string) => `Theme set to ${name}.`,
-  themeImported: "Theme imported.",
+  randomModeRequired: "Usage: theme random <dark|light>.",
+  setNameRequired: "Usage: theme set <name>.",
+  unsupportedThemeCommand:
+    'Unsupported theme command. Use "theme", "theme set <name>", or "theme random <dark|light>".',
 } as const;

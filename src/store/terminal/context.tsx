@@ -11,7 +11,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
     createInitialTerminalState(loadStoredTodos()),
   );
-  const { theme, themes, setTheme, importTheme } = useTheme();
+  const { theme, themes, setTheme } = useTheme();
 
   const store = useMemo<TerminalStore>(
     () => ({
@@ -32,7 +32,6 @@ export function TerminalProvider({ children }: PropsWithChildren) {
             themes,
             currentTheme: theme,
             setTheme,
-            importTheme,
           });
           dispatch(terminalActions.submit(state.command, output, state.todos));
           return;
@@ -54,7 +53,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
         dispatch(terminalActions.navigateHistory(direction));
       },
     }),
-    [state, theme, themes, setTheme, importTheme],
+    [state, theme, themes, setTheme],
   );
 
   return (
