@@ -7,7 +7,7 @@
 
 .terminal-line {
   margin: 0;
-  color: #fff;
+  color: var(--foreground);
   font: 16px/1.5 var(--mono);
   white-space: pre-wrap;
 }
@@ -20,7 +20,7 @@
 .command,
 .terminal-output,
 .terminal-input {
-  color: #fff;
+  color: var(--foreground);
 }
 
 .terminal-output {
@@ -41,7 +41,7 @@
   padding: 0;
   border: 0;
   outline: 0;
-  background: #000;
-  caret-color: #fff;
+  background: var(--background);
+  caret-color: var(--foreground);
   font: inherit;
 }

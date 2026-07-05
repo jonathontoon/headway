@@ -1,6 +1,7 @@
+import { highlight, highlightOutput } from '../services/syntaxHighlight'
 import { useTerminal } from '../hooks/useTerminal'
 
-const prompt = 'headway@localhost:~$'
+const prompt = '~$'
 
 export function Terminal() {
   const { state, setCommand, submitCommand, navigateHistory } = useTerminal()
@@ -29,10 +30,10 @@ export function Terminal() {
         <div className="terminal-entry" key={entry.id}>
           <p className="terminal-line">
             <span className="prompt">{prompt}</span>
-            <span className="command"> {entry.command}</span>
+            <span className="command"> {highlight(entry.command)}</span>
           </p>
           {entry.output !== undefined && (
-            <p className="terminal-output">{entry.output}</p>
+            <p className="terminal-output">{highlightOutput(entry.output)}</p>
           )}
         </div>
       ))}

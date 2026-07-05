@@ -15,8 +15,10 @@ describe('App Component', () => {
     fireEvent.change(input, { target: { value: '1 + 1' } })
     fireEvent.submit(input.closest('form')!)
 
-    expect(screen.getAllByText('headway@localhost:~$')).toHaveLength(2)
-    expect(screen.getByText('1 + 1')).toBeInTheDocument()
+    expect(screen.getAllByText('~$')).toHaveLength(2)
+    // Command text is syntax-highlighted across multiple token spans — check textContent directly
+    const commandEl = document.querySelector('.command')
+    expect(commandEl?.textContent?.trim()).toBe('1 + 1')
     expect(screen.getByText('2')).toBeInTheDocument()
   })
 

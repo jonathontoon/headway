@@ -22,7 +22,7 @@ export function runCommand(command: string): string | undefined {
   }
 
   if (trimmedCommand === 'help') {
-    return 'Commands: help, clear, echo <text>. JavaScript expressions also work.'
+    return 'Commands: help, clear, echo <text>, theme [name], theme import <alacritty-toml>. JavaScript expressions also work.'
   }
 
   if (trimmedCommand.startsWith('echo ')) {
