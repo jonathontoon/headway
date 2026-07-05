@@ -58,10 +58,6 @@ export const KEYBOARD_KEYS = {
 export const THEME_COMMAND_PREFIX_LENGTH = 6; // 'theme '.length
 export const THEME_IMPORT_COMMAND_PREFIX_LENGTH = 13; // 'theme import '.length
 
-// Syntax highlighting
-export const ERROR_OUTPUT_PATTERN = /^[A-Z][a-zA-Z]*Error:/;
-export const SYNTAX_HIGHLIGHT_LANGUAGE = "javascript";
-
 // Theme
 export const THEME_ID_SEPARATOR = "/";
 export const THEME_VARIANTS = {

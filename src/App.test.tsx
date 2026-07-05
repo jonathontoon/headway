@@ -10,10 +10,11 @@ describe("App Component", () => {
     render(<App />);
     expect(screen.getByLabelText("Terminal prompt")).toBeInTheDocument();
     expect(screen.getByLabelText("Terminal command")).toHaveFocus();
-    expect(screen.getByText(/headway v0\.1\.0/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Type 'help' for all available commands\./),
-    ).toBeInTheDocument();
+    const bootOutput = document.querySelector(".terminal-output");
+    expect(bootOutput?.textContent).toContain("headway v0.1.0");
+    expect(bootOutput?.textContent).toContain(
+      "Type 'help' for all available commands.",
+    );
   });
 
   it("runs terminal task commands", () => {
@@ -23,8 +24,9 @@ describe("App Component", () => {
     fireEvent.change(input, { target: { value: "list +GarageSale" } });
     fireEvent.submit(input.closest("form")!);
 
-    expect(screen.getAllByText("~$")).toHaveLength(2);
-    // Command text is syntax-highlighted across multiple token spans - check textContent directly.
+    const promptEls = document.querySelectorAll(".prompt");
+    expect(promptEls).toHaveLength(2);
+    promptEls.forEach((el) => expect(el.textContent).toBe("~$"));
     const commandEl = document.querySelector(".command");
     expect(commandEl?.textContent?.trim()).toBe("list +GarageSale");
     expect(
@@ -39,11 +41,12 @@ describe("App Component", () => {
 
     fireEvent.change(input, { target: { value: "echo hello" } });
     fireEvent.submit(form);
-    expect(screen.getByText("hello")).toBeInTheDocument();
+    const outputEls = document.querySelectorAll(".terminal-output");
+    expect(outputEls[outputEls.length - 1]?.textContent).toBe("→ hello");
 
     fireEvent.change(input, { target: { value: "clear" } });
     fireEvent.submit(form);
-    expect(screen.queryByText("hello")).not.toBeInTheDocument();
+    expect(document.querySelector(".terminal-output")).not.toBeInTheDocument();
   });
 
   it("reports unknown commands instead of evaluating JavaScript", () => {
@@ -55,7 +58,7 @@ describe("App Component", () => {
 
     const outputEl = document.querySelectorAll(".terminal-output")[1];
     expect(outputEl?.textContent).toBe(
-      "1 is not a recognized command. Type 'help' for all available commands.",
+      "→ 1 is not a recognized command. Type 'help' for all available commands.",
     );
   });
 });

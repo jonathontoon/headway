@@ -47,8 +47,8 @@
       Consolas,
       Liberation Mono,
       monospace;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.9;
   }
 
   .terminal-entry {
@@ -70,8 +70,8 @@
       Consolas,
       Liberation Mono,
       monospace;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.9;
   }
 
   .terminal-form {
@@ -86,69 +86,81 @@
     border: 0;
     outline: 0;
     @apply bg-terminal-background;
-    caret-color: #ffffff;
+    caret-color: var(--color3);
     font: inherit;
   }
 }
 
-/* Prism syntax highlighting */
-.token.comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
+/* Terminal output formatting (see src/services/terminalFormat.tsx) */
+.terminal-row {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.terminal-row--help {
+  @apply flex gap-4;
+}
+
+.term-help-command {
+  min-width: 290px;
+}
+
+.term-header {
+  margin-top: 0.5em;
+}
+
+.term-indent {
+  padding-left: 2ch;
+}
+
+.term-gap {
+  height: 0.5em;
+}
+
+.term-count {
+  display: inline-block;
+  min-width: 2ch;
+  text-align: right;
+}
+
+.term-muted {
   @apply text-terminal-8;
 }
 
-.token.keyword,
-.token.tag,
-.token.selector {
-  @apply text-terminal-12;
+.term-success {
+  @apply text-terminal-2;
 }
 
-.token.string,
-.token.attr-value,
-.token.template-string {
-  @apply text-terminal-10;
-}
-
-.token.number,
-.token.regex,
-.token.unit {
-  @apply text-terminal-14;
-}
-
-.token.boolean,
-.token.null,
-.token.symbol {
-  @apply text-terminal-13;
-}
-
-.token.function,
-.token.function-name,
-.token.class-name,
-.token.attr-name {
+.term-warning {
   @apply text-terminal-11;
 }
 
-.token.property {
-  @apply text-terminal-9;
+.term-error {
+  @apply text-terminal-1;
 }
 
-.token.operator,
-.token.entity,
-.token.url,
-.token.variable {
-  @apply text-terminal-foreground;
+.term-project,
+.term-context {
+  @apply text-terminal-6;
 }
 
-.token.punctuation {
-  @apply text-terminal-foreground opacity-60;
+.term-due-overdue {
+  @apply text-terminal-1;
 }
 
-.token.important {
-  @apply text-terminal-9 font-bold;
+.term-due-today {
+  @apply text-terminal-11;
 }
 
-.token.error-output {
-  @apply text-terminal-9;
+.term-due-future {
+  @apply text-terminal-5;
+}
+
+.term-prompt-tilde {
+  @apply text-terminal-6;
+}
+
+.term-prompt-dollar,
+.term-command-accent {
+  @apply text-terminal-3;
 }

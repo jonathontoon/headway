@@ -1,4 +1,4 @@
-import { highlight, highlightOutput } from "../services/syntaxHighlight";
+import { formatOutput, formatPromptSymbol } from "../services/terminalFormat";
 import { useTerminal } from "../hooks/useTerminal";
 import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
 
@@ -29,19 +29,21 @@ export function Terminal() {
         <div className="terminal-entry" key={entry.id}>
           {entry.command !== undefined && (
             <p className="terminal-line">
-              <span className="prompt">{TERMINAL_PROMPT}</span>
-              <span className="command"> {highlight(entry.command)}</span>
+              <span className="prompt">
+                {formatPromptSymbol(TERMINAL_PROMPT)}
+              </span>
+              <span className="command"> {entry.command}</span>
             </p>
           )}
           {entry.output !== undefined && (
-            <p className="terminal-output">{highlightOutput(entry.output)}</p>
+            <div className="terminal-output">{formatOutput(entry.output)}</div>
           )}
         </div>
       ))}
 
       <form className="terminal-line terminal-form" onSubmit={handleSubmit}>
         <label className="prompt" htmlFor="terminal-command">
-          {TERMINAL_PROMPT}
+          {formatPromptSymbol(TERMINAL_PROMPT)}
         </label>
         <input
           id="terminal-command"
