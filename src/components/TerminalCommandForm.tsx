@@ -132,7 +132,7 @@ export function TerminalCommandForm({
           aria-label="Terminal command"
           autoComplete="off"
           autoFocus
-          className="absolute inset-0 w-full p-0 border-0 outline-0 bg-transparent text-transparent caret-transparent [font:inherit]"
+          className="absolute inset-0 w-full p-0 border-0 outline-0 focus:outline-0 focus-visible:outline-0 [-webkit-tap-highlight-color:transparent] bg-transparent text-transparent caret-transparent [font:inherit]"
           value={command}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={handleKeyDown}
