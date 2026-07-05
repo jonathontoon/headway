@@ -7,44 +7,123 @@
   font-style: normal;
 }
 
-:root {
-  --mono:
-    "Departure Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --background: #000000;
-  --foreground: #ffffff;
-  --color0: #000000;
-  --color1: #cc0000;
-  --color2: #4e9a06;
-  --color3: #c4a000;
-  --color4: #3465a4;
-  --color5: #75507b;
-  --color6: #06989a;
-  --color7: #d3d7cf;
-  --color8: #555753;
-  --color9: #ef2929;
-  --color10: #8ae234;
-  --color11: #fce94f;
-  --color12: #729fcf;
-  --color13: #ad7fa8;
-  --color14: #34e2e2;
-  --color15: #eeeeec;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  font: 16px/1.5 var(--mono);
-  letter-spacing: 0;
-  color-scheme: dark;
-  color: var(--foreground);
-  background: var(--background);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  html {
+    @apply font-mono text-base leading-relaxed text-terminal-foreground bg-terminal-background;
+    letter-spacing: 0;
+    color-scheme: dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply m-0 bg-terminal-background;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
 }
 
-#root {
-  min-height: 100svh;
+@layer components {
+  .terminal {
+    @apply block min-h-screen p-6 box-border;
+  }
+
+  .terminal-line {
+    @apply m-0 text-terminal-foreground font-mono text-base leading-relaxed whitespace-pre-wrap;
+  }
+
+  .terminal-entry {
+    @apply mb-2;
+  }
+
+  .prompt,
+  .command,
+  .terminal-output,
+  .terminal-input {
+    @apply text-terminal-foreground;
+  }
+
+  .terminal-output {
+    @apply m-0 font-mono text-base leading-relaxed whitespace-pre-wrap;
+  }
+
+  .terminal-form {
+    @apply flex items-baseline;
+  }
+
+  .terminal-input {
+    @apply flex-1 min-w-fit m-0 ml-1 p-0 border-0 outline-0 bg-terminal-background;
+    caret-color: #ffffff;
+    font: inherit;
+  }
 }
 
-body {
-  margin: 0;
-  background: var(--background);
+/* Prism syntax highlighting */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  @apply text-terminal-8;
+}
+
+.token.keyword,
+.token.tag,
+.token.selector {
+  @apply text-terminal-12;
+}
+
+.token.string,
+.token.attr-value,
+.token.template-string {
+  @apply text-terminal-10;
+}
+
+.token.number,
+.token.regex,
+.token.unit {
+  @apply text-terminal-14;
+}
+
+.token.boolean,
+.token.null,
+.token.symbol {
+  @apply text-terminal-13;
+}
+
+.token.function,
+.token.function-name,
+.token.class-name,
+.token.attr-name {
+  @apply text-terminal-11;
+}
+
+.token.property {
+  @apply text-terminal-9;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.token.variable {
+  @apply text-terminal-foreground;
+}
+
+.token.punctuation {
+  @apply text-terminal-foreground opacity-60;
+}
+
+.token.important {
+  @apply text-terminal-9 font-bold;
+}
+
+.token.error-output {
+  @apply text-terminal-9;
 }
