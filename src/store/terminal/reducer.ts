@@ -83,6 +83,24 @@ export function terminalReducer(
         command: "",
         historyIndex: null,
       };
+    case "clearScreen":
+      return {
+        ...state,
+        entries: [],
+      };
+    case "cancel":
+      return {
+        ...state,
+        entries: [
+          ...state.entries,
+          {
+            id: state.entries.length,
+            command: `${state.command}^C`,
+          },
+        ],
+        command: "",
+        historyIndex: null,
+      };
     case "submit":
       return {
         ...state,

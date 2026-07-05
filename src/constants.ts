@@ -53,7 +53,37 @@ export const HELP_TEXT = [
 export const KEYBOARD_KEYS = {
   arrowUp: "ArrowUp",
   arrowDown: "ArrowDown",
+  tab: "Tab",
 } as const;
+
+// First-word command verbs, used for Tab completion
+export const COMMAND_VERBS = [
+  "add",
+  "edit",
+  "show",
+  "delete",
+  "complete",
+  "undo",
+  "due",
+  "priority",
+  "tag",
+  "project",
+  "clear",
+  "list",
+  "inbox",
+  "today",
+  "upcoming",
+  "someday",
+  "archive",
+  "projects",
+  "stats",
+  "export",
+  "import",
+  "theme",
+  "echo",
+  "donate",
+  "help",
+] as const;
 
 export const THEME_COMMAND_PREFIX_LENGTH = 6; // 'theme '.length
 

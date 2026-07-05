@@ -52,6 +52,12 @@ export function TerminalProvider({ children }: PropsWithChildren) {
       navigateHistory(direction) {
         dispatch(terminalActions.navigateHistory(direction));
       },
+      cancelCommand() {
+        dispatch(terminalActions.cancel());
+      },
+      clearScreen() {
+        dispatch(terminalActions.clearScreen());
+      },
     }),
     [state, theme, themes, setTheme],
   );

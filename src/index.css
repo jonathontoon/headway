@@ -29,4 +29,9 @@
   #root {
     @apply min-h-screen;
   }
+
+  ::selection {
+    background-color: var(--foreground);
+    color: var(--background);
+  }
 }

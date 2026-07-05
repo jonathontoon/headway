@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -6,20 +7,37 @@ import {
   type KeyboardEvent,
 } from "react";
 import { formatPromptSymbol } from "../services/terminalFormat";
-import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
+import { TERMINAL_PROMPT, KEYBOARD_KEYS, COMMAND_VERBS } from "../constants";
 
 type TerminalCommandFormProps = {
   readonly command: string;
   readonly onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   readonly onChange: (command: string) => void;
   readonly onNavigateHistory: (direction: "previous" | "next") => void;
+  readonly onCancel: () => void;
+  readonly onClearScreen: () => void;
 };
+
+function completeCommand(command: string): string | null {
+  if (command.includes(" ") || command.length === 0) {
+    return null;
+  }
+
+  const matches = COMMAND_VERBS.filter((verb) => verb.startsWith(command));
+  if (matches.length !== 1) {
+    return null;
+  }
+
+  return `${matches[0]} `;
+}
 
 export function TerminalCommandForm({
   command,
   onSubmit,
   onChange,
   onNavigateHistory,
+  onCancel,
+  onClearScreen,
 }: TerminalCommandFormProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [cursorPosition, setCursorPosition] = useState(command.length);
@@ -32,6 +50,28 @@ export function TerminalCommandForm({
     syncCursorPosition();
   }, [command]);
 
+  useEffect(() => {
+    function focusInputForTyping(event: globalThis.KeyboardEvent) {
+      const input = inputRef.current;
+      if (!input || document.activeElement === input) {
+        return;
+      }
+
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      if (event.key.length !== 1 && event.key !== "Backspace") {
+        return;
+      }
+
+      input.focus();
+    }
+
+    window.addEventListener("keydown", focusInputForTyping);
+    return () => window.removeEventListener("keydown", focusInputForTyping);
+  }, []);
+
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === KEYBOARD_KEYS.arrowUp) {
       event.preventDefault();
@@ -42,6 +82,31 @@ export function TerminalCommandForm({
     if (event.key === KEYBOARD_KEYS.arrowDown) {
       event.preventDefault();
       onNavigateHistory("next");
+      return;
+    }
+
+    if (event.key === KEYBOARD_KEYS.tab) {
+      event.preventDefault();
+      const completed = completeCommand(command);
+      if (completed !== null) {
+        onChange(completed);
+      }
+      return;
+    }
+
+    if (event.ctrlKey && event.key === "c") {
+      const hasSelection = Boolean(window.getSelection()?.toString());
+      if (hasSelection) {
+        return;
+      }
+      event.preventDefault();
+      onCancel();
+      return;
+    }
+
+    if (event.ctrlKey && event.key === "l") {
+      event.preventDefault();
+      onClearScreen();
     }
   }
 
