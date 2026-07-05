@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
+    "generate:themes": "node scripts/generate-terminal-colors.mjs",
     "test": "vitest run",
     "preview": "vite preview",
     "prepare": "husky"

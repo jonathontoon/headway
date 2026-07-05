@@ -1,13 +1,15 @@
-import { THEME_ID_SEPARATOR } from "../../constants";
+export type ThemeMode = "dark" | "light";
 
 export type Theme = {
   readonly name: string;
-  readonly variant: string;
+  readonly mode: ThemeMode;
   readonly background: string;
   readonly foreground: string;
   readonly colors: string[];
 };
 
-export function themeId(theme: Pick<Theme, "name" | "variant">): string {
-  return `${theme.name}${THEME_ID_SEPARATOR}${theme.variant}`;
-}
+export type ThemeFamily = {
+  readonly name: string;
+  readonly dark?: Theme;
+  readonly light?: Theme;
+};

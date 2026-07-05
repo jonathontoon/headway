@@ -1,5 +1,5 @@
 import { parseAlacrittyToml } from "./parseTheme";
-import { themeId, type Theme } from "./types";
+import type { Theme, ThemeFamily } from "./types";
 import {
   COMMANDS,
   THEME_ERROR_MESSAGES,
@@ -8,32 +8,22 @@ import {
 } from "../../constants";
 
 type ThemeCommandContext = {
-  themes: readonly Theme[];
+  themes: readonly ThemeFamily[];
   currentTheme: Theme;
-  setTheme: (name: string, variant: string) => void;
+  setTheme: (name: string) => void;
   importTheme: (theme: Theme) => void;
 };
 
-function groupByName(themes: readonly Theme[]): Map<string, readonly Theme[]> {
-  const map = new Map<string, Theme[]>();
-  for (const t of themes) {
-    const group = map.get(t.name) ?? [];
-    group.push(t);
-    map.set(t.name, group);
-  }
-  return map;
-}
+function formatList(
+  themes: readonly ThemeFamily[],
+  currentName: string,
+): string {
+  const nameWidth = Math.max(...themes.map((t) => t.name.length));
 
-function formatList(themes: readonly Theme[], currentId: string): string {
-  const groups = groupByName(themes);
-  const nameWidth = Math.max(...[...groups.keys()].map((n) => n.length));
-
-  return [...groups.entries()]
-    .map(([name, variants]) => {
-      const variantStr = variants
-        .map((t) => (themeId(t) === currentId ? `${t.variant}*` : t.variant))
-        .join("  ");
-      return `  ${name.padEnd(nameWidth)}  ${variantStr}`;
+  return themes
+    .map((theme) => {
+      const marker = theme.name === currentName ? "*" : " ";
+      return `${marker} ${theme.name.padEnd(nameWidth)}`;
     })
     .join("\n");
 }
@@ -43,10 +33,9 @@ export function handleThemeCommand(
   ctx: ThemeCommandContext,
 ): string | undefined {
   const trimmed = command.trim();
-  const currentId = themeId(ctx.currentTheme);
 
   if (trimmed === COMMANDS.theme) {
-    return formatList(ctx.themes, currentId);
+    return formatList(ctx.themes, ctx.currentTheme.name);
   }
 
   if (trimmed.startsWith(COMMANDS.themeImport)) {
@@ -63,30 +52,18 @@ export function handleThemeCommand(
     const args = trimmed.slice(THEME_COMMAND_PREFIX_LENGTH).trim().split(/\s+/);
     const [name, variant] = args;
 
-    const matches = ctx.themes.filter((t) => t.name === name);
+    const found = ctx.themes.find((t) => t.name === name);
 
-    if (matches.length === 0) {
+    if (!found) {
       return THEME_ERROR_MESSAGES.themeNotFound(name);
     }
 
     if (variant) {
-      const found = matches.find((t) => t.variant === variant);
-      if (!found) {
-        const available = matches.map((t) => t.variant).join(", ");
-        return THEME_ERROR_MESSAGES.variantNotFound(variant, name, available);
-      }
-      ctx.setTheme(name, variant);
-      return THEME_ERROR_MESSAGES.themeSet(name, variant);
+      return THEME_ERROR_MESSAGES.manualVariantsNotSupported;
     }
 
-    // No variant specified
-    if (matches.length === 1) {
-      ctx.setTheme(name, matches[0].variant);
-      return THEME_ERROR_MESSAGES.themeSetWithoutVariant(name);
-    }
-
-    const variantList = matches.map((t) => t.variant).join(", ");
-    return THEME_ERROR_MESSAGES.variantsList(name, variantList);
+    ctx.setTheme(name);
+    return THEME_ERROR_MESSAGES.themeSetWithoutVariant(name);
   }
 
   return undefined;

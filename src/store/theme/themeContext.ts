@@ -1,10 +1,10 @@
 import { createContext, useContext } from "react";
-import type { Theme } from "./types";
+import type { Theme, ThemeFamily } from "./types";
 
 export type ThemeStore = {
   readonly theme: Theme;
-  readonly themes: readonly Theme[];
-  readonly setTheme: (name: string, variant: string) => void;
+  readonly themes: readonly ThemeFamily[];
+  readonly setTheme: (name: string) => void;
   readonly importTheme: (theme: Theme) => void;
 };
 

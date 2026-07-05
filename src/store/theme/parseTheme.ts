@@ -1,4 +1,4 @@
-import type { Theme } from "./types";
+import type { Theme, ThemeMode } from "./types";
 
 function extractHex(text: string, key: string): string | null {
   const match = text.match(
@@ -14,7 +14,15 @@ function extractSection(raw: string, header: string): string {
   return nextSection === -1 ? raw.slice(start) : raw.slice(start, nextSection);
 }
 
-export function parseAlacrittyToml(raw: string): Theme | null {
+type ParseThemeOptions = {
+  readonly name?: string;
+  readonly mode?: ThemeMode;
+};
+
+export function parseAlacrittyToml(
+  raw: string,
+  options: ParseThemeOptions = {},
+): Theme | null {
   const bg = extractHex(raw, "background");
   const fg = extractHex(raw, "foreground");
 
@@ -50,8 +58,8 @@ export function parseAlacrittyToml(raw: string): Theme | null {
   }
 
   return {
-    name: "imported",
-    variant: "custom",
+    name: options.name ?? "imported",
+    mode: options.mode ?? "dark",
     background: bg,
     foreground: fg,
     colors: [...normal, ...bright] as unknown as Theme["colors"],
