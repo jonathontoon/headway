@@ -1,5 +1,15 @@
+@font-face {
+  font-family: "Departure Mono";
+  src:
+    url("/fonts/DepartureMono-Regular.woff2") format("woff2"),
+    url("/fonts/DepartureMono-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+}
+
 :root {
-  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --mono:
+    "Departure Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --background: #000000;
   --foreground: #ffffff;
   --color0: #000000;
