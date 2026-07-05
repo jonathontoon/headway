@@ -146,20 +146,7 @@ describe("todo commands", () => {
     );
   });
 
-  it("imports, exports, and reports unknown commands", () => {
-    const imported = runTodoCommand(
-      "import (A) 2026-07-05 One\n2026-07-05 Two +Project",
-      { todos },
-      clock,
-    );
-
-    expect(imported.nextTodos).toEqual([
-      "(A) 2026-07-05 One",
-      "2026-07-05 Two +Project",
-    ]);
-    expect(
-      runTodoCommand("export", { todos: imported.nextTodos }, clock).output,
-    ).toBe("(A) 2026-07-05 One\n2026-07-05 Two +Project");
+  it("reports unknown commands", () => {
     expect(runTodoCommand("lst", { todos }, clock).output).toBe(
       "lst is not a recognized command. Type 'help' for all available commands.",
     );

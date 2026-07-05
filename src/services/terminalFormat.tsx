@@ -123,7 +123,7 @@ function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
   return (
     <div key={key} className="block whitespace-pre-wrap">
       <span
-        className={`inline-block min-w-[2ch] text-right ${statLabelClassName(label) ?? ""}`}
+        className={`inline-block min-w-[3ch] text-right ${statLabelClassName(label) ?? ""}`}
       >
         {count}
       </span>{" "}
@@ -147,8 +147,11 @@ function renderHelpCommandSegment(segment: string): ReactNode {
 function renderHelpRow(match: RegExpMatchArray, key: number): ReactNode {
   const [, command, description] = match;
   return (
-    <div key={key} className="flex gap-4 whitespace-pre-wrap">
-      <span className="min-w-[290px] text-terminal-3">
+    <div
+      key={key}
+      className="grid grid-cols-[290px_1fr] gap-4 whitespace-pre-wrap"
+    >
+      <span className="text-terminal-3">
         {renderHelpCommandSegment(command)}
       </span>
       <span className="text-terminal-8">{description}</span>

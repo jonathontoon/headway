@@ -11,7 +11,6 @@ import type {
 const PRIORITY_PATTERN = /^[A-Z]$/;
 const CONTEXT_PATTERN = /^@\S+$/;
 const PROJECT_PATTERN = /^\+\S+$/;
-const IMPORT_PREFIX = "import ";
 
 type IndexedTask = {
   readonly id: number;
@@ -678,26 +677,6 @@ function runStats(todos: readonly string[], today: string): TodoCommandResult {
   };
 }
 
-function runImport(
-  todos: readonly string[],
-  rawText: string,
-): TodoCommandResult {
-  const lines = rawText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const invalid = lines.find((line) => !parseTodoLine(line).ok);
-
-  if (invalid) {
-    return {
-      nextTodos: todos,
-      output: `Error: invalid todo.txt line: ${invalid}`,
-    };
-  }
-
-  return { nextTodos: lines, output: `Imported ${lines.length} tasks.` };
-}
-
 export function runTodoCommand(
   command: string,
   state: TodoCommandState,
@@ -715,14 +694,6 @@ export function runTodoCommand(
 
   if (trimmedCommand.startsWith("echo ")) {
     return { nextTodos: state.todos, output: trimmedCommand.slice(5) };
-  }
-
-  if (trimmedCommand === "export") {
-    return { nextTodos: state.todos, output: state.todos.join("\n") };
-  }
-
-  if (trimmedCommand.startsWith(IMPORT_PREFIX)) {
-    return runImport(state.todos, trimmedCommand.slice(IMPORT_PREFIX.length));
   }
 
   const [commandName, ...args] = trimmedCommand.split(/\s+/);
@@ -776,7 +747,7 @@ export function runTodoCommand(
       return {
         nextTodos: state.todos,
         output:
-          "headway is free and always will be.\nIf it's saved you time, you can buy the maintainers a coffee:\nhttps://headway.dev/donate",
+          "headway is free and always will be. ♥\nIf it's saved you time, you can buy the maintainers a coffee:\nhttps://headway.dev/donate",
       };
     default:
       return {
