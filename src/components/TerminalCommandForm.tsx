@@ -108,7 +108,7 @@ export function TerminalCommandForm({
   }, []);
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    queueMicrotask(syncCursorPosition);
+    requestAnimationFrame(syncCursorPosition);
 
     if (event.key === KEYBOARD_KEYS.arrowUp) {
       event.preventDefault();

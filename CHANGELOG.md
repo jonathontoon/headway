@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.12.2] - 2026-07-06
+
+### Fixed
+
+- Terminal cursor color now matches the typed command text (`text-terminal-foreground`) instead of the prompt's `$` symbol color.
+- Cursor position now updates promptly on keydown instead of lagging a keystroke behind, by deferring the position read with `requestAnimationFrame` instead of `queueMicrotask`.
+- Scrolling to the bottom after submitting a command now reaches the true bottom of the page, accounting for `<main>`'s trailing padding.
+
 ## [0.12.1] - 2026-07-06
 
 ### Removed

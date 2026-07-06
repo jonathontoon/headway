@@ -50,7 +50,10 @@ export function Terminal() {
         onCancel={cancelCommand}
         onClearScreen={clearScreen}
       />
-      <div ref={bottomRef} />
+      <div
+        ref={bottomRef}
+        className="scroll-mb-4 sm:scroll-mb-6 md:scroll-mb-8"
+      />
     </main>
   );
 }
