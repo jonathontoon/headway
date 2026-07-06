@@ -13,7 +13,7 @@ describe("App Component", () => {
     const bootOutput = document.querySelector(
       '[data-testid="terminal-output"]',
     );
-    expect(bootOutput?.textContent).toContain("headway v0.1.0");
+    expect(bootOutput?.textContent).toContain("headway v0.12.2");
     expect(bootOutput?.textContent).toContain(
       "Type 'help' for all available commands.",
     );
@@ -34,25 +34,6 @@ describe("App Component", () => {
     expect(
       screen.getAllByText(/Schedule Goodwill pickup/).length,
     ).toBeGreaterThan(0);
-  });
-
-  it("clears terminal entries", () => {
-    render(<App />);
-    const input = screen.getByLabelText("Terminal command");
-    const form = input.closest("form")!;
-
-    fireEvent.change(input, { target: { value: "echo hello" } });
-    fireEvent.submit(form);
-    const outputEls = document.querySelectorAll(
-      '[data-testid="terminal-output"]',
-    );
-    expect(outputEls[outputEls.length - 1]?.textContent).toBe("→ hello");
-
-    fireEvent.change(input, { target: { value: "clear" } });
-    fireEvent.submit(form);
-    expect(
-      document.querySelector('[data-testid="terminal-output"]'),
-    ).not.toBeInTheDocument();
   });
 
   it("reports unknown commands instead of evaluating JavaScript", () => {

@@ -22,11 +22,6 @@ export function TerminalProvider({ children }: PropsWithChildren) {
       submitCommand() {
         const cmd = state.command.trim();
 
-        if (cmd === "clear") {
-          dispatch(terminalActions.clear());
-          return;
-        }
-
         if (cmd === "theme" || cmd.startsWith("theme ")) {
           const output = handleThemeCommand(cmd, {
             themes,
