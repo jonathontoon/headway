@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.14.1] - 2026-07-06
+
+### Fixed
+
+- Mobile Safari: stray native caret left rendered at the start of the command input after typing.
+- Mobile Safari: viewport zoomed in when the command input was focused.
+
 ## [0.14.0] - 2026-07-06
 
 ### Added

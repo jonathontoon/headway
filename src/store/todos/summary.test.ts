@@ -15,7 +15,7 @@ describe("todo boot summary", () => {
 
     expect(message).toBe(
       [
-        "↗ headway v0.14.0",
+        "↗ headway v0.14.1",
         "Good evening. You have 1 overdue task, and 1 due today.",
         "OVERDUE",
         "1. Pay electric bill +bills due:2026-06-28",

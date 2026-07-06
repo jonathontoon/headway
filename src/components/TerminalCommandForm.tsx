@@ -95,7 +95,12 @@ export function TerminalCommandForm({
   }
 
   useLayoutEffect(() => {
-    setCursorPosition(inputRef.current?.selectionStart ?? 0);
+    const position = inputRef.current?.selectionStart ?? 0;
+    setCursorPosition(position);
+    // iOS Safari can leave its native caret rendered at a stale position
+    // (typically the start of the field) after a controlled re-render.
+    // Re-applying the selection forces it to repaint at the correct spot.
+    inputRef.current?.setSelectionRange(position, position);
 
     if (isInitialRenderRef.current) {
       isInitialRenderRef.current = false;
@@ -193,8 +198,11 @@ export function TerminalCommandForm({
           id="terminal-command"
           aria-label="Terminal command"
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           autoFocus
-          className="absolute inset-0 w-full p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] bg-transparent text-transparent caret-transparent [font:inherit]"
+          className="absolute inset-0 w-full p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] bg-transparent text-transparent caret-transparent font-mono text-[16px]"
           value={command}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={handleKeyDown}
