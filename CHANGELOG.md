@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.14.0] - 2026-07-06
+
+### Added
+
+- Tab completion now also matches second-word subcommands, e.g. `clear due|priority|tags|project` and `theme set|random|test`.
+
 ## [0.13.0] - 2026-07-06
 
 ### Added

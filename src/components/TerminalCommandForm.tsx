@@ -7,7 +7,12 @@ import {
   type KeyboardEvent,
 } from "react";
 import { formatPromptSymbol } from "../services/terminalFormat";
-import { TERMINAL_PROMPT, KEYBOARD_KEYS, COMMAND_VERBS } from "../constants";
+import {
+  TERMINAL_PROMPT,
+  KEYBOARD_KEYS,
+  COMMAND_VERBS,
+  SUBCOMMAND_VERBS,
+} from "../constants";
 
 type TerminalCommandFormProps = {
   readonly command: string;
@@ -19,16 +24,35 @@ type TerminalCommandFormProps = {
 };
 
 function completeCommand(command: string): string | null {
-  if (command.includes(" ") || command.length === 0) {
+  if (command.length === 0) {
     return null;
   }
 
-  const matches = COMMAND_VERBS.filter((verb) => verb.startsWith(command));
-  if (matches.length !== 1) {
-    return null;
+  const words = command.split(" ");
+
+  if (words.length === 1) {
+    const matches = COMMAND_VERBS.filter((verb) => verb.startsWith(words[0]));
+    if (matches.length !== 1) {
+      return null;
+    }
+    return `${matches[0]} `;
   }
 
-  return `${matches[0]} `;
+  if (words.length === 2 && words[1].length > 0) {
+    const candidates = SUBCOMMAND_VERBS[words[0]];
+    if (!candidates) {
+      return null;
+    }
+
+    const matches = candidates.filter((verb) => verb.startsWith(words[1]));
+    if (matches.length !== 1) {
+      return null;
+    }
+
+    return `${words[0]} ${matches[0]} `;
+  }
+
+  return null;
 }
 
 const CURSOR_BLINK_RESUME_DELAY_MS = 500;
