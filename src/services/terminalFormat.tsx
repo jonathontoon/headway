@@ -147,7 +147,7 @@ function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
   return (
     <div key={key} className="block whitespace-pre-wrap">
       <span
-        className={`inline-block min-w-[2ch] text-right ${statLabelClassName(label) ?? ""}`}
+        className={`inline-block min-w-[3ch] text-right ${statLabelClassName(label) ?? ""}`}
       >
         {count}
       </span>{" "}

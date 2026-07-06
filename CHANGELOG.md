@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.12.3] - 2026-07-06
+
+### Fixed
+
+- `stats` output rows were misaligned with the summary line above them; the count column is now wide enough to line up with the summary line's `→ ` prefix.
+
 ## [0.12.2] - 2026-07-06
 
 ### Fixed
