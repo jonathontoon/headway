@@ -188,7 +188,9 @@ export function TerminalCommandForm({
               className={`absolute left-0 top-0 grid ${isCursorBlinking ? "animate-terminal-cursor-blink" : ""}`}
               aria-hidden="true"
             >
-              <span className="col-start-1 row-start-1 text-terminal-3">█</span>
+              <span className="col-start-1 row-start-1 text-terminal-foreground">
+                █
+              </span>
               <span className="col-start-1 row-start-1 text-terminal-background">
                 {charUnderCursor}
               </span>
