@@ -26,13 +26,15 @@ export const HELP_TEXT = [
   "clear due|priority|tags|project <id> [<id>...] - clear attributes",
   "",
   "VIEWS",
-  'list [+Project|@tag|"keyword"] - list incomplete tasks',
-  "inbox - tasks with no due date and no project",
-  "today - due today, plus overdue",
-  "upcoming - future-dated tasks",
-  "someday - project tasks with no due date",
-  "archive - completed tasks",
-  "projects - list all projects",
+  "list                         list incomplete tasks",
+  "list today                   due today and overdue",
+  "list upcoming                future-dated tasks",
+  "list inbox                   no due date and no project",
+  "list someday                 project tasks with no due date",
+  'list +Project|@tag|"keyword"     filter incomplete tasks',
+  "",
+  "archive                      completed tasks",
+  "projects                     list all projects",
   "",
   "OTHER",
   "stats - summary counts",
@@ -79,6 +81,7 @@ export const COMMAND_VERBS = [
 // Second-word subcommand verbs, keyed by first-word command, used for Tab completion
 export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
   clear: ["due", "priority", "tags", "project"],
+  list: ["today", "upcoming", "inbox", "someday"],
   theme: ["set", "random", "test"],
 };
 

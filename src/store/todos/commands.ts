@@ -554,8 +554,25 @@ function runClear(
 function runList(
   todos: readonly string[],
   filterText: string,
+  today: string,
 ): TodoCommandResult {
-  const filter = filterText.trim().replace(/^"|"$/g, "");
+  const trimmedFilter = filterText.trim();
+  const isQuotedKeyword = /^".*"$/.test(trimmedFilter);
+  const filter = trimmedFilter.replace(/^"|"$/g, "");
+
+  if (!isQuotedKeyword) {
+    switch (filter) {
+      case "today":
+        return runToday(todos, today);
+      case "upcoming":
+        return runUpcoming(todos, today);
+      case "inbox":
+        return runInbox(todos);
+      case "someday":
+        return runSomeday(todos);
+    }
+  }
+
   const tasks = incompleteTasks(todos).filter(({ task }) => {
     if (filter === "") return true;
     if (filter.startsWith("+")) return task.projects.includes(filter.slice(1));
@@ -718,7 +735,7 @@ export function runTodoCommand(
     case "clear":
       return runClear(state.todos, args);
     case "list":
-      return runList(state.todos, args.join(" "));
+      return runList(state.todos, args.join(" "), clock.today());
     case "today":
       return runToday(state.todos, clock.today());
     case "upcoming":

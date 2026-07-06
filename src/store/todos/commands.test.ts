@@ -146,6 +146,45 @@ describe("todo commands", () => {
     );
   });
 
+  it("renders named views through list", () => {
+    const todosWithUpcoming = [
+      ...todos,
+      "2026-07-05 Book flights +travel due:2026-07-09",
+    ];
+
+    expect(runTodoCommand("list today", { todos }, clock).output).toContain(
+      "1. (A) Pay electric bill +bills due:2026-07-04",
+    );
+    expect(
+      runTodoCommand("list upcoming", { todos: todosWithUpcoming }, clock)
+        .output,
+    ).toBe("6. Book flights +travel due:2026-07-09");
+    expect(runTodoCommand("list inbox", { todos }, clock).output).toBe(
+      "3. Fix leaky faucet @home",
+    );
+    expect(runTodoCommand("list someday", { todos }, clock).output).toContain(
+      "4. Submit quarterly report +work @computer",
+    );
+  });
+
+  it("keeps list project, tag, and keyword filters", () => {
+    expect(runTodoCommand("list +work", { todos }, clock).output).toContain(
+      "4. Submit quarterly report +work @computer",
+    );
+    expect(runTodoCommand("list @home", { todos }, clock).output).toBe(
+      "3. Fix leaky faucet @home",
+    );
+    expect(runTodoCommand('list "quarterly"', { todos }, clock).output).toBe(
+      "4. Submit quarterly report +work @computer",
+    );
+  });
+
+  it("treats quoted list view names as keyword filters", () => {
+    expect(runTodoCommand('list "today"', { todos }, clock).output).toBe(
+      'No incomplete tasks match "today".',
+    );
+  });
+
   it("reports unknown commands", () => {
     expect(runTodoCommand("lst", { todos }, clock).output).toBe(
       "lst is not a recognized command. Type 'help' for all available commands.",

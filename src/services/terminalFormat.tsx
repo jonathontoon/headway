@@ -26,7 +26,7 @@ const SECONDARY_LINE_PREFIXES = ["created:", "If it's saved you time"];
 
 const TASK_LINE_PATTERN = /^(\d+)\.\s+(?:\((\w)\)\s+)?(.*)$/;
 const COUNT_ROW_PATTERN = /^(\d+)\s+(\+[\w-]+|[a-z][a-z ]*)$/;
-const HELP_ROW_PATTERN = /^(.+?) - (.+)$/;
+const HELP_ROW_PATTERN = /^(.+?)(?: - |\s{2,})(.+)$/;
 const URL_PATTERN = /^https?:\/\//;
 const BOOT_BANNER_PATTERN = /^↗ /;
 const GREETING_PATTERN = /^(Good morning|Good afternoon|Good evening)\./;
