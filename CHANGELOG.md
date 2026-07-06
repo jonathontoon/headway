@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.12.1] - 2026-07-06
+
+### Removed
+
+- `echo <text>` command.
+- Bare `clear` command (terminal output clearing via typed command; `clear due|priority|tags|project <id>` attribute clearing is unaffected).
+- `edit <id>` with no text (the unimplemented `$EDITOR` stub); `edit <id> <text>` is unaffected.
+- `export` and `import <todo.txt lines>` help/tab-completion entries, which had never been implemented.
+
 ## [0.12.0] - 2026-07-06
 
 Retroactively reconstructed from Conventional Commit history: this project's version

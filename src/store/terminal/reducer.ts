@@ -76,13 +76,6 @@ export function terminalReducer(
   action: TerminalAction,
 ): TerminalState {
   switch (action.type) {
-    case "clear":
-      return {
-        ...state,
-        entries: [],
-        command: "",
-        historyIndex: null,
-      };
     case "clearScreen":
       return {
         ...state,

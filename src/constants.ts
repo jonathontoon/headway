@@ -4,15 +4,12 @@ export const TERMINAL_PROMPT = "~$";
 // Command keywords
 export const COMMANDS = {
   help: "help",
-  clear: "clear",
-  echo: "echo ",
   theme: "theme",
 } as const;
 
 export const HELP_TEXT = [
   "TASKS",
   'add "text [+Project] [due:DATE] [@tag]" - add a task',
-  "edit <id> - open task in $EDITOR",
   "edit <id> <text> - replace task line directly",
   "show <id> - print full detail for one task",
   "delete <id> [<id>...] - delete permanently",
@@ -39,14 +36,10 @@ export const HELP_TEXT = [
   "",
   "OTHER",
   "stats - summary counts",
-  "export - print canonical todo.txt",
-  "import <todo.txt lines> - replace stored tasks",
   "theme - print the current theme name",
   "theme set <name> - switch themes",
   "theme random <dark|light> - switch to a random theme with that mode",
   "theme test - explain current theme color slots",
-  "clear - clear terminal output",
-  "echo <text> - print text",
   "donate - donation link",
 ].join("\n");
 
@@ -78,10 +71,7 @@ export const COMMAND_VERBS = [
   "archive",
   "projects",
   "stats",
-  "export",
-  "import",
   "theme",
-  "echo",
   "donate",
   "help",
 ] as const;

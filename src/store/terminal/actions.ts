@@ -1,5 +1,4 @@
 export type TerminalAction =
-  | { readonly type: "clear" }
   | { readonly type: "clearScreen" }
   | { readonly type: "cancel" }
   | {
@@ -18,7 +17,6 @@ export type TerminalAction =
     };
 
 export const terminalActions = {
-  clear: (): TerminalAction => ({ type: "clear" }),
   clearScreen: (): TerminalAction => ({ type: "clearScreen" }),
   cancel: (): TerminalAction => ({ type: "cancel" }),
   submit: (

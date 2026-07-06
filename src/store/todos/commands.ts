@@ -259,7 +259,7 @@ function runEdit(
   }
 
   if (textParts.length === 0) {
-    return { nextTodos: todos, output: "Opened in $EDITOR." };
+    return { nextTodos: todos, output: "Usage: edit <id> <text>." };
   }
 
   const text = textParts.join(" ");
@@ -690,10 +690,6 @@ export function runTodoCommand(
 
   if (trimmedCommand === "help") {
     return { nextTodos: state.todos, output: HELP_TEXT };
-  }
-
-  if (trimmedCommand.startsWith("echo ")) {
-    return { nextTodos: state.todos, output: trimmedCommand.slice(5) };
   }
 
   const [commandName, ...args] = trimmedCommand.split(/\s+/);
