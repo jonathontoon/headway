@@ -10,7 +10,7 @@ export function TerminalEntry({ command, output }: TerminalEntryProps) {
   return (
     <div className="mb-2 md:mb-3">
       {command !== undefined && (
-        <p className="m-0 text-terminal-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9]">
+        <p className="m-0 mb-2 md:mb-3 text-terminal-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9]">
           <span data-testid="prompt" className="text-terminal-foreground">
             {formatPromptSymbol(TERMINAL_PROMPT)}
           </span>
