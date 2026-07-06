@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { getLocalDate } from "../store/todos/summary";
+import { HELP_TEXT } from "../constants";
 
 const SECTION_HEADERS = new Set([
   "TASKS",
@@ -167,14 +168,48 @@ function renderHelpCommandSegment(segment: string): ReactNode {
   );
 }
 
-function renderHelpRow(match: RegExpMatchArray, key: number): ReactNode {
-  const [, command, description] = match;
+function renderHelpOutput(): ReactNode {
   return (
-    <div key={key} className="flex gap-4 whitespace-pre-wrap">
-      <span className="min-w-[290px] text-terminal-3">
-        {renderHelpCommandSegment(command)}
-      </span>
-      <span className="text-terminal-8">{description}</span>
+    <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-[0.5em]">
+      {HELP_TEXT.split("\n").map((line, i) => {
+        if (line === "") {
+          return (
+            <div key={i} className="sm:col-span-2 h-0" aria-hidden="true" />
+          );
+        }
+
+        if (SECTION_HEADERS.has(line)) {
+          return (
+            <div
+              key={i}
+              className="sm:col-span-2 whitespace-pre-wrap text-terminal-8"
+            >
+              {line}
+            </div>
+          );
+        }
+
+        const helpMatch = line.match(HELP_ROW_PATTERN);
+        if (helpMatch) {
+          const [, command, description] = helpMatch;
+          return (
+            <Fragment key={i}>
+              <span className="whitespace-pre-wrap text-terminal-3">
+                {renderHelpCommandSegment(command)}
+              </span>
+              <span className="whitespace-pre-wrap text-terminal-8">
+                {description}
+              </span>
+            </Fragment>
+          );
+        }
+
+        return (
+          <div key={i} className="sm:col-span-2 whitespace-pre-wrap">
+            {line}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -315,6 +350,8 @@ function renderMessageLine(line: string, key: number): ReactNode {
 }
 
 export function formatOutput(output: string): ReactNode {
+  if (output === HELP_TEXT) return renderHelpOutput();
+
   const today = getLocalDate();
 
   return output.split("\n").map((line, i) => {
@@ -341,9 +378,6 @@ export function formatOutput(output: string): ReactNode {
     if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
       return renderSecondaryLine(line, i);
     }
-
-    const helpMatch = line.match(HELP_ROW_PATTERN);
-    if (helpMatch) return renderHelpRow(helpMatch, i);
 
     if (BOOT_BANNER_PATTERN.test(line)) return renderBootBanner(line, i);
     if (GREETING_PATTERN.test(line)) return renderGreeting(line, i);
