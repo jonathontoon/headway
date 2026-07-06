@@ -16,9 +16,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
-## [0.1.0] - 2026-07-06
+## [0.12.0] - 2026-07-06
+
+Retroactively reconstructed from Conventional Commit history: this project's version
+had never been bumped past the `0.0.0` scaffold default, so it did not reflect the
+`feat`/`fix` commits already shipped since the Vite/React rewrite. This release
+backfills the version to where it should be per semver (12 `feat` commits since
+that rewrite → 12 minor bumps), and folds in the fixes made while wiring up this
+policy.
+
+### Added
+
+- Terminal prompt UI as the app's primary interface.
+- App styling and test coverage refresh.
+- Syntax highlighting and terminalcolors.com theme support.
+- todo.txt terminal support.
+- Departure Mono as the core font.
+- Ayu Dark palette with a custom output formatter.
+- Browser-aware terminal themes.
+- Full Gogh theme catalog support.
+- Block cursor rendered over the native caret.
+- Native terminal interaction behaviors (history, tab completion, etc.).
+- Cursor blink pausing while typing or moving.
+- Theme test command and Hyper theme.
 
 ### Fixed
 
+- Terminal prompt interactivity.
+- Layout values restored after the Tailwind migration.
+- Focus outline and tap highlight suppression on the command input.
+- Help grid alignment, responsive scale, and scroll bounce.
+- Help command/description pairs tightened for mobile.
 - Terminal cursor now uses the same foreground color as prompt text instead of the accent color.
-- Boot banner version is now read from `package.json` instead of being hardcoded, and `package.json`'s version was corrected to match it.
+- Boot banner version is now read from `package.json` instead of being hardcoded.
