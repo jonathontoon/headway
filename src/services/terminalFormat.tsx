@@ -57,6 +57,17 @@ const TERMINAL_TEXT_CLASSES = [
   "text-terminal-15",
 ] as const;
 
+function renderGroupBox(children: ReactNode, key?: number): ReactNode {
+  return (
+    <div
+      key={key}
+      className="block rounded-md border border-terminal-8/30 px-3 py-2 my-[0.5em]"
+    >
+      {children}
+    </div>
+  );
+}
+
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
   return (
@@ -168,53 +179,56 @@ function renderHelpCommandSegment(segment: string): ReactNode {
   );
 }
 
-function renderHelpOutput(): ReactNode {
+function renderHelpRow(line: string, i: number): ReactNode {
+  if (SECTION_HEADERS.has(line)) {
+    return (
+      <div
+        key={i}
+        className="sm:col-span-2 whitespace-pre-wrap text-terminal-8"
+      >
+        {line}
+      </div>
+    );
+  }
+
+  const helpMatch = line.match(HELP_ROW_PATTERN);
+  if (helpMatch) {
+    const [, command, description] = helpMatch;
+    return (
+      <Fragment key={i}>
+        <span className="whitespace-pre-wrap text-terminal-3">
+          {renderHelpCommandSegment(command)}
+        </span>
+        <span className="whitespace-pre-wrap text-terminal-8 mb-2 sm:mb-0">
+          {description}
+        </span>
+      </Fragment>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-0 sm:gap-y-[0.5em]">
-      {HELP_TEXT.split("\n").map((line, i) => {
-        if (line === "") {
-          return (
-            <div
-              key={i}
-              className="sm:col-span-2 h-2 sm:h-0"
-              aria-hidden="true"
-            />
-          );
-        }
-
-        if (SECTION_HEADERS.has(line)) {
-          return (
-            <div
-              key={i}
-              className="sm:col-span-2 whitespace-pre-wrap text-terminal-8"
-            >
-              {line}
-            </div>
-          );
-        }
-
-        const helpMatch = line.match(HELP_ROW_PATTERN);
-        if (helpMatch) {
-          const [, command, description] = helpMatch;
-          return (
-            <Fragment key={i}>
-              <span className="whitespace-pre-wrap text-terminal-3">
-                {renderHelpCommandSegment(command)}
-              </span>
-              <span className="whitespace-pre-wrap text-terminal-8 mb-2 sm:mb-0">
-                {description}
-              </span>
-            </Fragment>
-          );
-        }
-
-        return (
-          <div key={i} className="sm:col-span-2 whitespace-pre-wrap">
-            {line}
-          </div>
-        );
-      })}
+    <div key={i} className="sm:col-span-2 whitespace-pre-wrap">
+      {line}
     </div>
+  );
+}
+
+function renderHelpOutput(): ReactNode {
+  const sections = HELP_TEXT.split("\n\n").map((section) =>
+    section.split("\n"),
+  );
+
+  return (
+    <>
+      {sections.map((sectionLines, si) =>
+        renderGroupBox(
+          <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-0 sm:gap-y-[0.5em]">
+            {sectionLines.map((line, i) => renderHelpRow(line, i))}
+          </div>,
+          si,
+        ),
+      )}
+    </>
   );
 }
 
@@ -357,59 +371,88 @@ function renderMessageLine(line: string, key: number): ReactNode {
   );
 }
 
+function renderOutputLine(line: string, i: number, today: string): ReactNode {
+  if (line === "") {
+    return <div key={i} className="h-[0.5em]" aria-hidden="true" />;
+  }
+  if (SECTION_HEADERS.has(line)) {
+    return (
+      <div
+        key={i}
+        className="block whitespace-pre-wrap text-terminal-8 mt-[0.5em]"
+      >
+        {line}
+      </div>
+    );
+  }
+
+  const taskMatch = line.match(TASK_LINE_PATTERN);
+  if (taskMatch) return renderTaskLine(taskMatch, today, i);
+
+  const countMatch = line.match(COUNT_ROW_PATTERN);
+  if (countMatch) return renderCountRow(countMatch, i);
+
+  if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
+    return renderSecondaryLine(line, i);
+  }
+
+  if (BOOT_BANNER_PATTERN.test(line)) return renderBootBanner(line, i);
+  if (GREETING_PATTERN.test(line)) return renderGreeting(line, i);
+
+  if (line === "Type 'help' for all available commands.") {
+    return (
+      <div key={i} className="block whitespace-pre-wrap text-terminal-8">
+        {line}
+      </div>
+    );
+  }
+
+  if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
+
+  const themeBaseColorMatch = line.match(THEME_BASE_COLOR_PATTERN);
+  if (themeBaseColorMatch) {
+    return renderThemeBaseColorLine(themeBaseColorMatch, i);
+  }
+
+  const themeIndexedColorMatch = line.match(THEME_INDEXED_COLOR_PATTERN);
+  if (themeIndexedColorMatch) {
+    return renderThemeIndexedColorLine(themeIndexedColorMatch, i);
+  }
+
+  return renderMessageLine(line, i);
+}
+
+function renderBootMessage(output: string): ReactNode {
+  const today = getLocalDate();
+  const lines = output.split("\n");
+  const [bannerLine, greetingLine, ...rest] = lines;
+
+  return (
+    <>
+      {renderGroupBox(
+        <>
+          {renderBootBanner(bannerLine, 0)}
+          {renderGreeting(greetingLine, 1)}
+        </>,
+      )}
+      {rest.length > 0 &&
+        renderGroupBox(rest.map((line, i) => renderOutputLine(line, i, today)))}
+    </>
+  );
+}
+
 export function formatOutput(output: string): ReactNode {
   if (output === HELP_TEXT) return renderHelpOutput();
 
+  const lines = output.split("\n");
+  if (
+    BOOT_BANNER_PATTERN.test(lines[0] ?? "") &&
+    GREETING_PATTERN.test(lines[1] ?? "")
+  ) {
+    return renderBootMessage(output);
+  }
+
   const today = getLocalDate();
 
-  return output.split("\n").map((line, i) => {
-    if (line === "") {
-      return <div key={i} className="h-[0.5em]" aria-hidden="true" />;
-    }
-    if (SECTION_HEADERS.has(line)) {
-      return (
-        <div
-          key={i}
-          className="block whitespace-pre-wrap text-terminal-8 mt-[0.5em]"
-        >
-          {line}
-        </div>
-      );
-    }
-
-    const taskMatch = line.match(TASK_LINE_PATTERN);
-    if (taskMatch) return renderTaskLine(taskMatch, today, i);
-
-    const countMatch = line.match(COUNT_ROW_PATTERN);
-    if (countMatch) return renderCountRow(countMatch, i);
-
-    if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-      return renderSecondaryLine(line, i);
-    }
-
-    if (BOOT_BANNER_PATTERN.test(line)) return renderBootBanner(line, i);
-    if (GREETING_PATTERN.test(line)) return renderGreeting(line, i);
-
-    if (line === "Type 'help' for all available commands.") {
-      return (
-        <div key={i} className="block whitespace-pre-wrap text-terminal-8">
-          {line}
-        </div>
-      );
-    }
-
-    if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
-
-    const themeBaseColorMatch = line.match(THEME_BASE_COLOR_PATTERN);
-    if (themeBaseColorMatch) {
-      return renderThemeBaseColorLine(themeBaseColorMatch, i);
-    }
-
-    const themeIndexedColorMatch = line.match(THEME_INDEXED_COLOR_PATTERN);
-    if (themeIndexedColorMatch) {
-      return renderThemeIndexedColorLine(themeIndexedColorMatch, i);
-    }
-
-    return renderMessageLine(line, i);
-  });
+  return lines.map((line, i) => renderOutputLine(line, i, today));
 }
