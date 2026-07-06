@@ -16,6 +16,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.13.0] - 2026-07-06
+
+### Added
+
+- `/donate` now redirects (via a Cloudflare `_redirects` rule) to the maintainers' GitHub Sponsors page.
+
+### Changed
+
+- The `donate` command now prints a link built from the current domain (`${origin}/donate`) instead of a hardcoded URL.
+- URLs printed in terminal output now render as clickable `<a>` links instead of plain text.
+
+## [0.12.3] - 2026-07-06
+
+### Fixed
+
+- `stats` output rows were misaligned with the summary line above them; the count column is now wide enough to line up with the summary line's `→ ` prefix.
+
 ## [0.12.2] - 2026-07-06
 
 ### Fixed

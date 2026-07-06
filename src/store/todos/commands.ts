@@ -742,8 +742,7 @@ export function runTodoCommand(
     case "donate":
       return {
         nextTodos: state.todos,
-        output:
-          "headway is free and always will be. ♥\nIf it's saved you time, you can buy the maintainers a coffee:\nhttps://headway.dev/donate",
+        output: `headway is free and always will be. ♥\nIf it's saved you time, you can buy the maintainers a coffee:\n${window.location.origin}/donate`,
       };
     default:
       return {
