@@ -268,11 +268,15 @@ function renderSecondaryLine(line: string, key: number): ReactNode {
 
 function renderUrlLine(line: string, key: number): ReactNode {
   return (
-    <div
-      key={key}
-      className="block whitespace-pre-wrap text-terminal-6 pl-[2ch]"
-    >
-      {line}
+    <div key={key} className="block whitespace-pre-wrap pl-[2ch]">
+      <a
+        href={line}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-terminal-6 underline"
+      >
+        {line}
+      </a>
     </div>
   );
 }
