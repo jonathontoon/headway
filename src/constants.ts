@@ -76,6 +76,12 @@ export const COMMAND_VERBS = [
   "help",
 ] as const;
 
+// Second-word subcommand verbs, keyed by first-word command, used for Tab completion
+export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
+  clear: ["due", "priority", "tags", "project"],
+  theme: ["set", "random", "test"],
+};
+
 export const THEME_COMMAND_PREFIX_LENGTH = 6; // 'theme '.length
 
 // Theme command error messages
