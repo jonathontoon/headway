@@ -74,7 +74,7 @@ export function formatBootMessage(
       task.projects.length === 0 && !getMetadataValue(task.metadata, "due"),
   );
   const lines = [
-    "↗ headway v0.1.0",
+    `↗ headway v${__APP_VERSION__}`,
     `${greeting}. You have ${overdue.length} ${pluralize(
       overdue.length,
       "overdue task",
