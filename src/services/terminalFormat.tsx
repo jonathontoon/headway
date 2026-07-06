@@ -170,11 +170,15 @@ function renderHelpCommandSegment(segment: string): ReactNode {
 
 function renderHelpOutput(): ReactNode {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-[0.5em]">
+    <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-0 sm:gap-y-[0.5em]">
       {HELP_TEXT.split("\n").map((line, i) => {
         if (line === "") {
           return (
-            <div key={i} className="sm:col-span-2 h-0" aria-hidden="true" />
+            <div
+              key={i}
+              className="sm:col-span-2 h-2 sm:h-0"
+              aria-hidden="true"
+            />
           );
         }
 
@@ -197,7 +201,7 @@ function renderHelpOutput(): ReactNode {
               <span className="whitespace-pre-wrap text-terminal-3">
                 {renderHelpCommandSegment(command)}
               </span>
-              <span className="whitespace-pre-wrap text-terminal-8">
+              <span className="whitespace-pre-wrap text-terminal-8 mb-2 sm:mb-0">
                 {description}
               </span>
             </Fragment>
