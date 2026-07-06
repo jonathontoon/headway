@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.15.0] - 2026-07-06
+
+### Added
+
+- Boot message and `help` output now group related lines (banner, task list, each help section) into bordered panels for clearer visual separation.
+
 ## [0.14.1] - 2026-07-06
 
 ### Fixed
