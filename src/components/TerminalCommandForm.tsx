@@ -197,9 +197,9 @@ export function TerminalCommandForm({
           just fixing the font-size outright.
 
           iOS also doesn't reliably honor `caret-color` (webkit bug 177489),
-          so `text-transparent`/`caret-transparent` alone leave a stray native
-          caret visible. `opacity-0` hides the text, background, and caret
-          together at the compositing layer instead of per-property painting.
+          and can still paint a native insertion caret for fully transparent
+          text controls. Keep every text-painting path transparent so WebKit
+          has no glyph or caret color to reuse before our custom block cursor.
         */}
         <input
           ref={inputRef}
@@ -210,7 +210,11 @@ export function TerminalCommandForm({
           autoCapitalize="off"
           spellCheck={false}
           autoFocus
-          className="absolute top-0 left-0 w-[133.3334%] h-[133.3334%] sm:w-[114.2857%] sm:h-[114.2857%] md:w-full md:h-full origin-top-left scale-75 sm:scale-[.875] md:scale-100 p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] opacity-0 caret-transparent font-mono text-base"
+          className="absolute top-0 left-0 w-[133.3334%] h-[133.3334%] sm:w-[114.2857%] sm:h-[114.2857%] md:w-full md:h-full origin-top-left scale-75 sm:scale-[.875] md:scale-100 p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-transparent caret-transparent bg-transparent font-mono text-base"
+          style={{
+            WebkitTextFillColor: "transparent",
+            textShadow: "none",
+          }}
           value={command}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={handleKeyDown}
