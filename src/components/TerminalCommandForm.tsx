@@ -95,7 +95,12 @@ export function TerminalCommandForm({
   }
 
   useLayoutEffect(() => {
-    setCursorPosition(inputRef.current?.selectionStart ?? 0);
+    const position = inputRef.current?.selectionStart ?? 0;
+    setCursorPosition(position);
+    // iOS Safari can leave its native caret rendered at a stale position
+    // (typically the start of the field) after a controlled re-render.
+    // Re-applying the selection forces it to repaint at the correct spot.
+    inputRef.current?.setSelectionRange(position, position);
 
     if (isInitialRenderRef.current) {
       isInitialRenderRef.current = false;
@@ -188,13 +193,24 @@ export function TerminalCommandForm({
         {formatPromptSymbol(TERMINAL_PROMPT)}
       </label>
       <div className="relative flex-1 min-w-[8ch] ml-[1ch]">
+        {/*
+          iOS Safari zooms the viewport on focus if the input's font-size is
+          below 16px, so it's pinned to text-base and then scaled back down
+          (with a matching size increase) to the responsive size the sibling
+          span renders at. This keeps native tap-to-position hit-testing
+          pixel-aligned with the visible text at every breakpoint, instead of
+          just fixing the font-size outright.
+        */}
         <input
           ref={inputRef}
           id="terminal-command"
           aria-label="Terminal command"
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           autoFocus
-          className="absolute inset-0 w-full p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] bg-transparent text-transparent caret-transparent [font:inherit]"
+          className="absolute top-0 left-0 w-[133.3334%] h-[133.3334%] sm:w-[114.2857%] sm:h-[114.2857%] md:w-full md:h-full origin-top-left scale-75 sm:scale-[.875] md:scale-100 p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] bg-transparent text-transparent caret-transparent font-mono text-base"
           value={command}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={handleKeyDown}
