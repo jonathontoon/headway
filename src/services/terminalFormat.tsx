@@ -364,13 +364,13 @@ export function formatOutput(output: string): ReactNode {
 
   return output.split("\n").map((line, i) => {
     if (line === "") {
-      return <div key={i} className="h-[0.5em]" aria-hidden="true" />;
+      return <div key={i} className="h-[1rem]" aria-hidden="true" />;
     }
     if (SECTION_HEADERS.has(line)) {
       return (
         <div
           key={i}
-          className="block whitespace-pre-wrap text-terminal-8 mt-[0.5em]"
+          className="block whitespace-pre-wrap text-terminal-8 mt-[1rem]"
         >
           {line}
         </div>
