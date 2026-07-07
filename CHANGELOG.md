@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.14.2] - 2026-07-07
+
+### Fixed
+
+- Mobile Safari/Chrome: native command-input caret still flashed briefly on first focus despite being visually hidden. Theme CSS variables are now applied before React mounts, and the input's caret/text now blends into the terminal background color instead of relying on `transparent`, which iOS WebKit doesn't reliably honor.
+
 ## [0.14.1] - 2026-07-06
 
 ### Fixed
