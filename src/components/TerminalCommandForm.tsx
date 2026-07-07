@@ -5,6 +5,7 @@ import {
   useState,
   type FormEvent,
   type KeyboardEvent,
+  type PointerEvent,
 } from "react";
 import { formatPromptSymbol } from "../services/terminalFormat";
 import {
@@ -66,6 +67,8 @@ export function TerminalCommandForm({
   onClearScreen,
 }: TerminalCommandFormProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const commandTextRef = useRef<HTMLSpanElement>(null);
+  const commandMeasurementRef = useRef<HTMLSpanElement>(null);
   const [cursorPosition, setCursorPosition] = useState(command.length);
   const [isCursorBlinking, setIsCursorBlinking] = useState(true);
   const resumeBlinkTimeoutRef =
@@ -91,6 +94,35 @@ export function TerminalCommandForm({
 
   function syncCursorPosition() {
     setCursorPosition(inputRef.current?.selectionStart ?? 0);
+    pauseCursorBlink();
+  }
+
+  function setCursorPositionFromClientX(clientX: number) {
+    const input = inputRef.current;
+    const commandText = commandTextRef.current;
+    const commandMeasurement = commandMeasurementRef.current;
+    if (!input || !commandText || !commandMeasurement) {
+      return;
+    }
+
+    const textRect = commandText.getBoundingClientRect();
+    const measurementRect = commandMeasurement.getBoundingClientRect();
+    const measuredLength = Math.max(command.length, 1);
+    const charWidth = measurementRect.width / measuredLength;
+    const nextCursorPosition =
+      charWidth > 0
+        ? Math.max(
+            0,
+            Math.min(
+              command.length,
+              Math.round((clientX - textRect.left) / charWidth),
+            ),
+          )
+        : command.length;
+
+    input.focus({ preventScroll: true });
+    input.setSelectionRange(nextCursorPosition, nextCursorPosition);
+    setCursorPosition(nextCursorPosition);
     pauseCursorBlink();
   }
 
@@ -171,6 +203,11 @@ export function TerminalCommandForm({
     }
   }
 
+  function handleCommandPointerDown(event: PointerEvent<HTMLSpanElement>) {
+    event.preventDefault();
+    setCursorPositionFromClientX(event.clientX);
+  }
+
   const before = command.slice(0, cursorPosition);
   const charUnderCursor = command[cursorPosition] ?? " ";
   const after = command.slice(cursorPosition + 1);
@@ -189,17 +226,9 @@ export function TerminalCommandForm({
       </label>
       <div className="relative flex-1 min-w-[8ch] ml-[1ch]">
         {/*
-          iOS Safari zooms the viewport on focus if the input's font-size is
-          below 16px, so it's pinned to text-base and then scaled back down
-          (with a matching size increase) to the responsive size the sibling
-          span renders at. This keeps native tap-to-position hit-testing
-          pixel-aligned with the visible text at every breakpoint, instead of
-          just fixing the font-size outright.
-
-          iOS also doesn't reliably honor `caret-color` (webkit bug 177489),
-          and can still paint a native insertion caret for fully transparent
-          text controls. Keep every text-painting path transparent so WebKit
-          has no glyph or caret color to reuse before our custom block cursor.
+          iOS Safari can paint a native insertion caret even when the input's
+          text and caret are transparent. Keep the real control focusable for
+          the keyboard, but remove it from the visible command text path.
         */}
         <input
           ref={inputRef}
@@ -210,8 +239,10 @@ export function TerminalCommandForm({
           autoCapitalize="off"
           spellCheck={false}
           autoFocus
-          className="absolute top-0 left-0 w-[133.3334%] h-[133.3334%] sm:w-[114.2857%] sm:h-[114.2857%] md:w-full md:h-full origin-top-left scale-75 sm:scale-[.875] md:scale-100 p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-transparent caret-transparent bg-transparent font-mono text-base"
+          className="absolute top-0 left-0 h-px w-px opacity-0 overflow-hidden p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-transparent caret-transparent bg-transparent font-mono text-base"
           style={{
+            clip: "rect(0 0 0 0)",
+            clipPath: "inset(50%)",
             WebkitTextFillColor: "transparent",
             textShadow: "none",
           }}
@@ -222,8 +253,10 @@ export function TerminalCommandForm({
           onSelect={syncCursorPosition}
         />
         <span
-          className="relative block whitespace-pre pointer-events-none"
+          ref={commandTextRef}
+          className="relative block whitespace-pre cursor-text"
           aria-hidden="true"
+          onPointerDown={handleCommandPointerDown}
         >
           {before}
           <span className="relative inline-block">
@@ -241,6 +274,13 @@ export function TerminalCommandForm({
             </span>
           </span>
           {after}
+        </span>
+        <span
+          ref={commandMeasurementRef}
+          className="absolute left-0 top-0 invisible whitespace-pre pointer-events-none"
+          aria-hidden="true"
+        >
+          {command || " "}
         </span>
       </div>
     </form>
