@@ -14,22 +14,27 @@
 @layer base {
   html {
     @apply font-mono text-base leading-relaxed text-terminal-foreground bg-terminal-background;
+    height: 100%;
     letter-spacing: 0;
     color-scheme: dark;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
     overscroll-behavior: none;
   }
 
   body {
     @apply m-0 bg-terminal-background;
+    height: 100%;
+    overflow: hidden;
     overscroll-behavior: none;
   }
 
   #root {
-    @apply min-h-screen;
+    @apply h-full;
+    overflow: hidden;
   }
 
   ::selection {

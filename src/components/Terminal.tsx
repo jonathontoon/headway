@@ -37,7 +37,7 @@ export function Terminal() {
 
   return (
     <main
-      className="block min-h-svh p-4 sm:p-6 md:p-8 box-border"
+      className="block h-dvh overflow-y-auto overscroll-contain px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-8 md:pt-8 md:pb-[calc(2rem+env(safe-area-inset-bottom))] box-border [-webkit-overflow-scrolling:touch]"
       aria-label="Terminal prompt"
       onContextMenu={handleContextMenu}
     >
@@ -52,7 +52,8 @@ export function Terminal() {
       />
       <div
         ref={bottomRef}
-        className="scroll-mb-4 sm:scroll-mb-6 md:scroll-mb-8"
+        className="h-0 scroll-mb-[calc(1rem+env(safe-area-inset-bottom))] sm:scroll-mb-[calc(1.5rem+env(safe-area-inset-bottom))] md:scroll-mb-[calc(2rem+env(safe-area-inset-bottom))]"
+        aria-hidden="true"
       />
     </main>
   );
