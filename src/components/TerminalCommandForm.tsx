@@ -227,8 +227,10 @@ export function TerminalCommandForm({
       <div className="relative flex-1 min-w-[8ch] ml-[1ch]">
         {/*
           iOS Safari can paint a native insertion caret even when the input's
-          text and caret are transparent. Keep the real control focusable for
-          the keyboard, but remove it from the visible command text path.
+          text and caret are transparent (WebKit bug 177489 only affects the
+          fully-transparent case). Blending the caret/text into the terminal
+          background color instead of hiding it sidesteps that bug, since it's
+          a normal opaque-color paint rather than a suppressed one.
         */}
         <input
           ref={inputRef}
@@ -239,11 +241,11 @@ export function TerminalCommandForm({
           autoCapitalize="off"
           spellCheck={false}
           autoFocus
-          className="absolute top-0 left-0 h-px w-px opacity-0 overflow-hidden p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-transparent caret-transparent bg-transparent font-mono text-base"
+          className="absolute top-0 left-0 h-px w-px opacity-0 overflow-hidden p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-terminal-background caret-terminal-background bg-transparent font-mono text-base"
           style={{
             clip: "rect(0 0 0 0)",
             clipPath: "inset(50%)",
-            WebkitTextFillColor: "transparent",
+            WebkitTextFillColor: "var(--background)",
             textShadow: "none",
           }}
           value={command}
