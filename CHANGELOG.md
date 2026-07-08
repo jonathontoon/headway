@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.15.0] - 2026-07-08
+
+### Added
+
+- The browser's `theme-color` meta tag now syncs to the active terminal theme's background color, so the address bar / tab chrome dynamically matches whatever theme is selected.
+
 ## [0.14.2] - 2026-07-07
 
 ### Fixed

@@ -9,6 +9,9 @@ export function applyTheme(theme: Theme) {
   style.setProperty("--background", theme.background);
   style.setProperty("--foreground", theme.foreground);
   theme.colors.forEach((color, i) => style.setProperty(`--color${i}`, color));
+
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme.background);
 }
 
 export function getPreferredMode(): ThemeMode {
