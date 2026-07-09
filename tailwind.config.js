@@ -33,6 +33,16 @@ export default {
           14: "var(--color14)",
           15: "var(--color15)",
         },
+        role: {
+          error: "var(--role-error)",
+          warning: "var(--role-warning)",
+          success: "var(--role-success)",
+          info: "var(--role-info)",
+          accent: "var(--role-accent)",
+          context: "var(--role-context)",
+          command: "var(--role-command)",
+          muted: "var(--role-muted)",
+        },
       },
       keyframes: {
         "terminal-cursor-blink": {

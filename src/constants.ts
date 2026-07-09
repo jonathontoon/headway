@@ -45,6 +45,24 @@ export const HELP_TEXT = [
   "donate - donation link",
 ].join("\n");
 
+// Output classification, used by terminalFormat to color message lines.
+// Keep in sync with the message templates in src/store/todos/commands.ts.
+export const SUCCESS_PREFIXES = [
+  "Added:",
+  "Updated:",
+  "Deleted:",
+  "Completed:",
+  "Reopened:",
+] as const;
+
+export const MUTED_PATTERN =
+  /\b(empty|is clear|No |not a recognized command|not found)\b/i;
+
+export const SECONDARY_LINE_PREFIXES = [
+  "created:",
+  "If it's saved you time",
+] as const;
+
 // Keyboard navigation
 export const KEYBOARD_KEYS = {
   arrowUp: "ArrowUp",

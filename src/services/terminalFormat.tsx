@@ -1,6 +1,12 @@
 import { Fragment, type ReactNode } from "react";
 import { getLocalDate } from "../store/todos/summary";
-import { HELP_TEXT } from "../constants";
+import {
+  HELP_TEXT,
+  MUTED_PATTERN,
+  SECONDARY_LINE_PREFIXES,
+  SUCCESS_PREFIXES,
+} from "../constants";
+import type { ThemeRoleName } from "../store/theme/types";
 
 const SECTION_HEADERS = new Set([
   "TASKS",
@@ -12,17 +18,6 @@ const SECTION_HEADERS = new Set([
   "TODAY",
   "INBOX",
 ]);
-
-const SUCCESS_PREFIXES = [
-  "Added:",
-  "Updated:",
-  "Deleted:",
-  "Completed:",
-  "Reopened:",
-];
-const MUTED_PATTERN =
-  /\b(empty|is clear|No |not a recognized command|not found)\b/i;
-const SECONDARY_LINE_PREFIXES = ["created:", "If it's saved you time"];
 
 const TASK_LINE_PATTERN = /^(\d+)\.\s+(?:\((\w)\)\s+)?(.*)$/;
 const COUNT_ROW_PATTERN = /^(\d+)\s+(\+[\w-]+|[a-z][a-z ]*)$/;
@@ -37,6 +32,9 @@ const THEME_BASE_COLOR_PATTERN =
   /^(background|foreground) (#[0-9a-f]{6}): (.*)$/;
 const THEME_INDEXED_COLOR_PATTERN =
   /^(color([0-9]|1[0-5])) (#[0-9a-f]{6}): (.*)$/;
+const THEME_ROLE_PATTERN = /^role ([a-z]+) (#[0-9a-f]{6}): (.*)$/;
+const SUMMARY_HEADER_PATTERN =
+  /^(?:\d+ tasks on your radar right now\.|\d+ projects, \d+ tasks between them\.)$/;
 
 const TERMINAL_TEXT_CLASSES = [
   "text-terminal-0",
@@ -57,26 +55,37 @@ const TERMINAL_TEXT_CLASSES = [
   "text-terminal-15",
 ] as const;
 
+const ROLE_TEXT_CLASSES: Record<ThemeRoleName, string> = {
+  error: "text-role-error",
+  warning: "text-role-warning",
+  success: "text-role-success",
+  info: "text-role-info",
+  accent: "text-role-accent",
+  context: "text-role-context",
+  command: "text-role-command",
+  muted: "text-role-muted",
+};
+
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
   return (
     <>
-      <span className="text-terminal-6">{head}</span>
-      <span className="text-terminal-3">{rest.join("")}</span>
+      <span className="text-role-accent">{head}</span>
+      <span className="text-role-command">{rest.join("")}</span>
     </>
   );
 }
 
-function priorityClassName(letter: string): string | undefined {
+function priorityClassName(letter: string): string {
   switch (letter.toUpperCase()) {
     case "A":
-      return "text-terminal-1";
+      return "text-role-error";
     case "B":
-      return "text-terminal-11";
+      return "text-role-warning";
     case "C":
-      return "text-terminal-2";
+      return "text-role-success";
     default:
-      return undefined;
+      return "text-role-muted";
   }
 }
 
@@ -84,14 +93,14 @@ function renderTaskFragments(text: string, today: string): ReactNode {
   return text.split(TASK_FRAGMENT_PATTERN).map((part, i) => {
     if (part.startsWith("+")) {
       return (
-        <span key={i} className="text-terminal-6">
+        <span key={i} className="text-role-accent">
           {part}
         </span>
       );
     }
     if (part.startsWith("@")) {
       return (
-        <span key={i} className="text-terminal-6">
+        <span key={i} className="text-role-context">
           {part}
         </span>
       );
@@ -101,10 +110,10 @@ function renderTaskFragments(text: string, today: string): ReactNode {
       const date = dueMatch[1];
       const className =
         date < today
-          ? "text-terminal-1"
+          ? "text-role-error"
           : date === today
-            ? "text-terminal-11"
-            : "text-terminal-5";
+            ? "text-role-warning"
+            : "text-role-info";
       return (
         <span key={i} className={className}>
           {part}
@@ -121,24 +130,25 @@ function renderTaskLine(
   key: number,
 ): ReactNode {
   const [, id, priority, rest] = match;
-  const priorityClass = priority ? priorityClassName(priority) : undefined;
 
   return (
     <div key={key} className="block whitespace-pre-wrap">
-      <span className="text-terminal-8">{id}.</span>{" "}
-      {priority && <span className={priorityClass}>({priority}) </span>}
+      <span className="text-role-muted">{id}.</span>{" "}
+      {priority && (
+        <span className={priorityClassName(priority)}>({priority}) </span>
+      )}
       {renderTaskFragments(rest, today)}
     </div>
   );
 }
 
 function statLabelClassName(label: string): string | undefined {
-  if (label.startsWith("+")) return "text-terminal-6";
-  if (label === "overdue") return "text-terminal-1";
-  if (label === "due today") return "text-terminal-11";
-  if (label === "on the horizon") return "text-terminal-5";
-  if (label === "parked in someday") return "text-terminal-6";
-  if (label.startsWith("wrapped up")) return "text-terminal-2";
+  if (label.startsWith("+")) return "text-role-accent";
+  if (label === "overdue") return "text-role-error";
+  if (label === "due today") return "text-role-warning";
+  if (label === "on the horizon") return "text-role-info";
+  if (label === "parked in someday") return "text-role-muted";
+  if (label.startsWith("wrapped up")) return "text-role-success";
   return undefined;
 }
 
@@ -159,7 +169,7 @@ function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
 function renderHelpCommandSegment(segment: string): ReactNode {
   return segment.split(HELP_ARG_PATTERN).map((part, i) =>
     part.startsWith("<") || part.startsWith('"') ? (
-      <span key={i} className="text-terminal-6">
+      <span key={i} className="text-role-accent">
         {part}
       </span>
     ) : (
@@ -186,7 +196,7 @@ function renderHelpOutput(): ReactNode {
           return (
             <div
               key={i}
-              className="sm:col-span-2 whitespace-pre-wrap text-terminal-8"
+              className="sm:col-span-2 whitespace-pre-wrap text-role-muted"
             >
               {line}
             </div>
@@ -198,10 +208,10 @@ function renderHelpOutput(): ReactNode {
           const [, command, description] = helpMatch;
           return (
             <Fragment key={i}>
-              <span className="whitespace-pre-wrap text-terminal-3">
+              <span className="whitespace-pre-wrap text-role-command">
                 {renderHelpCommandSegment(command)}
               </span>
-              <span className="whitespace-pre-wrap text-terminal-8 mb-2 sm:mb-0">
+              <span className="whitespace-pre-wrap text-role-muted mb-2 sm:mb-0">
                 {description}
               </span>
             </Fragment>
@@ -224,8 +234,8 @@ function renderBootBanner(line: string, key: number): ReactNode {
   const version = rest.pop();
   return (
     <div key={key} className="block whitespace-pre-wrap">
-      <span className="text-terminal-3">{arrow}</span> {rest.join(" ")}{" "}
-      <span className="text-terminal-6">{version}</span>
+      <span className="text-role-command">{arrow}</span> {rest.join(" ")}{" "}
+      <span className="text-role-accent">{version}</span>
     </div>
   );
 }
@@ -237,14 +247,14 @@ function renderGreeting(line: string, key: number): ReactNode {
       {parts.map((part, i) => {
         if (/^\d+ overdue tasks?$/.test(part)) {
           return (
-            <span key={i} className="text-terminal-1">
+            <span key={i} className="text-role-error">
               {part}
             </span>
           );
         }
         if (/^\d+ due today$/.test(part)) {
           return (
-            <span key={i} className="text-terminal-11">
+            <span key={i} className="text-role-warning">
               {part}
             </span>
           );
@@ -259,7 +269,7 @@ function renderSecondaryLine(line: string, key: number): ReactNode {
   return (
     <div
       key={key}
-      className="block whitespace-pre-wrap text-terminal-8 pl-[2ch]"
+      className="block whitespace-pre-wrap text-role-muted pl-[2ch]"
     >
       {line}
     </div>
@@ -273,7 +283,7 @@ function renderUrlLine(line: string, key: number): ReactNode {
         href={line}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-terminal-6 underline"
+        className="text-role-accent underline"
       >
         {line}
       </a>
@@ -285,7 +295,7 @@ function renderWithHeart(line: string): ReactNode {
   if (!HEART_PATTERN.test(line)) return line;
   return line.split(HEART_PATTERN).map((part, i) =>
     part === "♥" ? (
-      <span key={i} className="text-terminal-1">
+      <span key={i} className="text-role-error">
         {part}
       </span>
     ) : (
@@ -298,7 +308,7 @@ function renderColorSwatch(color: string): ReactNode {
   return (
     <span
       aria-hidden="true"
-      className="inline-block h-[1em] w-[2ch] align-[-0.12em] border border-terminal-8"
+      className="inline-block h-[1em] w-[2ch] align-[-0.12em] border border-role-muted"
       style={{ backgroundColor: color }}
     />
   );
@@ -311,8 +321,9 @@ function renderThemeBaseColorLine(
   const [, role, color, description] = match;
   return (
     <div key={key} className="block whitespace-pre-wrap">
-      {renderColorSwatch(color)} <span className="text-terminal-3">{role}</span>{" "}
-      <span className="text-terminal-8">{color}</span>: {description}
+      {renderColorSwatch(color)}{" "}
+      <span className="text-role-command">{role}</span>{" "}
+      <span className="text-role-muted">{color}</span>: {description}
     </div>
   );
 }
@@ -329,7 +340,37 @@ function renderThemeIndexedColorLine(
       <span className={TERMINAL_TEXT_CLASSES[index]} data-testid={label}>
         {label} sample
       </span>{" "}
-      <span className="text-terminal-8">{color}</span>: {description}
+      <span className="text-role-muted">{color}</span>: {description}
+    </div>
+  );
+}
+
+function renderThemeRoleLine(match: RegExpMatchArray, key: number): ReactNode {
+  const [, role, color, description] = match;
+  const roleClass = ROLE_TEXT_CLASSES[role as ThemeRoleName];
+  return (
+    <div key={key} className="block whitespace-pre-wrap">
+      {renderColorSwatch(color)}{" "}
+      <span className={roleClass} data-testid={`role-${role}`}>
+        role {role} sample
+      </span>{" "}
+      <span className="text-role-muted">{color}</span>: {description}
+    </div>
+  );
+}
+
+function renderSummaryHeader(line: string, key: number): ReactNode {
+  return (
+    <div key={key} className="block whitespace-pre-wrap">
+      {line.split(/(\d+)/).map((part, i) =>
+        /^\d+$/.test(part) ? (
+          <span key={i} className="text-role-accent">
+            {part}
+          </span>
+        ) : (
+          part
+        ),
+      )}
     </div>
   );
 }
@@ -337,16 +378,13 @@ function renderThemeIndexedColorLine(
 function renderMessageLine(line: string, key: number): ReactNode {
   let colorClass = "";
   if (line.startsWith("Error:")) {
-    colorClass = "text-terminal-1";
+    colorClass = "text-role-error";
   } else if (line.startsWith("Warning:")) {
-    colorClass = "text-terminal-11";
-  } else if (
-    SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix)) ||
-    line === "Opened in $EDITOR."
-  ) {
-    colorClass = "text-terminal-2";
+    colorClass = "text-role-warning";
+  } else if (SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix))) {
+    colorClass = "text-role-success";
   } else if (MUTED_PATTERN.test(line)) {
-    colorClass = "text-terminal-8";
+    colorClass = "text-role-muted";
   }
 
   return (
@@ -370,7 +408,7 @@ export function formatOutput(output: string): ReactNode {
       return (
         <div
           key={i}
-          className="block whitespace-pre-wrap text-terminal-8 mt-[1rem]"
+          className="block whitespace-pre-wrap text-role-muted mt-[1rem]"
         >
           {line}
         </div>
@@ -383,6 +421,8 @@ export function formatOutput(output: string): ReactNode {
     const countMatch = line.match(COUNT_ROW_PATTERN);
     if (countMatch) return renderCountRow(countMatch, i);
 
+    if (SUMMARY_HEADER_PATTERN.test(line)) return renderSummaryHeader(line, i);
+
     if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
       return renderSecondaryLine(line, i);
     }
@@ -392,7 +432,7 @@ export function formatOutput(output: string): ReactNode {
 
     if (line === "Type 'help' for all available commands.") {
       return (
-        <div key={i} className="block whitespace-pre-wrap text-terminal-8">
+        <div key={i} className="block whitespace-pre-wrap text-role-muted">
           {line}
         </div>
       );
@@ -408,6 +448,11 @@ export function formatOutput(output: string): ReactNode {
     const themeIndexedColorMatch = line.match(THEME_INDEXED_COLOR_PATTERN);
     if (themeIndexedColorMatch) {
       return renderThemeIndexedColorLine(themeIndexedColorMatch, i);
+    }
+
+    const themeRoleMatch = line.match(THEME_ROLE_PATTERN);
+    if (themeRoleMatch && themeRoleMatch[1] in ROLE_TEXT_CLASSES) {
+      return renderThemeRoleLine(themeRoleMatch, i);
     }
 
     return renderMessageLine(line, i);

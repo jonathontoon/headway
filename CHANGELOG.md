@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.16.0] - 2026-07-10
+
+### Added
+
+- Semantic color roles (error, warning, success, info, accent, context, command, muted) resolved per theme at build time, each guaranteed WCAG AA contrast (4.5:1) against that theme's background, with a contrast-blend fallback for themes whose palette can't otherwise meet it.
+
+### Changed
+
+- Terminal output now uses these semantic roles instead of raw ANSI slot colors: projects (`+tag`) and contexts (`@tag`) are visually distinct, priorities D-Z are styled instead of unstyled, and previously uncolored summary headers (`stats`, `projects`) now accent their counts.
+- `theme test` now lists each resolved role alongside its source slot and live contrast ratio.
+
 ## [0.15.1] - 2026-07-09
 
 ### Fixed

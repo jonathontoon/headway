@@ -1,5 +1,8 @@
 import { DEFAULT_THEME_FAMILIES } from "./defaultThemes";
 import { handleThemeCommand } from "./themeCommand";
+import { resolveRoleColor } from "./applyTheme";
+import { contrastRatio } from "./contrast";
+import { THEME_ROLE_NAMES } from "./types";
 
 const HYPER_COLORS = [
   "#2d3139",
@@ -33,6 +36,16 @@ describe("DEFAULT_THEME_FAMILIES", () => {
       background: "#000000",
       foreground: "#c8c8c8",
       colors: HYPER_COLORS,
+      roles: {
+        error: 1,
+        warning: 3,
+        success: 2,
+        info: 5,
+        accent: 6,
+        context: 4,
+        command: 3,
+        muted: "#767676",
+      },
     });
     expect(hyper?.dark?.colors).toHaveLength(16);
     expect(hyper?.dark?.colors).toEqual(expect.arrayContaining(HYPER_COLORS));
@@ -72,10 +85,31 @@ describe("DEFAULT_THEME_FAMILIES", () => {
       "color0 #2d3139: ANSI black; Headway use: available as text-terminal-0; source: terminal.ansiBlack",
     );
     expect(output).toContain(
-      "color1 #e06c75: ANSI red; Headway use: errors, overdue dates, priority A, donation heart; source: inferred from red token color #e06c75",
+      "color1 #e06c75: ANSI red; Headway use: default source for role error; source: inferred from red token color #e06c75",
     );
     expect(output).toContain(
-      "color11 #e5c07b: ANSI bright yellow; Headway use: warnings, due today, priority B; source: inferred from terminal.ansiYellow / yellow token color #e5c07b",
+      "color11 #e5c07b: ANSI bright yellow; Headway use: fallback source for roles warning and command; source: inferred from terminal.ansiYellow / yellow token color #e5c07b",
     );
+    expect(output).toContain(
+      "role error #e06c75: from color1; contrast 6.6; Headway use: errors, overdue dates, priority A, donation heart",
+    );
+    expect(output).toContain(
+      "role muted #767676: blended for contrast; contrast 4.6; Headway use: task ids, section headers, help descriptions, priorities D-Z",
+    );
+  });
+
+  it("resolves every role of every theme variant to WCAG AA contrast", () => {
+    for (const family of DEFAULT_THEME_FAMILIES) {
+      for (const theme of [family.dark, family.light]) {
+        if (!theme) continue;
+        for (const role of THEME_ROLE_NAMES) {
+          const color = resolveRoleColor(theme, theme.roles[role]);
+          const ratio = contrastRatio(color, theme.background);
+          expect
+            .soft(ratio, `${theme.name} (${theme.mode}) role ${role} ${color}`)
+            .toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
   });
 });

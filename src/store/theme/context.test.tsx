@@ -98,6 +98,9 @@ describe("ThemeProvider", () => {
     expect(
       document.documentElement.style.getPropertyValue("--background"),
     ).toBe(testTheme.dark?.background);
+    expect(
+      document.documentElement.style.getPropertyValue("--role-error"),
+    ).toMatch(/^#[0-9a-f]{6}$/);
   });
 
   it("updates the applied palette when the browser preference changes", () => {

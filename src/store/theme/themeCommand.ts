@@ -1,4 +1,12 @@
-import type { Theme, ThemeFamily, ThemeMode } from "./types";
+import {
+  THEME_ROLE_NAMES,
+  type Theme,
+  type ThemeFamily,
+  type ThemeMode,
+  type ThemeRoleName,
+} from "./types";
+import { resolveRoleColor } from "./applyTheme";
+import { contrastRatio } from "./contrast";
 import {
   COMMANDS,
   THEME_ERROR_MESSAGES,
@@ -33,22 +41,33 @@ const ANSI_COLOR_ROLES = [
 
 const HEADWAY_COLOR_USAGE = [
   "available as text-terminal-0",
-  "errors, overdue dates, priority A, donation heart",
-  "success messages, completed stats, priority C",
-  "prompt suffix and help command names",
-  "available as text-terminal-4",
-  "future due dates",
-  "prompt prefix, projects, tags, URLs",
+  "default source for role error",
+  "default source for role success",
+  "default source for roles warning and command",
+  "default source for role context",
+  "default source for role info",
+  "default source for role accent",
   "available as text-terminal-7",
-  "section headers, muted messages, task ids",
-  "available as text-terminal-9",
-  "available as text-terminal-10",
-  "warnings, due today, priority B",
-  "available as text-terminal-12",
-  "available as text-terminal-13",
-  "available as text-terminal-14",
+  "default source for role muted",
+  "fallback source for roles error and warning",
+  "fallback source for role success",
+  "fallback source for roles warning and command",
+  "fallback source for roles context, info, and accent",
+  "fallback source for roles info and context",
+  "fallback source for roles success, accent, and command",
   "available as text-terminal-15",
 ] as const;
+
+const ROLE_USAGE: Record<ThemeRoleName, string> = {
+  error: "errors, overdue dates, priority A, donation heart",
+  warning: "warnings, due today, priority B",
+  success: "success messages, completed stats, priority C",
+  info: "future due dates, upcoming stats",
+  accent: "projects, prompt prefix, URLs, help arguments",
+  context: "context tags",
+  command: "help command names, prompt suffix, boot arrow",
+  muted: "task ids, section headers, help descriptions, priorities D-Z",
+};
 
 const HYPER_COLOR_SOURCE_USAGE = [
   "terminal.ansiBlack",
@@ -101,6 +120,21 @@ function formatThemeTest(theme: Theme): string {
   theme.colors.forEach((color, index) => {
     lines.push(
       `color${index} ${color}: ANSI ${ANSI_COLOR_ROLES[index]}; Headway use: ${HEADWAY_COLOR_USAGE[index]}; source: ${themeSourceUsage(theme, index)}`,
+    );
+  });
+
+  THEME_ROLE_NAMES.forEach((role) => {
+    const value = theme.roles[role];
+    const color = resolveRoleColor(theme, value);
+    const source =
+      typeof value === "number"
+        ? `from color${value}`
+        : value === theme.foreground
+          ? "from foreground"
+          : "blended for contrast";
+    const ratio = contrastRatio(color, theme.background).toFixed(1);
+    lines.push(
+      `role ${role} ${color}: ${source}; contrast ${ratio}; Headway use: ${ROLE_USAGE[role]}`,
     );
   });
 

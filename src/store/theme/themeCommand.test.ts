@@ -1,5 +1,16 @@
 import { handleThemeCommand } from "./themeCommand";
-import type { Theme, ThemeFamily } from "./types";
+import type { Theme, ThemeFamily, ThemeRoles } from "./types";
+
+const TEST_ROLES: ThemeRoles = {
+  error: 1,
+  warning: 3,
+  success: 2,
+  info: 5,
+  accent: 6,
+  context: 4,
+  command: 3,
+  muted: 8,
+};
 
 function theme(name: string, mode: "dark" | "light"): Theme {
   return {
@@ -8,6 +19,7 @@ function theme(name: string, mode: "dark" | "light"): Theme {
     background: mode === "dark" ? "#000000" : "#ffffff",
     foreground: mode === "dark" ? "#ffffff" : "#000000",
     colors: Array.from({ length: 16 }, () => "#000000"),
+    roles: TEST_ROLES,
   };
 }
 
@@ -77,6 +89,7 @@ describe("handleThemeCommand", () => {
           "#eeeeee",
           "#ffffff",
         ],
+        roles: TEST_ROLES,
       },
       setTheme: vi.fn(),
     });
@@ -86,10 +99,16 @@ describe("handleThemeCommand", () => {
       "background #000000: app background; source: theme background",
     );
     expect(output).toContain(
-      "color1 #111111: ANSI red; Headway use: errors, overdue dates, priority A, donation heart; source: theme palette color",
+      "color1 #111111: ANSI red; Headway use: default source for role error; source: theme palette color",
     );
     expect(output).toContain(
-      "color11 #bbbbbb: ANSI bright yellow; Headway use: warnings, due today, priority B; source: theme palette color",
+      "color11 #bbbbbb: ANSI bright yellow; Headway use: fallback source for roles warning and command; source: theme palette color",
+    );
+    expect(output).toContain(
+      "role error #111111: from color1; contrast 1.1; Headway use: errors, overdue dates, priority A, donation heart",
+    );
+    expect(output).toContain(
+      "role muted #888888: from color8; contrast 5.9; Headway use: task ids, section headers, help descriptions, priorities D-Z",
     );
   });
 
