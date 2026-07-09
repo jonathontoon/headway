@@ -203,7 +203,11 @@ export function TerminalCommandForm({
     }
   }
 
-  function handleCommandPointerDown(event: PointerEvent<HTMLSpanElement>) {
+  function handleCommandPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
     event.preventDefault();
     setCursorPositionFromClientX(event.clientX);
   }
@@ -224,14 +228,11 @@ export function TerminalCommandForm({
       >
         {formatPromptSymbol(TERMINAL_PROMPT)}
       </label>
-      <div className="relative flex-1 min-w-[8ch] ml-[1ch]">
-        {/*
-          iOS Safari can paint a native insertion caret even when the input's
-          text and caret are transparent (WebKit bug 177489 only affects the
-          fully-transparent case). Blending the caret/text into the terminal
-          background color instead of hiding it sidesteps that bug, since it's
-          a normal opaque-color paint rather than a suppressed one.
-        */}
+      <div
+        data-testid="terminal-command-capture"
+        className="relative flex-1 min-w-[8ch] min-h-[1.9em] ml-[1ch] cursor-text touch-manipulation"
+        onPointerDown={handleCommandPointerDown}
+      >
         <input
           ref={inputRef}
           id="terminal-command"
@@ -239,13 +240,13 @@ export function TerminalCommandForm({
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
+          enterKeyHint="go"
+          inputMode="text"
           spellCheck={false}
           autoFocus
-          className="absolute top-0 left-0 h-px w-px opacity-0 overflow-hidden p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-terminal-background caret-terminal-background bg-transparent font-mono text-base"
+          className="absolute inset-0 block h-full w-full appearance-none opacity-0 overflow-hidden p-0 border-0 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] text-transparent caret-transparent bg-transparent font-mono text-base leading-[1.9]"
           style={{
-            clip: "rect(0 0 0 0)",
-            clipPath: "inset(50%)",
-            WebkitTextFillColor: "var(--background)",
+            WebkitTextFillColor: "transparent",
             textShadow: "none",
           }}
           value={command}
@@ -256,9 +257,8 @@ export function TerminalCommandForm({
         />
         <span
           ref={commandTextRef}
-          className="relative block whitespace-pre cursor-text"
+          className="relative block whitespace-pre pointer-events-none"
           aria-hidden="true"
-          onPointerDown={handleCommandPointerDown}
         >
           {before}
           <span className="relative inline-block">

@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [0.15.1] - 2026-07-09
+
+### Fixed
+
+- Mobile command input now uses a full-line invisible capture field, making keyboard focus more reliable while keeping the custom terminal cursor as the only visible caret.
+
 ## [0.15.0] - 2026-07-08
 
 ### Added

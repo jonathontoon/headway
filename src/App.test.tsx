@@ -13,10 +13,24 @@ describe("App Component", () => {
     const bootOutput = document.querySelector(
       '[data-testid="terminal-output"]',
     );
-    expect(bootOutput?.textContent).toContain("headway v0.15.0");
+    expect(bootOutput?.textContent).toContain("headway v0.15.1");
     expect(bootOutput?.textContent).toContain(
       "Type 'help' for all available commands.",
     );
+  });
+
+  it("focuses the command input from the command capture area", () => {
+    render(<App />);
+    const input = screen.getByLabelText("Terminal command");
+
+    input.blur();
+    fireEvent.pointerDown(screen.getByTestId("terminal-command-capture"), {
+      button: 0,
+      clientX: 0,
+      pointerType: "touch",
+    });
+
+    expect(input).toHaveFocus();
   });
 
   it("runs terminal task commands", () => {
