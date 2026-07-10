@@ -77,16 +77,27 @@ export function formatPromptSymbol(prompt: string): ReactNode {
 }
 
 function priorityClassName(letter: string): string {
-  switch (letter.toUpperCase()) {
-    case "A":
-      return "text-role-error";
-    case "B":
-      return "text-role-warning";
-    case "C":
-      return "text-role-success";
-    default:
-      return "text-role-muted";
-  }
+  // Warm to cool priority gradient: red → yellow → green → cyan → blue → magenta
+  // Using terminal colors in temperature order for visual spectrum
+  const PRIORITY_COLORS = [
+    "text-terminal-1", // A: red (warm)
+    "text-terminal-3", // B: yellow
+    "text-terminal-2", // C: green
+    "text-terminal-6", // D: cyan
+    "text-terminal-4", // E: blue (cool)
+    "text-terminal-5", // F: magenta
+    "text-terminal-9", // G: bright red
+    "text-terminal-11", // H: bright yellow
+    "text-terminal-10", // I: bright green
+    "text-terminal-14", // J: bright cyan
+    "text-terminal-12", // K: bright blue
+    "text-terminal-13", // L: bright magenta
+    "text-terminal-7", // M: white
+    "text-terminal-15", // N: bright white
+  ] as const;
+  const charCode = letter.toUpperCase().charCodeAt(0) - "A".charCodeAt(0);
+  const colorIndex = charCode % PRIORITY_COLORS.length;
+  return PRIORITY_COLORS[Math.max(0, colorIndex)];
 }
 
 function renderTaskFragments(text: string, today: string): ReactNode {

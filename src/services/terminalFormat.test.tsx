@@ -19,14 +19,14 @@ describe("terminal output formatting", () => {
 
     expect(screen.getByText("+work")).toHaveClass("text-role-accent");
     expect(screen.getByText("@laptop")).toHaveClass("text-role-context");
-    expect(screen.getByText("(A)")).toHaveClass("text-role-error");
+    expect(screen.getByText("(A)")).toHaveClass("text-terminal-1");
     expect(screen.getByText("1.")).toHaveClass("text-role-muted");
   });
 
-  it("mutes priorities below C instead of leaving them unstyled", () => {
+  it("colors priorities beyond C with the warm-to-cool spectrum", () => {
     render(<>{formatOutput("2. (D) Water plants")}</>);
 
-    expect(screen.getByText("(D)")).toHaveClass("text-role-muted");
+    expect(screen.getByText("(D)")).toHaveClass("text-terminal-6");
   });
 
   it("classifies each success message template as success output", () => {
