@@ -16,6 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [1.0.0] - 2026-07-10
+
+### Added
+
+- Sample todos now cover the full A-Z priority range, multiple tags/projects per task, and every list grouping (overdue, due today, upcoming, someday, completed).
+- Priority letters A-Z are each colored distinctly using a warm-to-cool spectrum across the 12 hued terminal colors, instead of D-Z sharing a single muted color.
+
+### Changed
+
+- Task lists are now sorted by priority first, then due date, then original order (previously due date took precedence over priority).
+
+### Removed
+
+- **BREAKING:** The theme catalog, and the `theme set`, `theme random`, and `theme test` commands, have been removed. The app now ships a single, fixed theme based on Earthsong instead of dozens of switchable Gogh-sourced themes.
+
 ## [0.16.0] - 2026-07-10
 
 ### Added
