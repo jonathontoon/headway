@@ -4,9 +4,14 @@ import { TERMINAL_PROMPT } from "../constants";
 type TerminalEntryProps = {
   readonly command?: string;
   readonly output?: string;
+  readonly taskCount: number;
 };
 
-export function TerminalEntry({ command, output }: TerminalEntryProps) {
+export function TerminalEntry({
+  command,
+  output,
+  taskCount,
+}: TerminalEntryProps) {
   return (
     <div className="mb-2 md:mb-3">
       {command !== undefined && (
@@ -25,7 +30,7 @@ export function TerminalEntry({ command, output }: TerminalEntryProps) {
           data-testid="terminal-output"
           className="m-0 whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9] text-terminal-foreground"
         >
-          {formatOutput(output)}
+          {formatOutput(output, taskCount)}
         </div>
       )}
     </div>

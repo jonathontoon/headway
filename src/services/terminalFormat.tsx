@@ -180,7 +180,7 @@ function renderHelpOutput(): ReactNode {
           const [, command, description] = helpMatch;
           return (
             <Fragment key={i}>
-              <span className="whitespace-pre-wrap text-role-command">
+              <span className="whitespace-pre-wrap text-role-command pl-[1ch]">
                 {renderHelpCommandSegment(command)}
               </span>
               <span className="whitespace-pre-wrap text-role-muted mb-2 sm:mb-0">
@@ -191,7 +191,10 @@ function renderHelpOutput(): ReactNode {
         }
 
         return (
-          <div key={i} className="sm:col-span-2 whitespace-pre-wrap">
+          <div
+            key={i}
+            className="sm:col-span-2 whitespace-pre-wrap pl-[1ch] text-role-muted"
+          >
             {line}
           </div>
         );
@@ -241,7 +244,7 @@ function renderSecondaryLine(line: string, key: number): ReactNode {
   return (
     <div
       key={key}
-      className="block whitespace-pre-wrap text-role-muted pl-[2ch]"
+      className="block whitespace-pre-wrap text-role-muted pl-[3ch]"
     >
       {line}
     </div>
@@ -250,7 +253,7 @@ function renderSecondaryLine(line: string, key: number): ReactNode {
 
 function renderUrlLine(line: string, key: number): ReactNode {
   return (
-    <div key={key} className="block whitespace-pre-wrap pl-[2ch]">
+    <div key={key} className="block whitespace-pre-wrap pl-[3ch]">
       <a
         href={line}
         target="_blank"
@@ -306,21 +309,34 @@ function renderMessageLine(line: string, key: number): ReactNode {
 
   return (
     <div key={key} className={`block whitespace-pre-wrap ${colorClass}`}>
-      {"→ "}
+      {" → "}
       {renderWithHeart(line)}
     </div>
   );
 }
 
-export function formatOutput(output: string): ReactNode {
+function renderTaskDetailLine(
+  line: string,
+  today: string,
+  key: number,
+): ReactNode {
+  return (
+    <div key={key} className="block whitespace-pre-wrap">
+      {" → "}
+      {renderTaskFragments(line, today)}
+    </div>
+  );
+}
+
+export function formatOutput(output: string, taskCount: number): ReactNode {
   if (output === HELP_TEXT) return renderHelpOutput();
 
   const today = getLocalDate();
   const lines = output.split("\n");
-  const idColumnWidth = lines.reduce((max, line) => {
-    const idLength = line.match(TASK_LINE_PATTERN)?.[1]?.length ?? 0;
-    return Math.max(max, idLength + 1);
-  }, 0);
+  // Sized to the total task count (not just what's in this block) so the id
+  // column lines up the same way across every rendered list, not just within
+  // one of them.
+  const idColumnWidth = String(taskCount).length + 1;
 
   return lines.map((line, i) => {
     if (line === "") {
@@ -354,13 +370,22 @@ export function formatOutput(output: string): ReactNode {
 
     if (line === "Type 'help' for all available commands.") {
       return (
-        <div key={i} className="block whitespace-pre-wrap text-role-muted">
+        <div
+          key={i}
+          className="block whitespace-pre-wrap text-role-muted mt-[1rem]"
+        >
           {line}
         </div>
       );
     }
 
     if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
+
+    // `show <#>` prints the task line followed by a `created:` detail row;
+    // give that task line the same fragment coloring as a rendered list.
+    if (lines[i + 1]?.startsWith("created:")) {
+      return renderTaskDetailLine(line, today, i);
+    }
 
     return renderMessageLine(line, i);
   });

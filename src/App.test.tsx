@@ -61,7 +61,7 @@ describe("App Component", () => {
       '[data-testid="terminal-output"]',
     )[1];
     expect(outputEl?.textContent).toBe(
-      "→ 1 is not a recognized command. Type 'help' for all available commands.",
+      " → 1 is not a recognized command. Type 'help' for all available commands.",
     );
   });
 });

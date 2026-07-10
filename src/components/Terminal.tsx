@@ -41,7 +41,7 @@ export function Terminal() {
       aria-label="Terminal prompt"
       onContextMenu={handleContextMenu}
     >
-      <TerminalHistory entries={state.entries} />
+      <TerminalHistory entries={state.entries} taskCount={state.todos.length} />
       <TerminalCommandForm
         command={state.command}
         onSubmit={handleSubmit}

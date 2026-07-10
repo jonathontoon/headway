@@ -4,10 +4,12 @@ import { TerminalEntry } from "./TerminalEntry";
 
 type TerminalHistoryProps = {
   readonly entries: readonly TerminalEntryModel[];
+  readonly taskCount: number;
 };
 
 export const TerminalHistory = memo(function TerminalHistory({
   entries,
+  taskCount,
 }: TerminalHistoryProps) {
   return (
     <>
@@ -16,6 +18,7 @@ export const TerminalHistory = memo(function TerminalHistory({
           key={entry.id}
           command={entry.command}
           output={entry.output}
+          taskCount={taskCount}
         />
       ))}
     </>
