@@ -4,7 +4,6 @@ export const TERMINAL_PROMPT = "~$";
 // Command keywords
 export const COMMANDS = {
   help: "help",
-  theme: "theme",
 } as const;
 
 export const HELP_TEXT = [
@@ -38,10 +37,6 @@ export const HELP_TEXT = [
   "",
   "OTHER",
   "stats - summary counts",
-  "theme - print the current theme name",
-  "theme set <name> - switch themes",
-  "theme random <dark|light> - switch to a random theme with that mode",
-  "theme test - explain current theme color slots",
   "donate - donation link",
 ].join("\n");
 
@@ -91,7 +86,6 @@ export const COMMAND_VERBS = [
   "archive",
   "projects",
   "stats",
-  "theme",
   "donate",
   "help",
 ] as const;
@@ -100,18 +94,4 @@ export const COMMAND_VERBS = [
 export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
   clear: ["due", "priority", "tags", "project"],
   list: ["today", "upcoming", "inbox", "someday"],
-  theme: ["set", "random", "test"],
 };
-
-export const THEME_COMMAND_PREFIX_LENGTH = 6; // 'theme '.length
-
-// Theme command error messages
-export const THEME_ERROR_MESSAGES = {
-  themeNotFound: (name: string) =>
-    `Theme "${name}" not found. Use "theme random dark" or "theme random light" to discover themes.`,
-  themeSetWithoutVariant: (name: string) => `Theme set to ${name}.`,
-  randomModeRequired: "Usage: theme random <dark|light>.",
-  setNameRequired: "Usage: theme set <name>.",
-  unsupportedThemeCommand:
-    'Unsupported theme command. Use "theme", "theme set <name>", "theme random <dark|light>", or "theme test".',
-} as const;

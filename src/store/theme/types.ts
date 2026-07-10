@@ -1,5 +1,3 @@
-export type ThemeMode = "dark" | "light";
-
 export const THEME_ROLE_NAMES = [
   "error",
   "warning",
@@ -21,15 +19,8 @@ export type ThemeRoles = Readonly<Record<ThemeRoleName, ThemeRoleValue>>;
 
 export type Theme = {
   readonly name: string;
-  readonly mode: ThemeMode;
   readonly background: string;
   readonly foreground: string;
   readonly colors: string[];
   readonly roles: ThemeRoles;
-};
-
-export type ThemeFamily = {
-  readonly name: string;
-  readonly dark?: Theme;
-  readonly light?: Theme;
 };
