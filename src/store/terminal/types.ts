@@ -9,4 +9,5 @@ export type TerminalState = {
   readonly command: string;
   readonly historyIndex: number | null;
   readonly todos: readonly string[];
+  readonly view: readonly number[];
 };

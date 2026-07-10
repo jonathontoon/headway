@@ -20,11 +20,13 @@ export type ParseTodoResult =
 
 export type TodoCommandState = {
   readonly todos: readonly string[];
+  readonly view: readonly number[];
 };
 
 export type TodoCommandResult = {
   readonly nextTodos: readonly string[];
   readonly output?: string;
+  readonly view?: readonly number[];
 };
 
 export type TodoClock = {

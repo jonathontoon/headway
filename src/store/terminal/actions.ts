@@ -6,6 +6,7 @@ export type TerminalAction =
       readonly command: string;
       readonly output?: string;
       readonly todos: readonly string[];
+      readonly view: readonly number[];
     }
   | {
       readonly type: "setCommand";
@@ -23,11 +24,13 @@ export const terminalActions = {
     command: string,
     output: string | undefined,
     todos: readonly string[],
+    view: readonly number[],
   ): TerminalAction => ({
     type: "submit",
     command,
     output,
     todos,
+    view,
   }),
   setCommand: (command: string): TerminalAction => ({
     type: "setCommand",

@@ -17,7 +17,10 @@ export function TerminalProvider({ children }: PropsWithChildren) {
         dispatch(terminalActions.setCommand(command));
       },
       submitCommand() {
-        const result = runTodoCommand(state.command, { todos: state.todos });
+        const result = runTodoCommand(state.command, {
+          todos: state.todos,
+          view: state.view,
+        });
         if (result.nextTodos !== state.todos) {
           storeTodos(result.nextTodos);
         }
@@ -26,6 +29,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
             state.command,
             result.output,
             result.nextTodos,
+            result.view ?? state.view,
           ),
         );
       },

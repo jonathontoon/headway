@@ -9,16 +9,18 @@ import {
 export function createInitialTerminalState(
   todos: readonly string[],
 ): TerminalState {
+  const { message, view } = formatBootMessage(
+    todos,
+    getLocalDate(),
+    getTimeGreeting(),
+  );
+
   return {
-    entries: [
-      {
-        id: 0,
-        output: formatBootMessage(todos, getLocalDate(), getTimeGreeting()),
-      },
-    ],
+    entries: [{ id: 0, output: message }],
     command: "",
     historyIndex: null,
     todos,
+    view,
   };
 }
 
@@ -108,6 +110,7 @@ export function terminalReducer(
         command: "",
         historyIndex: null,
         todos: action.todos,
+        view: action.view,
       };
     case "setCommand":
       return {

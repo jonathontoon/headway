@@ -2,7 +2,7 @@ import { formatBootMessage } from "./summary";
 
 describe("todo boot summary", () => {
   it("formats the welcome message from overdue, today, and inbox tasks", () => {
-    const message = formatBootMessage(
+    const { message, view } = formatBootMessage(
       [
         "2026-06-20 Pay electric bill +bills due:2026-06-28",
         "(B) 2026-06-25 Schedule Goodwill pickup @phone +GarageSale due:2026-07-04",
@@ -26,5 +26,6 @@ describe("todo boot summary", () => {
         "Type 'help' for all available commands.",
       ].join("\n"),
     );
+    expect(view).toEqual([1, 2, 3]);
   });
 });

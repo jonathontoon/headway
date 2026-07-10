@@ -1,10 +1,17 @@
 import { HELP_TEXT } from "../../constants";
+import {
+  formatSection,
+  formatTaskBody,
+  getMetadataValue,
+  parseTasks,
+  taskLabel,
+  type IndexedTask,
+} from "./format";
 import { isTodoDate, parseTodoLine, serializeTodo } from "./parser";
 import type {
   TodoClock,
   TodoCommandResult,
   TodoCommandState,
-  TodoMetadata,
   TodoTask,
 } from "./types";
 
@@ -12,16 +19,12 @@ const PRIORITY_PATTERN = /^[A-Z]$/;
 const CONTEXT_PATTERN = /^@\S+$/;
 const PROJECT_PATTERN = /^\+\S+$/;
 
-type IndexedTask = {
-  readonly id: number;
-  readonly task: TodoTask;
-  readonly line: string;
-};
-
 type TaskUpdate = {
   readonly task: TodoTask;
   readonly output?: string;
 };
+
+const NO_LIST_ERROR = "Error: no task list is showing - run 'list' first.";
 
 const defaultClock: TodoClock = {
   today: () => {
@@ -31,29 +34,31 @@ const defaultClock: TodoClock = {
   },
 };
 
-function parseTasks(todos: readonly string[]): readonly IndexedTask[] {
-  return todos.flatMap((line, index) => {
-    const result = parseTodoLine(line);
-    return result.ok ? [{ id: index + 1, task: result.task, line }] : [];
-  });
-}
-
 function findTask(
-  todos: readonly string[],
+  state: TodoCommandState,
   idText: string | undefined,
 ): { readonly index: number; readonly task: TodoTask } | string {
-  const id = Number(idText);
+  const position = Number(idText);
 
-  if (!Number.isInteger(id) || id < 1 || id > todos.length) {
+  if (!Number.isInteger(position) || position < 1) {
     return "Error: no task with that id.";
   }
 
-  const result = parseTodoLine(todos[id - 1]);
-  if (!result.ok) {
-    return `Error: task ${id} is not valid todo.txt.`;
+  if (state.view.length === 0) {
+    return NO_LIST_ERROR;
   }
 
-  return { index: id - 1, task: result.task };
+  const lineNumber = state.view[position - 1];
+  if (lineNumber === undefined || lineNumber > state.todos.length) {
+    return "Error: no task with that id.";
+  }
+
+  const result = parseTodoLine(state.todos[lineNumber - 1]);
+  if (!result.ok) {
+    return `Error: task ${position} is not valid todo.txt.`;
+  }
+
+  return { index: lineNumber - 1, task: result.task };
 }
 
 function replaceAt(
@@ -62,13 +67,6 @@ function replaceAt(
   task: TodoTask,
 ): readonly string[] {
   return todos.map((todo, i) => (i === index ? serializeTodo(task) : todo));
-}
-
-function taskLabel(task: TodoTask): string {
-  return task.text
-    .replace(/\s+pri:[^:\s]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function removeMetadata(text: string, key: string): string {
@@ -135,21 +133,25 @@ function parseIds(args: readonly string[]): readonly number[] | string {
 }
 
 function updateMany(
-  todos: readonly string[],
+  state: TodoCommandState,
   idTexts: readonly string[],
   update: (task: TodoTask, id: number) => TodoTask | TaskUpdate | string,
 ): TodoCommandResult {
   const ids = parseIds(idTexts);
 
   if (typeof ids === "string") {
-    return { nextTodos: todos, output: ids };
+    return { nextTodos: state.todos, output: ids };
   }
 
-  let nextTodos = [...todos];
+  if (state.view.length === 0) {
+    return { nextTodos: state.todos, output: NO_LIST_ERROR };
+  }
+
+  let nextTodos = [...state.todos];
   const outputs: string[] = [];
 
   ids.forEach((id) => {
-    const found = findTask(nextTodos, String(id));
+    const found = findTask({ todos: nextTodos, view: state.view }, String(id));
     if (typeof found === "string") {
       outputs.push(found);
       return;
@@ -171,12 +173,6 @@ function updateMany(
   });
 
   return { nextTodos, output: outputs.join("\n") || undefined };
-}
-
-function formatTask(id: number, task: TodoTask): string {
-  const priority =
-    task.priority && !task.completed ? `(${task.priority}) ` : "";
-  return `${id}. ${priority}${taskLabel(task)}`;
 }
 
 function compareTasks(a: IndexedTask, b: IndexedTask): number {
@@ -203,13 +199,6 @@ function compareTasks(a: IndexedTask, b: IndexedTask): number {
   return a.id - b.id;
 }
 
-function getMetadataValue(
-  metadata: readonly TodoMetadata[],
-  key: string,
-): string | undefined {
-  return metadata.find((item) => item.key === key)?.value;
-}
-
 function incompleteTasks(todos: readonly string[]): readonly IndexedTask[] {
   return parseTasks(todos)
     .filter(({ task }) => !task.completed)
@@ -220,24 +209,30 @@ function completedTasks(todos: readonly string[]): readonly IndexedTask[] {
   return parseTasks(todos).filter(({ task }) => task.completed);
 }
 
-function formatTaskList(
+function buildListing(
   tasks: readonly IndexedTask[],
   emptyMessage: string,
-): string {
-  return tasks.length === 0
-    ? emptyMessage
-    : tasks.map(({ id, task }) => formatTask(id, task)).join("\n");
+): { readonly output: string; readonly view: readonly number[] } {
+  if (tasks.length === 0) {
+    return { output: emptyMessage, view: [] };
+  }
+
+  const { lines, ids } = formatSection(tasks, 1);
+  return { output: lines.join("\n"), view: ids };
 }
 
 function runAdd(
-  todos: readonly string[],
+  state: TodoCommandState,
   commandText: string,
   clock: TodoClock,
 ): TodoCommandResult {
   const text = commandText.trim();
 
   if (text === "") {
-    return { nextTodos: todos, output: "Error: add requires task text." };
+    return {
+      nextTodos: state.todos,
+      output: "Error: add requires task text.",
+    };
   }
 
   const parsed = parseTodoLine(text);
@@ -245,26 +240,24 @@ function runAdd(
   const line = task ? serializeTodo(task) : `${clock.today()} ${text}`;
 
   return {
-    nextTodos: [...todos, line],
-    output: `Added: ${todos.length + 1}. ${
-      task ? formatTask(todos.length + 1, task).replace(/^\d+\. /, "") : text
-    }`,
+    nextTodos: [...state.todos, line],
+    output: `Added: ${task ? formatTaskBody(task) : text}`,
   };
 }
 
 function runEdit(
-  todos: readonly string[],
+  state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
   const [idText, ...textParts] = args;
-  const found = findTask(todos, idText);
+  const found = findTask(state, idText);
 
   if (typeof found === "string") {
-    return { nextTodos: todos, output: found };
+    return { nextTodos: state.todos, output: found };
   }
 
   if (textParts.length === 0) {
-    return { nextTodos: todos, output: "Usage: edit <id> <text>." };
+    return { nextTodos: state.todos, output: "Usage: edit <#> <text>." };
   }
 
   const text = textParts.join(" ");
@@ -279,19 +272,19 @@ function runEdit(
   };
 
   return {
-    nextTodos: replaceAt(todos, found.index, nextTask),
+    nextTodos: replaceAt(state.todos, found.index, nextTask),
     output: `Updated: ${taskLabel(nextTask)}`,
   };
 }
 
 function runShow(
-  todos: readonly string[],
+  state: TodoCommandState,
   idText: string | undefined,
 ): TodoCommandResult {
-  const found = findTask(todos, idText);
+  const found = findTask(state, idText);
 
   if (typeof found === "string") {
-    return { nextTodos: todos, output: found };
+    return { nextTodos: state.todos, output: found };
   }
 
   const due = getMetadataValue(found.task.metadata, "due") ?? "-";
@@ -300,26 +293,30 @@ function runShow(
   const status = found.task.completed ? "complete" : "open";
 
   return {
-    nextTodos: todos,
+    nextTodos: state.todos,
     output: `${taskLabel(found.task)}\ncreated: ${created}  priority: ${priority}  due: ${due}  status: ${status}`,
   };
 }
 
 function runDelete(
-  todos: readonly string[],
+  state: TodoCommandState,
   idTexts: readonly string[],
 ): TodoCommandResult {
   const ids = parseIds(idTexts);
 
   if (typeof ids === "string") {
-    return { nextTodos: todos, output: ids };
+    return { nextTodos: state.todos, output: ids };
+  }
+
+  if (state.view.length === 0) {
+    return { nextTodos: state.todos, output: NO_LIST_ERROR };
   }
 
   const outputs: string[] = [];
   const removeIndexes = new Set<number>();
 
   ids.forEach((id) => {
-    const found = findTask(todos, String(id));
+    const found = findTask(state, String(id));
     if (typeof found === "string") {
       outputs.push(found);
       return;
@@ -333,17 +330,18 @@ function runDelete(
   });
 
   return {
-    nextTodos: todos.filter((_, index) => !removeIndexes.has(index)),
+    nextTodos: state.todos.filter((_, index) => !removeIndexes.has(index)),
     output: outputs.join("\n"),
+    view: removeIndexes.size > 0 ? [] : undefined,
   };
 }
 
 function runComplete(
-  todos: readonly string[],
+  state: TodoCommandState,
   idTexts: readonly string[],
   clock: TodoClock,
 ): TodoCommandResult {
-  return updateMany(todos, idTexts, (task) => {
+  return updateMany(state, idTexts, (task) => {
     if (task.completed) {
       return "Warning: already marked complete.";
     }
@@ -372,10 +370,10 @@ function runComplete(
 }
 
 function runUndo(
-  todos: readonly string[],
+  state: TodoCommandState,
   idTexts: readonly string[],
 ): TodoCommandResult {
-  return updateMany(todos, idTexts, (task) => {
+  return updateMany(state, idTexts, (task) => {
     if (!task.completed) {
       return "Warning: not marked complete.";
     }
@@ -404,19 +402,19 @@ function runUndo(
 }
 
 function runDue(
-  todos: readonly string[],
+  state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
   const [idText, date] = args;
 
   if (!isTodoDate(date ?? "")) {
     return {
-      nextTodos: todos,
+      nextTodos: state.todos,
       output: `Error: invalid date "${date ?? ""}" - expected YYYY-MM-DD.`,
     };
   }
 
-  return updateMany(todos, [idText ?? ""], (task) => {
+  return updateMany(state, [idText ?? ""], (task) => {
     const text = addOrReplaceMetadata(task.text, "due", date);
     const parsed = parseTodoLine(text);
     return {
@@ -431,19 +429,19 @@ function runDue(
 }
 
 function runPriority(
-  todos: readonly string[],
+  state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
   const [idText, priority] = args;
 
   if (!PRIORITY_PATTERN.test(priority ?? "")) {
     return {
-      nextTodos: todos,
+      nextTodos: state.todos,
       output: `Error: invalid priority "${priority ?? ""}" - expected a single letter A-Z.`,
     };
   }
 
-  return updateMany(todos, [idText ?? ""], (task) => ({
+  return updateMany(state, [idText ?? ""], (task) => ({
     task: {
       ...task,
       priority,
@@ -453,17 +451,17 @@ function runPriority(
 }
 
 function runTag(
-  todos: readonly string[],
+  state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
   const [idText, ...tags] = args;
   const invalid = tags.find((tag) => !CONTEXT_PATTERN.test(tag));
 
   if (tags.length === 0 || invalid) {
-    return { nextTodos: todos, output: "Error: expected @tag." };
+    return { nextTodos: state.todos, output: "Error: expected @tag." };
   }
 
-  return updateMany(todos, [idText ?? ""], (task) => {
+  return updateMany(state, [idText ?? ""], (task) => {
     const text = addUniqueTokens(task.text, tags);
     const parsed = parseTodoLine(text);
     return {
@@ -478,16 +476,16 @@ function runTag(
 }
 
 function runProject(
-  todos: readonly string[],
+  state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
   const [idText, project] = args;
 
   if (!PROJECT_PATTERN.test(project ?? "")) {
-    return { nextTodos: todos, output: "Error: expected +Project." };
+    return { nextTodos: state.todos, output: "Error: expected +Project." };
   }
 
-  return updateMany(todos, [idText ?? ""], (task) => {
+  return updateMany(state, [idText ?? ""], (task) => {
     const text = addUniqueTokens(task.text, [project]);
     const parsed = parseTodoLine(text);
     return {
@@ -502,13 +500,13 @@ function runProject(
 }
 
 function runClear(
-  todos: readonly string[],
+  state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
   const [target, ...rest] = args;
 
   if (target === "due") {
-    return updateMany(todos, rest, (task) => {
+    return updateMany(state, rest, (task) => {
       const text = removeMetadata(task.text, "due");
       const parsed = parseTodoLine(text);
       return {
@@ -520,7 +518,7 @@ function runClear(
   }
 
   if (target === "priority") {
-    return updateMany(todos, rest, (task) => ({
+    return updateMany(state, rest, (task) => ({
       ...task,
       priority: undefined,
     }));
@@ -529,7 +527,7 @@ function runClear(
   if (target === "tags") {
     const [idText, ...tags] = rest;
     const tagSet = new Set(tags);
-    return updateMany(todos, [idText ?? ""], (task) => {
+    return updateMany(state, [idText ?? ""], (task) => {
       const text = removeTokens(
         task.text,
         (word) =>
@@ -541,7 +539,7 @@ function runClear(
   }
 
   if (target === "project") {
-    return updateMany(todos, rest, (task) => {
+    return updateMany(state, rest, (task) => {
       const text = removeTokens(task.text, (word) =>
         PROJECT_PATTERN.test(word),
       );
@@ -551,13 +549,13 @@ function runClear(
   }
 
   return {
-    nextTodos: todos,
+    nextTodos: state.todos,
     output: "Error: clear expects due, priority, tags, or project.",
   };
 }
 
 function runList(
-  todos: readonly string[],
+  state: TodoCommandState,
   filterText: string,
   today: string,
 ): TodoCommandResult {
@@ -568,83 +566,80 @@ function runList(
   if (!isQuotedKeyword) {
     switch (filter) {
       case "today":
-        return runToday(todos, today);
+        return runToday(state, today);
       case "upcoming":
-        return runUpcoming(todos, today);
+        return runUpcoming(state, today);
       case "inbox":
-        return runInbox(todos);
+        return runInbox(state);
       case "someday":
-        return runSomeday(todos);
+        return runSomeday(state);
     }
   }
 
-  const tasks = incompleteTasks(todos).filter(({ task }) => {
+  const tasks = incompleteTasks(state.todos).filter(({ task }) => {
     if (filter === "") return true;
     if (filter.startsWith("+")) return task.projects.includes(filter.slice(1));
     if (filter.startsWith("@")) return task.contexts.includes(filter.slice(1));
     return task.text.toLowerCase().includes(filter.toLowerCase());
   });
 
-  return {
-    nextTodos: todos,
-    output: formatTaskList(
-      tasks,
-      filter === ""
-        ? "No incomplete tasks."
-        : `No incomplete tasks match "${filter}".`,
-    ),
-  };
+  const { output, view } = buildListing(
+    tasks,
+    filter === ""
+      ? "No incomplete tasks."
+      : `No incomplete tasks match "${filter}".`,
+  );
+
+  return { nextTodos: state.todos, output, view };
 }
 
-function runToday(todos: readonly string[], today: string): TodoCommandResult {
-  const tasks = incompleteTasks(todos).filter(({ task }) => {
+function runToday(state: TodoCommandState, today: string): TodoCommandResult {
+  const tasks = incompleteTasks(state.todos).filter(({ task }) => {
     const due = getMetadataValue(task.metadata, "due");
     return due !== undefined && due <= today;
   });
 
-  return { nextTodos: todos, output: formatTaskList(tasks, "Today is clear.") };
+  const { output, view } = buildListing(tasks, "Today is clear.");
+  return { nextTodos: state.todos, output, view };
 }
 
 function runUpcoming(
-  todos: readonly string[],
+  state: TodoCommandState,
   today: string,
 ): TodoCommandResult {
-  const tasks = incompleteTasks(todos).filter(({ task }) => {
+  const tasks = incompleteTasks(state.todos).filter(({ task }) => {
     const due = getMetadataValue(task.metadata, "due");
     return due !== undefined && due > today;
   });
 
-  return {
-    nextTodos: todos,
-    output: formatTaskList(tasks, "Upcoming is empty."),
-  };
+  const { output, view } = buildListing(tasks, "Upcoming is empty.");
+  return { nextTodos: state.todos, output, view };
 }
 
-function runInbox(todos: readonly string[]): TodoCommandResult {
-  const tasks = incompleteTasks(todos).filter(
+function runInbox(state: TodoCommandState): TodoCommandResult {
+  const tasks = incompleteTasks(state.todos).filter(
     ({ task }) =>
       task.projects.length === 0 && !getMetadataValue(task.metadata, "due"),
   );
 
-  return { nextTodos: todos, output: formatTaskList(tasks, "Inbox is empty.") };
+  const { output, view } = buildListing(tasks, "Inbox is empty.");
+  return { nextTodos: state.todos, output, view };
 }
 
-function runSomeday(todos: readonly string[]): TodoCommandResult {
-  const tasks = incompleteTasks(todos).filter(
+function runSomeday(state: TodoCommandState): TodoCommandResult {
+  const tasks = incompleteTasks(state.todos).filter(
     ({ task }) =>
       task.projects.length > 0 && !getMetadataValue(task.metadata, "due"),
   );
 
-  return {
-    nextTodos: todos,
-    output: formatTaskList(tasks, "Someday is empty."),
-  };
+  const { output, view } = buildListing(tasks, "Someday is empty.");
+  return { nextTodos: state.todos, output, view };
 }
 
-function runProjects(todos: readonly string[]): TodoCommandResult {
+function runProjects(state: TodoCommandState): TodoCommandResult {
   const counts = new Map<string, number>();
 
-  incompleteTasks(todos).forEach(({ task }) => {
+  incompleteTasks(state.todos).forEach(({ task }) => {
     task.projects.forEach((project) => {
       counts.set(project, (counts.get(project) ?? 0) + 1);
     });
@@ -653,13 +648,13 @@ function runProjects(todos: readonly string[]): TodoCommandResult {
   const rows = [...counts.entries()].sort((a, b) => b[1] - a[1]);
 
   if (rows.length === 0) {
-    return { nextTodos: todos, output: "No projects." };
+    return { nextTodos: state.todos, output: "No projects." };
   }
 
   const total = rows.reduce((sum, [, count]) => sum + count, 0);
 
   return {
-    nextTodos: todos,
+    nextTodos: state.todos,
     output: [
       `${rows.length} projects, ${total} tasks between them.`,
       ...rows.map(([project, count]) => `${count} +${project}`),
@@ -667,9 +662,9 @@ function runProjects(todos: readonly string[]): TodoCommandResult {
   };
 }
 
-function runStats(todos: readonly string[], today: string): TodoCommandResult {
-  const open = incompleteTasks(todos);
-  const completed = completedTasks(todos);
+function runStats(state: TodoCommandState, today: string): TodoCommandResult {
+  const open = incompleteTasks(state.todos);
+  const completed = completedTasks(state.todos);
   const overdue = open.filter(({ task }) => {
     const due = getMetadataValue(task.metadata, "due");
     return due !== undefined && due < today;
@@ -687,7 +682,7 @@ function runStats(todos: readonly string[], today: string): TodoCommandResult {
   ).length;
 
   return {
-    nextTodos: todos,
+    nextTodos: state.todos,
     output: [
       `${open.length} tasks on your radar right now.`,
       `${overdue} overdue`,
@@ -699,13 +694,11 @@ function runStats(todos: readonly string[], today: string): TodoCommandResult {
   };
 }
 
-export function runTodoCommand(
-  command: string,
+function runCommand(
+  trimmedCommand: string,
   state: TodoCommandState,
-  clock: TodoClock = defaultClock,
+  clock: TodoClock,
 ): TodoCommandResult {
-  const trimmedCommand = command.trim();
-
   if (trimmedCommand === "") {
     return { nextTodos: state.todos, output: undefined };
   }
@@ -718,49 +711,48 @@ export function runTodoCommand(
 
   switch (commandName) {
     case "add":
-      return runAdd(state.todos, trimmedCommand.slice(3), clock);
+      return runAdd(state, trimmedCommand.slice(3), clock);
     case "edit":
-      return runEdit(state.todos, args);
+      return runEdit(state, args);
     case "show":
-      return runShow(state.todos, args[0]);
+      return runShow(state, args[0]);
     case "delete":
-      return runDelete(state.todos, args);
+      return runDelete(state, args);
     case "complete":
-      return runComplete(state.todos, args, clock);
+      return runComplete(state, args, clock);
     case "undo":
-      return runUndo(state.todos, args);
+      return runUndo(state, args);
     case "due":
-      return runDue(state.todos, args);
+      return runDue(state, args);
     case "priority":
-      return runPriority(state.todos, args);
+      return runPriority(state, args);
     case "tag":
-      return runTag(state.todos, args);
+      return runTag(state, args);
     case "project":
-      return runProject(state.todos, args);
+      return runProject(state, args);
     case "clear":
-      return runClear(state.todos, args);
+      return runClear(state, args);
     case "list":
-      return runList(state.todos, args.join(" "), clock.today());
+      return runList(state, args.join(" "), clock.today());
     case "today":
-      return runToday(state.todos, clock.today());
+      return runToday(state, clock.today());
     case "upcoming":
-      return runUpcoming(state.todos, clock.today());
+      return runUpcoming(state, clock.today());
     case "inbox":
-      return runInbox(state.todos);
+      return runInbox(state);
     case "someday":
-      return runSomeday(state.todos);
-    case "archive":
-      return {
-        nextTodos: state.todos,
-        output: formatTaskList(
-          completedTasks(state.todos),
-          "Archive is empty.",
-        ),
-      };
+      return runSomeday(state);
+    case "archive": {
+      const { output, view } = buildListing(
+        completedTasks(state.todos),
+        "Archive is empty.",
+      );
+      return { nextTodos: state.todos, output, view };
+    }
     case "projects":
-      return runProjects(state.todos);
+      return runProjects(state);
     case "stats":
-      return runStats(state.todos, clock.today());
+      return runStats(state, clock.today());
     case "donate":
       return {
         nextTodos: state.todos,
@@ -772,4 +764,13 @@ export function runTodoCommand(
         output: `${commandName} is not a recognized command. Type 'help' for all available commands.`,
       };
   }
+}
+
+export function runTodoCommand(
+  command: string,
+  state: TodoCommandState,
+  clock: TodoClock = defaultClock,
+): TodoCommandResult {
+  const result = runCommand(command.trim(), state, clock);
+  return { ...result, view: result.view ?? state.view };
 }

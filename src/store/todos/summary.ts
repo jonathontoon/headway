@@ -1,41 +1,14 @@
-import { parseTodoLine } from "./parser";
-import type { TodoMetadata, TodoTask } from "./types";
+import {
+  formatSection,
+  getMetadataValue,
+  parseTasks,
+  type IndexedTask,
+} from "./format";
 
-type IndexedTask = {
-  readonly id: number;
-  readonly task: TodoTask;
-};
-
-function getMetadataValue(
-  metadata: readonly TodoMetadata[],
-  key: string,
-): string | undefined {
-  return metadata.find((item) => item.key === key)?.value;
-}
-
-function taskLabel(task: TodoTask): string {
-  return task.text
-    .replace(/\s+pri:[^:\s]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function formatTask(id: number, task: TodoTask): string {
-  const priority =
-    task.priority && !task.completed ? `(${task.priority}) ` : "";
-  return `${id}. ${priority}${taskLabel(task)}`;
-}
-
-function incompleteTasks(todos: readonly string[]): readonly IndexedTask[] {
-  return todos.flatMap((line, index) => {
-    const result = parseTodoLine(line);
-
-    if (!result.ok || result.task.completed) {
-      return [];
-    }
-
-    return [{ id: index + 1, task: result.task }];
-  });
+function openTasksInFileOrder(
+  todos: readonly string[],
+): readonly IndexedTask[] {
+  return parseTasks(todos).filter(({ task }) => !task.completed);
 }
 
 function pluralize(count: number, singular: string, plural: string): string {
@@ -60,8 +33,8 @@ export function formatBootMessage(
   todos: readonly string[],
   today: string,
   greeting: string,
-): string {
-  const open = incompleteTasks(todos);
+): { readonly message: string; readonly view: readonly number[] } {
+  const open = openTasksInFileOrder(todos);
   const overdue = open.filter(({ task }) => {
     const due = getMetadataValue(task.metadata, "due");
     return due !== undefined && due < today;
@@ -73,6 +46,7 @@ export function formatBootMessage(
     ({ task }) =>
       task.projects.length === 0 && !getMetadataValue(task.metadata, "due"),
   );
+
   const lines = [
     `↗ headway v${__APP_VERSION__}`,
     `${greeting}. You have ${overdue.length} ${pluralize(
@@ -82,25 +56,22 @@ export function formatBootMessage(
     )}, and ${dueToday.length} due today.`,
   ];
 
-  if (overdue.length > 0) {
-    lines.push(
-      "OVERDUE",
-      ...overdue.map(({ id, task }) => formatTask(id, task)),
-    );
-  }
+  let position = 1;
+  let view: readonly number[] = [];
 
-  if (dueToday.length > 0) {
-    lines.push(
-      "TODAY",
-      ...dueToday.map(({ id, task }) => formatTask(id, task)),
-    );
-  }
-
-  if (inbox.length > 0) {
-    lines.push("INBOX", ...inbox.map(({ id, task }) => formatTask(id, task)));
+  for (const [heading, tasks] of [
+    ["OVERDUE", overdue],
+    ["TODAY", dueToday],
+    ["INBOX", inbox],
+  ] as const) {
+    if (tasks.length === 0) continue;
+    const section = formatSection(tasks, position);
+    lines.push(heading, ...section.lines);
+    view = [...view, ...section.ids];
+    position += tasks.length;
   }
 
   lines.push("Type 'help' for all available commands.");
 
-  return lines.join("\n");
+  return { message: lines.join("\n"), view };
 }
