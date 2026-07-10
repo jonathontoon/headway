@@ -180,12 +180,7 @@ function formatTask(id: number, task: TodoTask): string {
 }
 
 function compareTasks(a: IndexedTask, b: IndexedTask): number {
-  const aDue = getMetadataValue(a.task.metadata, "due");
-  const bDue = getMetadataValue(b.task.metadata, "due");
-
-  if (aDue && bDue && aDue !== bDue) return aDue.localeCompare(bDue);
-  if (aDue) return -1;
-  if (bDue) return 1;
+  // Sort by priority first (A-Z, with no priority at the end)
   if (
     a.task.priority &&
     b.task.priority &&
@@ -195,6 +190,16 @@ function compareTasks(a: IndexedTask, b: IndexedTask): number {
   }
   if (a.task.priority) return -1;
   if (b.task.priority) return 1;
+
+  // Then by due date
+  const aDue = getMetadataValue(a.task.metadata, "due");
+  const bDue = getMetadataValue(b.task.metadata, "due");
+
+  if (aDue && bDue && aDue !== bDue) return aDue.localeCompare(bDue);
+  if (aDue) return -1;
+  if (bDue) return 1;
+
+  // Finally by original order
   return a.id - b.id;
 }
 
