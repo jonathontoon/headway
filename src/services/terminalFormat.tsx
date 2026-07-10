@@ -94,12 +94,18 @@ function renderTaskLine(
   match: RegExpMatchArray,
   today: string,
   key: number,
+  idColumnWidth: number,
 ): ReactNode {
   const [, id, priority, rest] = match;
 
   return (
     <div key={key} className="block whitespace-pre-wrap">
-      <span className="text-role-muted">{id}.</span>{" "}
+      <span
+        className="inline-block text-right text-role-muted"
+        style={{ minWidth: `${idColumnWidth}ch` }}
+      >
+        {id}.
+      </span>{" "}
       {priority && (
         <span className={priorityClassName(priority)}>({priority}) </span>
       )}
@@ -310,8 +316,13 @@ export function formatOutput(output: string): ReactNode {
   if (output === HELP_TEXT) return renderHelpOutput();
 
   const today = getLocalDate();
+  const lines = output.split("\n");
+  const idColumnWidth = lines.reduce((max, line) => {
+    const idLength = line.match(TASK_LINE_PATTERN)?.[1]?.length ?? 0;
+    return Math.max(max, idLength + 1);
+  }, 0);
 
-  return output.split("\n").map((line, i) => {
+  return lines.map((line, i) => {
     if (line === "") {
       return <div key={i} className="h-[1rem]" aria-hidden="true" />;
     }
@@ -327,7 +338,7 @@ export function formatOutput(output: string): ReactNode {
     }
 
     const taskMatch = line.match(TASK_LINE_PATTERN);
-    if (taskMatch) return renderTaskLine(taskMatch, today, i);
+    if (taskMatch) return renderTaskLine(taskMatch, today, i, idColumnWidth);
 
     const countMatch = line.match(COUNT_ROW_PATTERN);
     if (countMatch) return renderCountRow(countMatch, i);
