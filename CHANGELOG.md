@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [1.1.0] - 2026-07-11
+
+### Changed
+
+- Task ids now refer to the position in the most recently rendered list (`list`, `today`, `upcoming`, `inbox`, `someday`, `archive`, or the boot dashboard) instead of the raw todo.txt line position, so printed numbers always match display order. Commands that reference an id (`edit`, `show`, `delete`, `complete`, `undo`, `due`, `priority`, `tag`, `project`, `clear`) resolve against that list; deleting invalidates it, so further id references require listing again.
+
+### Fixed
+
+- Priority letters F-Z no longer get a distinct color; only A-E use the warm-to-cool gradient, so color highlights the priorities that matter instead of competing across the full alphabet.
+- Task id columns are now right-aligned to the widest id in each rendered list, so priority letters and task text line up regardless of single- vs multi-digit ids.
+
 ## [1.0.0] - 2026-07-10
 
 ### Added
