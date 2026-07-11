@@ -261,7 +261,7 @@ function renderUrlLine(line: string, key: number): ReactNode {
         href={line}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-role-accent underline"
+        className="text-role-accent underline hover:no-underline"
       >
         {line}
       </a>
@@ -293,7 +293,7 @@ function renderInlineText(line: string): ReactNode {
         href={segment}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-role-accent underline"
+        className="text-role-accent underline hover:no-underline"
       >
         {segment}
       </a>
@@ -342,7 +342,7 @@ function renderMessageLine(line: string, key: number): ReactNode {
 function renderSpinnerLine(line: string, key: number): ReactNode {
   return (
     <div key={key} className="block whitespace-pre-wrap text-role-muted">
-      {line}
+      {` ${line}`}
     </div>
   );
 }
