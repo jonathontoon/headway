@@ -20,7 +20,10 @@ import {
 
 export type GitHubCommandDeps = {
   readonly getTodos: () => readonly string[];
-  readonly emit: (output: string) => void;
+  readonly emit: (
+    output: string,
+    options?: { readonly replace?: boolean },
+  ) => void;
   readonly applyTodos: (todos: readonly string[]) => void;
   readonly clientId: string | undefined;
   readonly fetchFn?: FetchFn;
@@ -114,6 +117,7 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
           `Visit ${device.verificationUri} and enter code ${device.userCode}`,
           `${frame} Waiting for authorization...`,
         ].join("\n"),
+        { replace: true },
       );
     },
   );

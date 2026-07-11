@@ -13,6 +13,10 @@ export type TerminalAction =
       readonly output: string;
     }
   | {
+      readonly type: "replaceLastOutput";
+      readonly output: string;
+    }
+  | {
       readonly type: "applyTodos";
       readonly todos: readonly string[];
     }
@@ -42,6 +46,10 @@ export const terminalActions = {
   }),
   appendOutput: (output: string): TerminalAction => ({
     type: "appendOutput",
+    output,
+  }),
+  replaceLastOutput: (output: string): TerminalAction => ({
+    type: "replaceLastOutput",
     output,
   }),
   applyTodos: (todos: readonly string[]): TerminalAction => ({

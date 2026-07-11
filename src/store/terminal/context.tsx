@@ -56,7 +56,12 @@ export function TerminalProvider({ children }: PropsWithChildren) {
           githubBusyRef.current = true;
           void runGitHubCommand(trimmed, {
             getTodos: () => todosRef.current,
-            emit: (output) => dispatch(terminalActions.appendOutput(output)),
+            emit: (output, options) =>
+              dispatch(
+                options?.replace
+                  ? terminalActions.replaceLastOutput(output)
+                  : terminalActions.appendOutput(output),
+              ),
             applyTodos: (todos) => {
               storeTodos(todos);
               dispatch(terminalActions.applyTodos(todos));

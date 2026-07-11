@@ -123,6 +123,18 @@ export function terminalReducer(
           },
         ],
       };
+    case "replaceLastOutput": {
+      const lastIndex = state.entries.length - 1;
+      if (lastIndex < 0) {
+        return state;
+      }
+      return {
+        ...state,
+        entries: state.entries.map((entry, index) =>
+          index === lastIndex ? { ...entry, output: action.output } : entry,
+        ),
+      };
+    }
     case "applyTodos":
       return {
         ...state,
