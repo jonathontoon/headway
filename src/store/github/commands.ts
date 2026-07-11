@@ -86,6 +86,9 @@ function describeTarget(target: SyncTarget): string {
   return `${target.owner}/${target.repo}:${target.path} (${target.branch})`;
 }
 
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const SPINNER_TICK_MS = 90;
+
 async function runLogin(deps: GitHubCommandDeps): Promise<void> {
   if (!deps.clientId) {
     deps.emit(
@@ -95,36 +98,44 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
   }
 
   const device = await requestDeviceCode(deps.clientId, deps.fetchFn);
-  deps.emit(
-    [
-      `Visit ${device.verificationUri} and enter code ${device.userCode}`,
-      "⠋ Waiting for authorization...",
-    ].join("\n"),
-  );
+  const renderWaiting = (frame: string, replace: boolean) =>
+    deps.emit(
+      [
+        `Visit ${device.verificationUri} and enter code ${device.userCode}`,
+        `${frame} Waiting for authorization...`,
+      ].join("\n"),
+      { replace },
+    );
+
+  renderWaiting(SPINNER_FRAMES[0], false);
 
   if (typeof window !== "undefined" && window.open) {
     window.open(device.verificationUri, "_blank");
   }
 
-  const token = await pollForToken(
-    deps.clientId,
-    device,
-    deps.fetchFn,
-    deps.waitFn,
-    (frame) => {
-      deps.emit(
-        [
-          `Visit ${device.verificationUri} and enter code ${device.userCode}`,
-          `${frame} Waiting for authorization...`,
-        ].join("\n"),
-        { replace: true },
-      );
-    },
-  );
-  const login = await getAuthenticatedLogin(token, deps.fetchFn);
+  // The spinner animates on its own clock; the network poll runs on
+  // GitHub's much slower interval (typically every 5s), so tying the two
+  // together made the spinner look frozen between polls.
+  let frameIndex = 0;
+  const spinnerId = setInterval(() => {
+    frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
+    renderWaiting(SPINNER_FRAMES[frameIndex], true);
+  }, SPINNER_TICK_MS);
 
-  storeGitHubSettings({ ...loadGitHubSettings(), token, login });
-  deps.emit(`Logged in as ${login}.`);
+  try {
+    const token = await pollForToken(
+      deps.clientId,
+      device,
+      deps.fetchFn,
+      deps.waitFn,
+    );
+    const login = await getAuthenticatedLogin(token, deps.fetchFn);
+
+    storeGitHubSettings({ ...loadGitHubSettings(), token, login });
+    deps.emit(`Logged in as ${login}.`);
+  } finally {
+    clearInterval(spinnerId);
+  }
 }
 
 function runLogout(deps: GitHubCommandDeps): void {

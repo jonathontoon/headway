@@ -30,6 +30,7 @@ const HELP_ARG_PATTERN = /(<[^>]+>|"[^"]*")/g;
 const HEART_PATTERN = /(♥)/;
 const SUMMARY_HEADER_PATTERN =
   /^(?:\d+ tasks on your radar right now\.|\d+ projects, \d+ tasks between them\.)$/;
+const SPINNER_LINE_PATTERN = /^[⠀-⣿] /;
 
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
@@ -316,6 +317,14 @@ function renderMessageLine(line: string, key: number): ReactNode {
   );
 }
 
+function renderSpinnerLine(line: string, key: number): ReactNode {
+  return (
+    <div key={key} className="block whitespace-pre-wrap text-role-muted">
+      {line}
+    </div>
+  );
+}
+
 function renderTaskDetailLine(
   line: string,
   today: string,
@@ -381,6 +390,7 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
     }
 
     if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
+    if (SPINNER_LINE_PATTERN.test(line)) return renderSpinnerLine(line, i);
 
     // `show <#>` prints the task line followed by a `created:` detail row;
     // give that task line the same fragment coloring as a rendered list.
