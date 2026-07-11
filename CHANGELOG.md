@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [1.2.0] - 2026-07-11
+
+### Added
+
+- Manual GitHub sync for the todo list: `sync setup <owner>/<repo> [branch] [path]` picks a repo file (defaults `main`/`todo.txt`), `sync push` commits local tasks via the GitHub Contents API, `sync pull` replaces local tasks from the repo, and `sync`/`sync status` reports the target, account, and dirty/clean state. Push and pull detect conflicts (remote changed since last sync, or unpushed local changes) and require `--force` to override.
+- `login`/`logout` commands authenticate with GitHub via the OAuth device flow (set `VITE_GITHUB_CLIENT_ID` to an OAuth App with device flow enabled). A new Cloudflare Worker route proxies the two device-flow endpoints that don't allow browser CORS.
+
 ## [1.1.0] - 2026-07-11
 
 ### Changed
