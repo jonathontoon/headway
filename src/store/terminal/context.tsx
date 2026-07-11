@@ -45,7 +45,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
           githubOperationRef.current = null;
           dispatch(
             terminalActions.appendOutput(
-              `Alright, moving on - stopped waiting on '${pending.label}'.`,
+              `Stopped waiting on '${pending.label}'.`,
             ),
           );
         }
