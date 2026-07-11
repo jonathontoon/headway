@@ -16,6 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [1.3.0] - 2026-07-11
+
+### Added
+
+- `login` now animates a spinner while waiting for GitHub authorization, and highlights the device code you need to enter.
+- Submitting any command while `login` (or `sync backup`/`sync restore`) is in flight cancels it instead of blocking.
+
+### Changed
+
+- Renamed `sync push`/`sync pull` to `sync backup`/`sync restore` (with matching `Pushed:`/`Pulled:` output renamed to `Saved:`/`Loaded:`), so GitHub sync reads like a backup feature instead of a git wrapper.
+- Terminal links no longer show an underline on hover.
+
 ## [1.2.0] - 2026-07-11
 
 ### Added

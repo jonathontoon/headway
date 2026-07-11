@@ -68,7 +68,7 @@ describe("github commands", () => {
   });
 
   it("recognizes only github command verbs", () => {
-    expect(isGitHubCommand("sync push")).toBe(true);
+    expect(isGitHubCommand("sync backup")).toBe(true);
     expect(isGitHubCommand("  login  ")).toBe(true);
     expect(isGitHubCommand("logout")).toBe(true);
     expect(isGitHubCommand("list")).toBe(false);
@@ -149,7 +149,7 @@ describe("github commands", () => {
     configureTarget({ lastSyncedSha: "abc1234def", lastSyncedHash: "stale" });
     const dirty = makeDeps();
     await runGitHubCommand("sync status", dirty.deps);
-    expect(dirty.output[0]).toContain("state: local changes not pushed");
+    expect(dirty.output[0]).toContain("state: local changes not saved");
   });
 
   it("requires a client id for login", async () => {
@@ -238,22 +238,22 @@ describe("github commands", () => {
     expect(loadGitHubSettings().owner).toBe("toon");
   });
 
-  it("requires login and a target before push or pull", async () => {
+  it("requires login and a target before backup or restore", async () => {
     const anonymous = makeDeps();
-    await runGitHubCommand("sync push", anonymous.deps);
+    await runGitHubCommand("sync backup", anonymous.deps);
     expect(anonymous.output[0]).toBe(
       "Error: not logged in - run 'login' first.",
     );
 
     storeGitHubSettings({ token: "gho_token" });
     const untargeted = makeDeps();
-    await runGitHubCommand("sync pull", untargeted.deps);
+    await runGitHubCommand("sync restore", untargeted.deps);
     expect(untargeted.output[0]).toBe(
       "Error: no sync target - run 'sync setup <owner>/<repo>' first.",
     );
   });
 
-  it("pushes a new file when none exists remotely", async () => {
+  it("saves a new file when none exists remotely", async () => {
     configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -267,9 +267,9 @@ describe("github commands", () => {
       },
     });
     const { deps, output } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync push", deps);
+    await runGitHubCommand("sync backup", deps);
 
-    expect(output[0]).toBe("Pushed: 2 tasks to toon/todos:todo.txt (new-sha)");
+    expect(output[0]).toBe("Saved: 2 tasks to toon/todos:todo.txt (new-sha)");
     expect(loadGitHubSettings()).toMatchObject({
       lastSyncedSha: "new-sha-1234",
       lastSyncedHash: hashTodos(todos),
@@ -290,12 +290,12 @@ describe("github commands", () => {
       },
     });
     const { deps, output } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync push", deps);
+    await runGitHubCommand("sync backup", deps);
 
-    expect(output[0]).toContain("Pushed: 2 tasks");
+    expect(output[0]).toContain("Saved: 2 tasks");
   });
 
-  it("refuses to push over unseen remote changes unless forced", async () => {
+  it("refuses to back up over unseen remote changes unless forced", async () => {
     configureTarget({ lastSyncedSha: "old-sha" });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -305,17 +305,17 @@ describe("github commands", () => {
     });
 
     const blocked = makeDeps({ fetchFn });
-    await runGitHubCommand("sync push", blocked.deps);
+    await runGitHubCommand("sync backup", blocked.deps);
     expect(blocked.output[0]).toBe(
-      "Error: the remote file changed since the last sync - run 'sync pull' first or 'sync push --force'.",
+      "Error: the remote file changed since the last sync - run 'sync restore' first or 'sync backup --force'.",
     );
 
     const forced = makeDeps({ fetchFn });
-    await runGitHubCommand("sync push --force", forced.deps);
-    expect(forced.output[0]).toContain("Pushed: 2 tasks");
+    await runGitHubCommand("sync backup --force", forced.deps);
+    expect(forced.output[0]).toContain("Saved: 2 tasks");
   });
 
-  it("refuses to pull over local changes unless forced", async () => {
+  it("refuses to restore over local changes unless forced", async () => {
     configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -326,17 +326,17 @@ describe("github commands", () => {
     });
 
     const blocked = makeDeps({ fetchFn });
-    await runGitHubCommand("sync pull", blocked.deps);
+    await runGitHubCommand("sync restore", blocked.deps);
     expect(blocked.output[0]).toBe(
-      "Error: local changes have not been pushed - run 'sync push' or 'sync pull --force'.",
+      "Error: local changes have not been saved - run 'sync backup' or 'sync restore --force'.",
     );
     expect(blocked.applied).toEqual([]);
 
     const forced = makeDeps({ fetchFn });
-    await runGitHubCommand("sync pull --force", forced.deps);
+    await runGitHubCommand("sync restore --force", forced.deps);
     expect(forced.applied).toEqual([["remote task"]]);
     expect(forced.output[0]).toBe(
-      "Pulled: 1 tasks from toon/todos:todo.txt (remote-)",
+      "Loaded: 1 tasks from toon/todos:todo.txt (remote-)",
     );
     expect(loadGitHubSettings()).toMatchObject({
       lastSyncedSha: "remote-sha",
@@ -344,7 +344,7 @@ describe("github commands", () => {
     });
   });
 
-  it("pulls cleanly when local state matches the last sync", async () => {
+  it("restores cleanly when local state matches the last sync", async () => {
     configureTarget({ lastSyncedHash: hashTodos(todos) });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -354,22 +354,22 @@ describe("github commands", () => {
         }),
     });
     const { deps, applied } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync pull", deps);
+    await runGitHubCommand("sync restore", deps);
 
     expect(applied).toEqual([["remote task"]]);
   });
 
-  it("reports a missing remote file on pull", async () => {
+  it("reports a missing remote file on restore", async () => {
     configureTarget({ lastSyncedHash: hashTodos(todos) });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 404),
     });
     const { deps, output } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync pull", deps);
+    await runGitHubCommand("sync restore", deps);
 
     expect(output[0]).toBe(
-      "Error: todo.txt not found in toon/todos - run 'sync push' first.",
+      "Error: todo.txt not found in toon/todos - run 'sync backup' first.",
     );
   });
 
@@ -380,7 +380,7 @@ describe("github commands", () => {
         jsonResponse({}, 401),
     });
     const { deps, output } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync push", deps);
+    await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe(
       "Error: GitHub rejected the token - run 'login' again.",

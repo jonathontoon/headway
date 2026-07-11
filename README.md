@@ -7,7 +7,7 @@ A terminal-style todo.txt app in your browser. No databases, no signup, no distr
 - **Add/edit/delete tasks** with todo.txt syntax: priorities (A-Z), due dates, projects (+name), contexts (@tag), and metadata
 - **Five built-in views**: today/upcoming/inbox/someday/archive, plus search by project or tag
 - **Priority-aware sorting**: A-E get warm-to-cool colors; your most important tasks stand out
-- **GitHub sync** (optional): back up your todo.txt to a repo you control, pull changes from there, and push when you've made edits
+- **GitHub sync** (optional): back up your todo.txt to a repo you control, and load changes from there
 
 Everything runs client-side. Your tasks live in your browser's localStorage until you sync them to GitHub.
 
@@ -45,23 +45,23 @@ You can back up your tasks to a GitHub repo. Syncing is always manual — nothin
    ```
    login                    # shows a code to enter at github.com/login/device
    sync setup you/your-repo # defaults to branch "main" and path "todo.txt"
-   sync push                # commits your tasks
+   sync backup              # saves your tasks
    ```
 
 ### Commands
 
-| Command                                     | What it does                                                                         |
-| ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `login` / `logout`                          | Connect or disconnect your GitHub account                                            |
-| `sync setup <owner>/<repo> [branch] [path]` | Choose which repo file to sync with                                                  |
-| `sync` or `sync status`                     | Show your sync target, account, and whether you have unpushed changes                |
-| `sync push [--force]`                       | Commit local tasks to GitHub (warns if the remote file changed since your last sync) |
-| `sync pull [--force]`                       | Replace local tasks with what's in the repo (warns if you have unpushed changes)     |
+| Command                                     | What it does                                                                       |
+| ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `login` / `logout`                          | Connect or disconnect your GitHub account                                          |
+| `sync setup <owner>/<repo> [branch] [path]` | Choose which repo file to sync with                                                |
+| `sync` or `sync status`                     | Show your sync target, account, and whether you have unsaved changes               |
+| `sync backup [--force]`                     | Save local tasks to GitHub (warns if the remote file changed since your last sync) |
+| `sync restore [--force]`                    | Load tasks from the repo, replacing local ones (warns if you have unsaved changes) |
 
 ### How it works
 
 - The device-flow login endpoints don't allow browser CORS, so the Cloudflare Worker proxies exactly two routes: `/api/github/device/code` and `/api/github/device/token`. Your actual file reads and writes go directly from the browser to `api.github.com`.
-- The app tracks the last-synced file SHA and a content hash of your tasks, so it can detect conflicts (remote changed, or you have unpushed local changes).
+- The app tracks the last-synced file SHA and a content hash of your tasks, so it can detect conflicts (remote changed, or you have unsaved local changes).
 - Your GitHub token lives in `localStorage`. That's fine for a personal deployment, but remember it's readable by any script running on the page — don't reuse a token you use for other things.
 - Device flow uses the classic `repo` scope (fine-grained tokens aren't available via device flow yet).
 

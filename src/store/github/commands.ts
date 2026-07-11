@@ -178,15 +178,15 @@ async function runSync(
     case "setup":
       runSetup(rest, deps);
       return;
-    case "push":
-      await runPush(rest.includes("--force"), deps);
+    case "backup":
+      await runBackup(rest.includes("--force"), deps);
       return;
-    case "pull":
-      await runPull(rest.includes("--force"), deps);
+    case "restore":
+      await runRestore(rest.includes("--force"), deps);
       return;
     default:
       deps.emit(
-        `sync ${subcommand} is not a recognized command. Try 'sync setup', 'sync status', 'sync push' or 'sync pull'.`,
+        `sync ${subcommand} is not a recognized command. Try 'sync setup', 'sync status', 'sync backup' or 'sync restore'.`,
       );
   }
 }
@@ -229,7 +229,7 @@ function runStatus(deps: GitHubCommandDeps): void {
   if (settings.lastSyncedHash !== undefined) {
     const dirty = hashTodos(deps.getTodos()) !== settings.lastSyncedHash;
     stateLine = dirty
-      ? "state: local changes not pushed"
+      ? "state: local changes not saved"
       : `state: clean, synced at ${settings.lastSyncedSha?.slice(0, 7)}`;
   }
 
@@ -260,7 +260,10 @@ function requireSession(deps: GitHubCommandDeps): SyncSession | undefined {
   return { settings, target, token: settings.token };
 }
 
-async function runPush(force: boolean, deps: GitHubCommandDeps): Promise<void> {
+async function runBackup(
+  force: boolean,
+  deps: GitHubCommandDeps,
+): Promise<void> {
   const session = requireSession(deps);
 
   if (!session) {
@@ -281,7 +284,7 @@ async function runPush(force: boolean, deps: GitHubCommandDeps): Promise<void> {
 
     if (!force && remote.sha !== session.settings.lastSyncedSha) {
       deps.emit(
-        "Error: the remote file changed since the last sync - run 'sync pull' first or 'sync push --force'.",
+        "Error: the remote file changed since the last sync - run 'sync restore' first or 'sync backup --force'.",
       );
       return;
     }
@@ -301,11 +304,14 @@ async function runPush(force: boolean, deps: GitHubCommandDeps): Promise<void> {
     lastSyncedHash: hashTodos(todos),
   });
   deps.emit(
-    `Pushed: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
+    `Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
   );
 }
 
-async function runPull(force: boolean, deps: GitHubCommandDeps): Promise<void> {
+async function runRestore(
+  force: boolean,
+  deps: GitHubCommandDeps,
+): Promise<void> {
   const session = requireSession(deps);
 
   if (!session) {
@@ -318,7 +324,7 @@ async function runPull(force: boolean, deps: GitHubCommandDeps): Promise<void> {
 
   if (dirty && !force) {
     deps.emit(
-      "Error: local changes have not been pushed - run 'sync push' or 'sync pull --force'.",
+      "Error: local changes have not been saved - run 'sync backup' or 'sync restore --force'.",
     );
     return;
   }
@@ -332,7 +338,7 @@ async function runPull(force: boolean, deps: GitHubCommandDeps): Promise<void> {
 
   if (remote === "not_found") {
     deps.emit(
-      `Error: ${session.target.path} not found in ${session.target.owner}/${session.target.repo} - run 'sync push' first.`,
+      `Error: ${session.target.path} not found in ${session.target.owner}/${session.target.repo} - run 'sync backup' first.`,
     );
     return;
   }
@@ -344,6 +350,6 @@ async function runPull(force: boolean, deps: GitHubCommandDeps): Promise<void> {
     lastSyncedHash: hashTodos(remote.lines),
   });
   deps.emit(
-    `Pulled: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
+    `Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
   );
 }
