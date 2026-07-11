@@ -8,7 +8,6 @@ export const COMMANDS = {
 
 export const HELP_TEXT = [
   "TASKS",
-  "Tip: <#> means the number from your last list; run list/today/... first",
   'add "text [+Project] [due:DATE] [@tag]" - add a task',
   "edit <#> <text> - replace task line directly",
   "show <#> - print full detail for one task",
@@ -37,7 +36,7 @@ export const HELP_TEXT = [
   "projects                     list all projects",
   "",
   "SYNC",
-  "connect - authorize with GitHub (device code)",
+  "connect - authorize with GitHub",
   "disconnect - remove your GitHub connection",
   "sync setup <owner>/<repo> [branch] [path] - choose the repo file",
   "sync status - show sync target and state",
