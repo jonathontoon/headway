@@ -9,6 +9,7 @@ import {
   type DeviceCode,
   type FetchFn,
   type SyncTarget,
+  type WaitFn,
 } from "./api";
 
 const target: SyncTarget = {
@@ -113,6 +114,51 @@ describe("github api", () => {
         instantWait,
       ),
     ).rejects.toThrow("device code expired");
+  });
+
+  it("propagates an abort signal through the wait function", async () => {
+    const device: DeviceCode = {
+      deviceCode: "dev1",
+      userCode: "ABCD-1234",
+      verificationUri: "https://github.com/login/device",
+      interval: 5,
+      expiresIn: 900,
+    };
+    const controller = new AbortController();
+    controller.abort();
+    const waitFn: WaitFn = (_ms, signal) =>
+      signal?.aborted
+        ? Promise.reject(new DOMException("Aborted", "AbortError"))
+        : Promise.resolve();
+    const fetchFn: FetchFn = () => {
+      throw new Error("fetch should not run once aborted");
+    };
+
+    await expect(
+      pollForToken("client123", device, fetchFn, waitFn, controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("passes the abort signal into the underlying fetch calls", async () => {
+    const controller = new AbortController();
+    const calls: RequestInit[] = [];
+
+    await requestDeviceCode(
+      "client123",
+      fetchOnce(
+        jsonResponse({
+          device_code: "dev1",
+          user_code: "ABCD-1234",
+          verification_uri: "https://github.com/login/device",
+          interval: 5,
+          expires_in: 900,
+        }),
+        calls,
+      ),
+      controller.signal,
+    );
+
+    expect(calls[0].signal).toBe(controller.signal);
   });
 
   it("reads a remote file with its blob sha", async () => {

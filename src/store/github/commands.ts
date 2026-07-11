@@ -28,7 +28,19 @@ export type GitHubCommandDeps = {
   readonly clientId: string | undefined;
   readonly fetchFn?: FetchFn;
   readonly waitFn?: WaitFn;
+  readonly signal?: AbortSignal;
 };
+
+function isAbortError(error: unknown): boolean {
+  // DOMException (what fetch/AbortController reject with) is not
+  // consistently `instanceof Error` across engines, so check by name.
+  return Boolean(
+    error &&
+    typeof error === "object" &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError",
+  );
+}
 
 const GITHUB_VERBS = new Set(["login", "logout", "sync"]);
 
@@ -56,6 +68,7 @@ export async function runGitHubCommand(
         return;
     }
   } catch (error) {
+    if (isAbortError(error)) return;
     deps.emit(formatError(error));
   }
 }
@@ -97,7 +110,11 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
     return;
   }
 
-  const device = await requestDeviceCode(deps.clientId, deps.fetchFn);
+  const device = await requestDeviceCode(
+    deps.clientId,
+    deps.fetchFn,
+    deps.signal,
+  );
   const renderWaiting = (frame: string, replace: boolean) =>
     deps.emit(
       [
@@ -124,8 +141,9 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
       device,
       deps.fetchFn,
       deps.waitFn,
+      deps.signal,
     );
-    const login = await getAuthenticatedLogin(token, deps.fetchFn);
+    const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
 
     storeGitHubSettings({ ...loadGitHubSettings(), token, login });
     deps.emit(`Logged in as ${login}.`);
@@ -250,7 +268,12 @@ async function runPush(force: boolean, deps: GitHubCommandDeps): Promise<void> {
   }
 
   const todos = deps.getTodos();
-  const remote = await getFile(session.target, session.token, deps.fetchFn);
+  const remote = await getFile(
+    session.target,
+    session.token,
+    deps.fetchFn,
+    deps.signal,
+  );
   let sha: string | undefined;
 
   if (remote !== "not_found") {
@@ -270,6 +293,7 @@ async function runPush(force: boolean, deps: GitHubCommandDeps): Promise<void> {
     todos,
     sha,
     deps.fetchFn,
+    deps.signal,
   );
   storeGitHubSettings({
     ...loadGitHubSettings(),
@@ -299,7 +323,12 @@ async function runPull(force: boolean, deps: GitHubCommandDeps): Promise<void> {
     return;
   }
 
-  const remote = await getFile(session.target, session.token, deps.fetchFn);
+  const remote = await getFile(
+    session.target,
+    session.token,
+    deps.fetchFn,
+    deps.signal,
+  );
 
   if (remote === "not_found") {
     deps.emit(

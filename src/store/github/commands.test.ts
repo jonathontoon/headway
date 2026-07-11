@@ -1,4 +1,4 @@
-import { encodeLines, type FetchFn } from "./api";
+import { encodeLines, type FetchFn, type WaitFn } from "./api";
 import {
   isGitHubCommand,
   runGitHubCommand,
@@ -184,6 +184,45 @@ describe("github commands", () => {
       token: "gho_token",
       login: "toon",
     });
+  });
+
+  it("stops silently without emitting output when the login is aborted mid-flight", async () => {
+    const controller = new AbortController();
+    const fetchFn: FetchFn = (input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("device/code")) {
+        // Simulate the user submitting a new command right after the
+        // device code comes back, before the poll wait begins.
+        controller.abort();
+        return Promise.resolve(
+          jsonResponse({
+            device_code: "dev1",
+            user_code: "ABCD-1234",
+            verification_uri: "https://github.com/login/device",
+            interval: 5,
+            expires_in: 900,
+          }),
+        );
+      }
+      throw new Error(`unexpected fetch after abort: ${url}`);
+    };
+    const waitFn: WaitFn = (_ms, signal) =>
+      signal?.aborted
+        ? Promise.reject(new DOMException("Aborted", "AbortError"))
+        : Promise.resolve();
+
+    const { deps, output } = makeDeps({
+      fetchFn,
+      waitFn,
+      signal: controller.signal,
+    });
+    await runGitHubCommand("login", deps);
+
+    // The initial "Visit ... / Waiting..." render still happens, but no
+    // error and no "Logged in" message follow, and nothing is persisted.
+    expect(output.some((line) => line.startsWith("Error"))).toBe(false);
+    expect(output.some((line) => line.startsWith("Logged in"))).toBe(false);
+    expect(loadGitHubSettings().token).toBeUndefined();
   });
 
   it("logs out only when a session exists", async () => {

@@ -23,7 +23,12 @@ export function TerminalProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     todosRef.current = state.todos;
   }, [state.todos]);
-  const githubBusyRef = useRef(false);
+  // Tracks a github command currently in flight (e.g. the login device-flow
+  // poll), so submitting another command can cancel it instead of blocking.
+  const githubOperationRef = useRef<{
+    readonly controller: AbortController;
+    readonly label: string;
+  } | null>(null);
 
   const store = useMemo<TerminalStore>(
     () => ({
@@ -33,6 +38,13 @@ export function TerminalProvider({ children }: PropsWithChildren) {
       },
       submitCommand() {
         const trimmed = state.command.trim();
+        const pending = githubOperationRef.current;
+
+        if (pending) {
+          pending.controller.abort();
+          githubOperationRef.current = null;
+          dispatch(terminalActions.appendOutput(`Cancelled: ${pending.label}`));
+        }
 
         if (isGitHubCommand(trimmed)) {
           dispatch(
@@ -44,16 +56,9 @@ export function TerminalProvider({ children }: PropsWithChildren) {
             ),
           );
 
-          if (githubBusyRef.current) {
-            dispatch(
-              terminalActions.appendOutput(
-                "Error: a sync operation is already running.",
-              ),
-            );
-            return;
-          }
+          const controller = new AbortController();
+          githubOperationRef.current = { controller, label: trimmed };
 
-          githubBusyRef.current = true;
           void runGitHubCommand(trimmed, {
             getTodos: () => todosRef.current,
             emit: (output, options) =>
@@ -67,8 +72,11 @@ export function TerminalProvider({ children }: PropsWithChildren) {
               dispatch(terminalActions.applyTodos(todos));
             },
             clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
+            signal: controller.signal,
           }).finally(() => {
-            githubBusyRef.current = false;
+            if (githubOperationRef.current?.controller === controller) {
+              githubOperationRef.current = null;
+            }
           });
           return;
         }

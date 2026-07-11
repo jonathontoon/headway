@@ -1,5 +1,8 @@
 export type FetchFn = typeof fetch;
-export type WaitFn = (milliseconds: number) => Promise<void>;
+export type WaitFn = (
+  milliseconds: number,
+  signal?: AbortSignal,
+) => Promise<void>;
 
 export type SyncTarget = {
   readonly owner: string;
@@ -32,8 +35,27 @@ export class GitHubApiError extends Error {
 
 const DEVICE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
 
-const defaultWait: WaitFn = (milliseconds) =>
-  new Promise((resolve) => setTimeout(resolve, milliseconds));
+function abortError(): DOMException {
+  return new DOMException("The operation was aborted.", "AbortError");
+}
+
+const defaultWait: WaitFn = (milliseconds, signal) =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(abortError());
+      return;
+    }
+
+    const timer = setTimeout(resolve, milliseconds);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(abortError());
+      },
+      { once: true },
+    );
+  });
 
 function jsonHeaders(): HeadersInit {
   return { "Content-Type": "application/json", Accept: "application/json" };
@@ -54,11 +76,13 @@ function contentsUrl(target: SyncTarget): string {
 export async function requestDeviceCode(
   clientId: string,
   fetchFn: FetchFn = fetch,
+  signal?: AbortSignal,
 ): Promise<DeviceCode> {
   const response = await fetchFn("/api/github/device/code", {
     method: "POST",
     headers: jsonHeaders(),
     body: JSON.stringify({ client_id: clientId, scope: "repo" }),
+    signal,
   });
   const data = await response.json();
 
@@ -83,12 +107,13 @@ export async function pollForToken(
   device: DeviceCode,
   fetchFn: FetchFn = fetch,
   wait: WaitFn = defaultWait,
+  signal?: AbortSignal,
 ): Promise<string> {
   let interval = device.interval;
   const deadline = Date.now() + device.expiresIn * 1000;
 
   for (;;) {
-    await wait(interval * 1000);
+    await wait(interval * 1000, signal);
 
     if (Date.now() > deadline) {
       throw new Error("the device code expired - run 'login' again");
@@ -102,6 +127,7 @@ export async function pollForToken(
         device_code: device.deviceCode,
         grant_type: DEVICE_GRANT_TYPE,
       }),
+      signal,
     });
     const data = await response.json();
 
@@ -131,9 +157,11 @@ export async function pollForToken(
 export async function getAuthenticatedLogin(
   token: string,
   fetchFn: FetchFn = fetch,
+  signal?: AbortSignal,
 ): Promise<string> {
   const response = await fetchFn("https://api.github.com/user", {
     headers: apiHeaders(token),
+    signal,
   });
 
   if (!response.ok) {
@@ -148,10 +176,11 @@ export async function getFile(
   target: SyncTarget,
   token: string,
   fetchFn: FetchFn = fetch,
+  signal?: AbortSignal,
 ): Promise<RemoteFile | "not_found"> {
   const response = await fetchFn(
     `${contentsUrl(target)}?ref=${encodeURIComponent(target.branch)}`,
-    { headers: apiHeaders(token) },
+    { headers: apiHeaders(token), signal },
   );
 
   if (response.status === 404) {
@@ -175,6 +204,7 @@ export async function putFile(
   lines: readonly string[],
   sha: string | undefined,
   fetchFn: FetchFn = fetch,
+  signal?: AbortSignal,
 ): Promise<string> {
   const response = await fetchFn(contentsUrl(target), {
     method: "PUT",
@@ -185,6 +215,7 @@ export async function putFile(
       branch: target.branch,
       ...(sha ? { sha } : {}),
     }),
+    signal,
   });
 
   if (!response.ok) {
