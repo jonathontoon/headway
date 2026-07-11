@@ -177,7 +177,7 @@ describe("github commands", () => {
     await runGitHubCommand("login", deps);
 
     expect(output[0]).toBe(
-      "Visit https://github.com/login/device and enter code ABCD-1234\n⠋ Waiting for authorization...",
+      "Visit https://github.com/login/device and enter code ABCD-1234.\n⠋ Waiting for authorization...",
     );
     expect(output[output.length - 1]).toBe("Logged in as toon.");
     expect(loadGitHubSettings()).toMatchObject({

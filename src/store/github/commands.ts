@@ -118,7 +118,7 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
   const renderWaiting = (frame: string, replace: boolean) =>
     deps.emit(
       [
-        `Visit ${device.verificationUri} and enter code ${device.userCode}`,
+        `Visit ${device.verificationUri} and enter code ${device.userCode}.`,
         `${frame} Waiting for authorization...`,
       ].join("\n"),
       { replace },
