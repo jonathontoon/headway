@@ -43,7 +43,11 @@ export function TerminalProvider({ children }: PropsWithChildren) {
         if (pending) {
           pending.controller.abort();
           githubOperationRef.current = null;
-          dispatch(terminalActions.appendOutput(`Cancelled: ${pending.label}`));
+          dispatch(
+            terminalActions.appendOutput(
+              `Alright, moving on - stopped waiting on '${pending.label}'.`,
+            ),
+          );
         }
 
         if (isGitHubCommand(trimmed)) {
