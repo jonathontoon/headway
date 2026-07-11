@@ -32,6 +32,8 @@ const SUMMARY_HEADER_PATTERN =
   /^(?:\d+ tasks on your radar right now\.|\d+ projects, \d+ tasks between them\.)$/;
 const SPINNER_LINE_PATTERN = /^[⠀-⣿] /;
 const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
+const DEVICE_CODE_PATTERN = /\b([A-Z0-9]{4}-[A-Z0-9]{4})\b/g;
+const DEVICE_CODE_TEST_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
@@ -282,9 +284,29 @@ function renderWithHeart(line: string): ReactNode {
   );
 }
 
+function renderDeviceCodes(segment: string, key: number): ReactNode {
+  const parts = segment.split(DEVICE_CODE_PATTERN);
+  if (parts.length === 1)
+    return <Fragment key={key}>{renderWithHeart(segment)}</Fragment>;
+
+  return (
+    <Fragment key={key}>
+      {parts.map((part, i) =>
+        DEVICE_CODE_TEST_PATTERN.test(part) ? (
+          <span key={i} className="text-role-context font-bold">
+            {part}
+          </span>
+        ) : (
+          <Fragment key={i}>{renderWithHeart(part)}</Fragment>
+        ),
+      )}
+    </Fragment>
+  );
+}
+
 function renderInlineText(line: string): ReactNode {
   const segments = line.split(INLINE_URL_PATTERN);
-  if (segments.length === 1) return renderWithHeart(line);
+  if (segments.length === 1) return renderDeviceCodes(line, 0);
 
   return segments.map((segment, i) =>
     URL_PATTERN.test(segment) ? (
@@ -298,7 +320,7 @@ function renderInlineText(line: string): ReactNode {
         {segment}
       </a>
     ) : (
-      <Fragment key={i}>{renderWithHeart(segment)}</Fragment>
+      renderDeviceCodes(segment, i)
     ),
   );
 }
