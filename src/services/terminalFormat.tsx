@@ -31,6 +31,7 @@ const HEART_PATTERN = /(♥)/;
 const SUMMARY_HEADER_PATTERN =
   /^(?:\d+ tasks on your radar right now\.|\d+ projects, \d+ tasks between them\.)$/;
 const SPINNER_LINE_PATTERN = /^[⠀-⣿] /;
+const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
 
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
@@ -281,6 +282,27 @@ function renderWithHeart(line: string): ReactNode {
   );
 }
 
+function renderInlineText(line: string): ReactNode {
+  const segments = line.split(INLINE_URL_PATTERN);
+  if (segments.length === 1) return renderWithHeart(line);
+
+  return segments.map((segment, i) =>
+    URL_PATTERN.test(segment) ? (
+      <a
+        key={i}
+        href={segment}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-role-accent underline"
+      >
+        {segment}
+      </a>
+    ) : (
+      <Fragment key={i}>{renderWithHeart(segment)}</Fragment>
+    ),
+  );
+}
+
 function renderSummaryHeader(line: string, key: number): ReactNode {
   return (
     <div key={key} className="block whitespace-pre-wrap">
@@ -312,7 +334,7 @@ function renderMessageLine(line: string, key: number): ReactNode {
   return (
     <div key={key} className={`block whitespace-pre-wrap ${colorClass}`}>
       {" → "}
-      {renderWithHeart(line)}
+      {renderInlineText(line)}
     </div>
   );
 }

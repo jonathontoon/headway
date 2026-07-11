@@ -109,10 +109,6 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
 
   renderWaiting(SPINNER_FRAMES[0], false);
 
-  if (typeof window !== "undefined" && window.open) {
-    window.open(device.verificationUri, "_blank");
-  }
-
   // The spinner animates on its own clock; the network poll runs on
   // GitHub's much slower interval (typically every 5s), so tying the two
   // together made the spinner look frozen between polls.
