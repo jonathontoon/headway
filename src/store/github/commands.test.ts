@@ -179,7 +179,7 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Visit https://github.com/login/device and enter code ABCD-1234\n⠋ Waiting for authorization...",
     );
-    expect(output[1]).toBe("Logged in as toon.");
+    expect(output[output.length - 1]).toBe("Logged in as toon.");
     expect(loadGitHubSettings()).toMatchObject({
       token: "gho_token",
       login: "toon",

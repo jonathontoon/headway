@@ -108,6 +108,14 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
     device,
     deps.fetchFn,
     deps.waitFn,
+    (frame) => {
+      deps.emit(
+        [
+          `Visit ${device.verificationUri} and enter code ${device.userCode}`,
+          `${frame} Waiting for authorization...`,
+        ].join("\n"),
+      );
+    },
   );
   const login = await getAuthenticatedLogin(token, deps.fetchFn);
 

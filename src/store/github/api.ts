@@ -83,7 +83,10 @@ export async function pollForToken(
   device: DeviceCode,
   fetchFn: FetchFn = fetch,
   wait: WaitFn = defaultWait,
+  onProgress?: (frame: string) => void,
 ): Promise<string> {
+  const spinnerFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+  let frameIndex = 0;
   let interval = device.interval;
   const deadline = Date.now() + device.expiresIn * 1000;
 
@@ -92,6 +95,11 @@ export async function pollForToken(
 
     if (Date.now() > deadline) {
       throw new Error("the device code expired - run 'login' again");
+    }
+
+    if (onProgress) {
+      frameIndex = (frameIndex + 1) % spinnerFrames.length;
+      onProgress(spinnerFrames[frameIndex]);
     }
 
     const response = await fetchFn("/api/github/device/token", {
