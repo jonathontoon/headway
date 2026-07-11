@@ -36,6 +36,14 @@ export const HELP_TEXT = [
   "archive                      completed tasks",
   "projects                     list all projects",
   "",
+  "SYNC",
+  "login - connect to GitHub (device code)",
+  "logout - disconnect from GitHub",
+  "sync setup <owner>/<repo> [branch] [path] - choose the repo file",
+  "sync status - show sync target and state",
+  "sync push [--force] - commit local tasks to GitHub",
+  "sync pull [--force] - replace local tasks from GitHub",
+  "",
   "OTHER",
   "stats - summary counts",
   "donate - donation link",
@@ -49,6 +57,10 @@ export const SUCCESS_PREFIXES = [
   "Deleted:",
   "Completed:",
   "Reopened:",
+  "Pushed:",
+  "Pulled:",
+  "Logged in",
+  "Logged out",
 ] as const;
 
 export const MUTED_PATTERN =
@@ -88,6 +100,9 @@ export const COMMAND_VERBS = [
   "projects",
   "stats",
   "donate",
+  "sync",
+  "login",
+  "logout",
   "help",
 ] as const;
 
@@ -95,4 +110,5 @@ export const COMMAND_VERBS = [
 export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
   clear: ["due", "priority", "tags", "project"],
   list: ["today", "upcoming", "inbox", "someday"],
+  sync: ["setup", "status", "push", "pull"],
 };

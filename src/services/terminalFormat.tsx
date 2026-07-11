@@ -12,6 +12,7 @@ const SECTION_HEADERS = new Set([
   "STATUS",
   "ATTRIBUTES",
   "VIEWS",
+  "SYNC",
   "OTHER",
   "OVERDUE",
   "TODAY",

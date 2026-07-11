@@ -9,6 +9,14 @@ export type TerminalAction =
       readonly view: readonly number[];
     }
   | {
+      readonly type: "appendOutput";
+      readonly output: string;
+    }
+  | {
+      readonly type: "applyTodos";
+      readonly todos: readonly string[];
+    }
+  | {
       readonly type: "setCommand";
       readonly command: string;
     }
@@ -31,6 +39,14 @@ export const terminalActions = {
     output,
     todos,
     view,
+  }),
+  appendOutput: (output: string): TerminalAction => ({
+    type: "appendOutput",
+    output,
+  }),
+  applyTodos: (todos: readonly string[]): TerminalAction => ({
+    type: "applyTodos",
+    todos,
   }),
   setCommand: (command: string): TerminalAction => ({
     type: "setCommand",

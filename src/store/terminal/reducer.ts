@@ -112,6 +112,23 @@ export function terminalReducer(
         todos: action.todos,
         view: action.view,
       };
+    case "appendOutput":
+      return {
+        ...state,
+        entries: [
+          ...state.entries,
+          {
+            id: state.entries.length,
+            output: action.output,
+          },
+        ],
+      };
+    case "applyTodos":
+      return {
+        ...state,
+        todos: action.todos,
+        view: [],
+      };
     case "setCommand":
       return {
         ...state,
