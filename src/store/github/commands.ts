@@ -95,9 +95,13 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
   deps.emit(
     [
       `Visit ${device.verificationUri} and enter code ${device.userCode}`,
-      "Waiting for authorization...",
+      "⠋ Waiting for authorization...",
     ].join("\n"),
   );
+
+  if (typeof window !== "undefined" && window.open) {
+    window.open(device.verificationUri, "_blank");
+  }
 
   const token = await pollForToken(
     deps.clientId,
