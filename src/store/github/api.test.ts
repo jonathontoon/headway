@@ -104,7 +104,7 @@ describe("github api", () => {
         fetchOnce(jsonResponse({ error: "access_denied" })),
         instantWait,
       ),
-    ).rejects.toThrow("login was cancelled on GitHub");
+    ).rejects.toThrow("authorization was denied on GitHub");
 
     await expect(
       pollForToken(

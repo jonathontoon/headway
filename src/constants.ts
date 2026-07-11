@@ -37,12 +37,12 @@ export const HELP_TEXT = [
   "projects                     list all projects",
   "",
   "SYNC",
-  "login - connect to GitHub (device code)",
-  "logout - disconnect from GitHub",
+  "connect - authorize with GitHub (device code)",
+  "disconnect - remove your GitHub connection",
   "sync setup <owner>/<repo> [branch] [path] - choose the repo file",
   "sync status - show sync target and state",
-  "sync backup [--force] - save local tasks to GitHub",
-  "sync restore [--force] - load tasks from GitHub",
+  "sync backup - save local tasks to GitHub",
+  "sync restore - load tasks from GitHub",
   "",
   "OTHER",
   "stats - summary counts",
@@ -59,8 +59,8 @@ export const SUCCESS_PREFIXES = [
   "Reopened:",
   "Saved:",
   "Loaded:",
-  "Logged in",
-  "Logged out",
+  "Connected",
+  "Disconnected",
 ] as const;
 
 export const MUTED_PATTERN =
@@ -101,8 +101,8 @@ export const COMMAND_VERBS = [
   "stats",
   "donate",
   "sync",
-  "login",
-  "logout",
+  "connect",
+  "disconnect",
   "help",
 ] as const;
 

@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [1.4.0] - 2026-07-11
+
+### Changed
+
+- Renamed `login`/`logout` to `connect`/`disconnect` and their `Logged in`/`Logged out` output to `Connected`/`Disconnected`, since this app isn't `git` and shouldn't sound like it.
+- `sync backup`/`sync restore` no longer block on conflicts or need `--force`. Every backup is its own commit, so nothing is actually lost by overwriting; they now just warn and proceed.
+
 ## [1.3.0] - 2026-07-11
 
 ### Added

@@ -43,25 +43,27 @@ You can back up your tasks to a GitHub repo. Syncing is always manual — nothin
 3. Build and deploy
 4. In the app:
    ```
-   login                    # shows a code to enter at github.com/login/device
+   connect                  # shows a code to enter at github.com/login/device
    sync setup you/your-repo # defaults to branch "main" and path "todo.txt"
    sync backup              # saves your tasks
    ```
 
 ### Commands
 
-| Command                                     | What it does                                                                       |
-| ------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `login` / `logout`                          | Connect or disconnect your GitHub account                                          |
-| `sync setup <owner>/<repo> [branch] [path]` | Choose which repo file to sync with                                                |
-| `sync` or `sync status`                     | Show your sync target, account, and whether you have unsaved changes               |
-| `sync backup [--force]`                     | Save local tasks to GitHub (warns if the remote file changed since your last sync) |
-| `sync restore [--force]`                    | Load tasks from the repo, replacing local ones (warns if you have unsaved changes) |
+| Command                                     | What it does                                                         |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `connect` / `disconnect`                    | Authorize or remove your GitHub connection                           |
+| `sync setup <owner>/<repo> [branch] [path]` | Choose which repo file to sync with                                  |
+| `sync` or `sync status`                     | Show your sync target, account, and whether you have unsaved changes |
+| `sync backup`                               | Save local tasks to GitHub                                           |
+| `sync restore`                              | Load tasks from the repo, replacing local ones                       |
+
+`sync backup`/`sync restore` never refuse to run — if the other side moved on since your last sync, they warn you and proceed anyway. Nothing is lost either way: every backup is its own commit, so older versions stay in the repo's history on GitHub.
 
 ### How it works
 
-- The device-flow login endpoints don't allow browser CORS, so the Cloudflare Worker proxies exactly two routes: `/api/github/device/code` and `/api/github/device/token`. Your actual file reads and writes go directly from the browser to `api.github.com`.
-- The app tracks the last-synced file SHA and a content hash of your tasks, so it can detect conflicts (remote changed, or you have unsaved local changes).
+- The device-flow connect endpoints don't allow browser CORS, so the Cloudflare Worker proxies exactly two routes: `/api/github/device/code` and `/api/github/device/token`. Your actual file reads and writes go directly from the browser to `api.github.com`.
+- The app tracks the last-synced file SHA and a content hash of your tasks, so it can warn you about conflicts (remote changed, or unsaved local changes) without blocking you.
 - Your GitHub token lives in `localStorage`. That's fine for a personal deployment, but remember it's readable by any script running on the page — don't reuse a token you use for other things.
 - Device flow uses the classic `repo` scope (fine-grained tokens aren't available via device flow yet).
 

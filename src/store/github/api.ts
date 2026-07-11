@@ -116,7 +116,7 @@ export async function pollForToken(
     await wait(interval * 1000, signal);
 
     if (Date.now() > deadline) {
-      throw new Error("the device code expired - run 'login' again");
+      throw new Error("the device code expired - run 'connect' again");
     }
 
     const response = await fetchFn("/api/github/device/token", {
@@ -142,13 +142,13 @@ export async function pollForToken(
         interval += 5;
         continue;
       case "expired_token":
-        throw new Error("the device code expired - run 'login' again");
+        throw new Error("the device code expired - run 'connect' again");
       case "access_denied":
-        throw new Error("login was cancelled on GitHub");
+        throw new Error("authorization was denied on GitHub");
       default:
         throw new GitHubApiError(
           response.status,
-          data.error_description ?? data.error ?? "login failed",
+          data.error_description ?? data.error ?? "authorization failed",
         );
     }
   }

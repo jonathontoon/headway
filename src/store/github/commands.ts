@@ -42,7 +42,7 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
-const GITHUB_VERBS = new Set(["login", "logout", "sync"]);
+const GITHUB_VERBS = new Set(["connect", "disconnect", "sync"]);
 
 export function isGitHubCommand(command: string): boolean {
   const [verb] = command.trim().split(/\s+/);
@@ -57,11 +57,11 @@ export async function runGitHubCommand(
 
   try {
     switch (verb) {
-      case "login":
-        await runLogin(deps);
+      case "connect":
+        await runConnect(deps);
         return;
-      case "logout":
-        runLogout(deps);
+      case "disconnect":
+        runDisconnect(deps);
         return;
       case "sync":
         await runSync(args, deps);
@@ -75,7 +75,7 @@ export async function runGitHubCommand(
 
 function formatError(error: unknown): string {
   if (error instanceof GitHubApiError && error.status === 401) {
-    return "Error: GitHub rejected the token - run 'login' again.";
+    return "Error: GitHub rejected the token - run 'connect' again.";
   }
 
   const message = error instanceof Error ? error.message : String(error);
@@ -102,7 +102,7 @@ function describeTarget(target: SyncTarget): string {
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_TICK_MS = 90;
 
-async function runLogin(deps: GitHubCommandDeps): Promise<void> {
+async function runConnect(deps: GitHubCommandDeps): Promise<void> {
   if (!deps.clientId) {
     deps.emit(
       "Error: no GitHub client id is configured - set VITE_GITHUB_CLIENT_ID and rebuild.",
@@ -146,22 +146,22 @@ async function runLogin(deps: GitHubCommandDeps): Promise<void> {
     const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
 
     storeGitHubSettings({ ...loadGitHubSettings(), token, login });
-    deps.emit(`Logged in as ${login}.`);
+    deps.emit(`Connected as ${login}.`);
   } finally {
     clearInterval(spinnerId);
   }
 }
 
-function runLogout(deps: GitHubCommandDeps): void {
+function runDisconnect(deps: GitHubCommandDeps): void {
   const settings = loadGitHubSettings();
 
   if (!settings.token) {
-    deps.emit("No GitHub session to log out of.");
+    deps.emit("No GitHub connection to disconnect.");
     return;
   }
 
   storeGitHubSettings({ ...settings, token: undefined, login: undefined });
-  deps.emit("Logged out of GitHub.");
+  deps.emit("Disconnected from GitHub.");
 }
 
 async function runSync(
@@ -179,10 +179,10 @@ async function runSync(
       runSetup(rest, deps);
       return;
     case "backup":
-      await runBackup(rest.includes("--force"), deps);
+      await runBackup(deps);
       return;
     case "restore":
-      await runRestore(rest.includes("--force"), deps);
+      await runRestore(deps);
       return;
     default:
       deps.emit(
@@ -223,7 +223,7 @@ function runStatus(deps: GitHubCommandDeps): void {
     : "target: not set - run 'sync setup <owner>/<repo>'";
   const accountLine = settings.login
     ? `account: ${settings.login}`
-    : "account: not logged in - run 'login'";
+    : "account: not connected - run 'connect'";
 
   let stateLine = "state: never synced";
   if (settings.lastSyncedHash !== undefined) {
@@ -246,7 +246,7 @@ function requireSession(deps: GitHubCommandDeps): SyncSession | undefined {
   const settings = loadGitHubSettings();
 
   if (!settings.token) {
-    deps.emit("Error: not logged in - run 'login' first.");
+    deps.emit("Error: not connected - run 'connect' first.");
     return undefined;
   }
 
@@ -260,10 +260,10 @@ function requireSession(deps: GitHubCommandDeps): SyncSession | undefined {
   return { settings, target, token: settings.token };
 }
 
-async function runBackup(
-  force: boolean,
-  deps: GitHubCommandDeps,
-): Promise<void> {
+// Every backup is its own commit, so an overwrite is never actually
+// destructive - the previous version is still in the repo's history on
+// GitHub. Conflicts are surfaced as a warning rather than blocked.
+async function runBackup(deps: GitHubCommandDeps): Promise<void> {
   const session = requireSession(deps);
 
   if (!session) {
@@ -278,15 +278,13 @@ async function runBackup(
     deps.signal,
   );
   let sha: string | undefined;
+  let warning = "";
 
   if (remote !== "not_found") {
     sha = remote.sha;
 
-    if (!force && remote.sha !== session.settings.lastSyncedSha) {
-      deps.emit(
-        "Error: the remote file changed since the last sync - run 'sync restore' first or 'sync backup --force'.",
-      );
-      return;
+    if (remote.sha !== session.settings.lastSyncedSha) {
+      warning = "Warning: overwrote a version already saved on GitHub.\n";
     }
   }
 
@@ -304,14 +302,11 @@ async function runBackup(
     lastSyncedHash: hashTodos(todos),
   });
   deps.emit(
-    `Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
+    `${warning}Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
   );
 }
 
-async function runRestore(
-  force: boolean,
-  deps: GitHubCommandDeps,
-): Promise<void> {
+async function runRestore(deps: GitHubCommandDeps): Promise<void> {
   const session = requireSession(deps);
 
   if (!session) {
@@ -321,13 +316,6 @@ async function runRestore(
   const dirty =
     session.settings.lastSyncedHash === undefined ||
     hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
-
-  if (dirty && !force) {
-    deps.emit(
-      "Error: local changes have not been saved - run 'sync backup' or 'sync restore --force'.",
-    );
-    return;
-  }
 
   const remote = await getFile(
     session.target,
@@ -343,6 +331,10 @@ async function runRestore(
     return;
   }
 
+  const warning = dirty
+    ? "Warning: replaced local changes that weren't saved.\n"
+    : "";
+
   deps.applyTodos(remote.lines);
   storeGitHubSettings({
     ...loadGitHubSettings(),
@@ -350,6 +342,6 @@ async function runRestore(
     lastSyncedHash: hashTodos(remote.lines),
   });
   deps.emit(
-    `Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
+    `${warning}Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
   );
 }

@@ -13,8 +13,8 @@ import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
 
 function describeCancellation(label: string): string {
-  if (label === "login") {
-    return "Login cancelled, stopped waiting for authorization.";
+  if (label === "connect") {
+    return "Connection cancelled, stopped waiting for authorization.";
   }
   return `${label} cancelled.`;
 }

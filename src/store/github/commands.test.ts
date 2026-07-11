@@ -69,8 +69,8 @@ describe("github commands", () => {
 
   it("recognizes only github command verbs", () => {
     expect(isGitHubCommand("sync backup")).toBe(true);
-    expect(isGitHubCommand("  login  ")).toBe(true);
-    expect(isGitHubCommand("logout")).toBe(true);
+    expect(isGitHubCommand("  connect  ")).toBe(true);
+    expect(isGitHubCommand("disconnect")).toBe(true);
     expect(isGitHubCommand("list")).toBe(false);
     expect(isGitHubCommand("")).toBe(false);
     expect(isGitHubCommand("synchronize")).toBe(false);
@@ -127,7 +127,7 @@ describe("github commands", () => {
     expect(empty.output[0]).toBe(
       [
         "target: not set - run 'sync setup <owner>/<repo>'",
-        "account: not logged in - run 'login'",
+        "account: not connected - run 'connect'",
         "state: never synced",
       ].join("\n"),
     );
@@ -152,14 +152,14 @@ describe("github commands", () => {
     expect(dirty.output[0]).toContain("state: local changes not saved");
   });
 
-  it("requires a client id for login", async () => {
+  it("requires a client id to connect", async () => {
     const { deps, output } = makeDeps({ clientId: undefined });
-    await runGitHubCommand("login", deps);
+    await runGitHubCommand("connect", deps);
 
     expect(output[0]).toContain("no GitHub client id is configured");
   });
 
-  it("logs in via the device flow and stores the token", async () => {
+  it("connects via the device flow and stores the token", async () => {
     const fetchFn = fakeFetch({
       "POST /api/github/device/code": () =>
         jsonResponse({
@@ -174,19 +174,19 @@ describe("github commands", () => {
       "GET https://api.github.com/user": () => jsonResponse({ login: "toon" }),
     });
     const { deps, output } = makeDeps({ fetchFn });
-    await runGitHubCommand("login", deps);
+    await runGitHubCommand("connect", deps);
 
     expect(output[0]).toBe(
       "Visit https://github.com/login/device and enter code ABCD-1234.\n⠋ Waiting for authorization...",
     );
-    expect(output[output.length - 1]).toBe("Logged in as toon.");
+    expect(output[output.length - 1]).toBe("Connected as toon.");
     expect(loadGitHubSettings()).toMatchObject({
       token: "gho_token",
       login: "toon",
     });
   });
 
-  it("stops silently without emitting output when the login is aborted mid-flight", async () => {
+  it("stops silently without emitting output when connect is aborted mid-flight", async () => {
     const controller = new AbortController();
     const fetchFn: FetchFn = (input) => {
       const url = typeof input === "string" ? input : input.toString();
@@ -216,33 +216,33 @@ describe("github commands", () => {
       waitFn,
       signal: controller.signal,
     });
-    await runGitHubCommand("login", deps);
+    await runGitHubCommand("connect", deps);
 
     // The initial "Visit ... / Waiting..." render still happens, but no
-    // error and no "Logged in" message follow, and nothing is persisted.
+    // error and no "Connected" message follow, and nothing is persisted.
     expect(output.some((line) => line.startsWith("Error"))).toBe(false);
-    expect(output.some((line) => line.startsWith("Logged in"))).toBe(false);
+    expect(output.some((line) => line.startsWith("Connected"))).toBe(false);
     expect(loadGitHubSettings().token).toBeUndefined();
   });
 
-  it("logs out only when a session exists", async () => {
+  it("disconnects only when a session exists", async () => {
     const anonymous = makeDeps();
-    await runGitHubCommand("logout", anonymous.deps);
-    expect(anonymous.output[0]).toBe("No GitHub session to log out of.");
+    await runGitHubCommand("disconnect", anonymous.deps);
+    expect(anonymous.output[0]).toBe("No GitHub connection to disconnect.");
 
     configureTarget();
     const { deps, output } = makeDeps();
-    await runGitHubCommand("logout", deps);
-    expect(output[0]).toBe("Logged out of GitHub.");
+    await runGitHubCommand("disconnect", deps);
+    expect(output[0]).toBe("Disconnected from GitHub.");
     expect(loadGitHubSettings().token).toBeUndefined();
     expect(loadGitHubSettings().owner).toBe("toon");
   });
 
-  it("requires login and a target before backup or restore", async () => {
+  it("requires a connection and a target before backup or restore", async () => {
     const anonymous = makeDeps();
     await runGitHubCommand("sync backup", anonymous.deps);
     expect(anonymous.output[0]).toBe(
-      "Error: not logged in - run 'login' first.",
+      "Error: not connected - run 'connect' first.",
     );
 
     storeGitHubSettings({ token: "gho_token" });
@@ -295,27 +295,25 @@ describe("github commands", () => {
     expect(output[0]).toContain("Saved: 2 tasks");
   });
 
-  it("refuses to back up over unseen remote changes unless forced", async () => {
+  it("warns but still overwrites when backing up over unseen remote changes", async () => {
     configureTarget({ lastSyncedSha: "old-sha" });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({ sha: "changed-sha", content: encodeLines(["other"]) }),
       "PUT https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
-        jsonResponse({ content: { sha: "forced-sha" } }),
+        jsonResponse({ content: { sha: "new-sha" } }),
     });
 
-    const blocked = makeDeps({ fetchFn });
-    await runGitHubCommand("sync backup", blocked.deps);
-    expect(blocked.output[0]).toBe(
-      "Error: the remote file changed since the last sync - run 'sync restore' first or 'sync backup --force'.",
-    );
+    const { deps, output } = makeDeps({ fetchFn });
+    await runGitHubCommand("sync backup", deps);
 
-    const forced = makeDeps({ fetchFn });
-    await runGitHubCommand("sync backup --force", forced.deps);
-    expect(forced.output[0]).toContain("Saved: 2 tasks");
+    expect(output[0]).toBe(
+      "Warning: overwrote a version already saved on GitHub.\nSaved: 2 tasks to toon/todos:todo.txt (new-sha)",
+    );
+    expect(loadGitHubSettings()).toMatchObject({ lastSyncedSha: "new-sha" });
   });
 
-  it("refuses to restore over local changes unless forced", async () => {
+  it("warns but still replaces local tasks when restoring over unsaved changes", async () => {
     configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -325,18 +323,12 @@ describe("github commands", () => {
         }),
     });
 
-    const blocked = makeDeps({ fetchFn });
-    await runGitHubCommand("sync restore", blocked.deps);
-    expect(blocked.output[0]).toBe(
-      "Error: local changes have not been saved - run 'sync backup' or 'sync restore --force'.",
-    );
-    expect(blocked.applied).toEqual([]);
+    const { deps, output, applied } = makeDeps({ fetchFn });
+    await runGitHubCommand("sync restore", deps);
 
-    const forced = makeDeps({ fetchFn });
-    await runGitHubCommand("sync restore --force", forced.deps);
-    expect(forced.applied).toEqual([["remote task"]]);
-    expect(forced.output[0]).toBe(
-      "Loaded: 1 tasks from toon/todos:todo.txt (remote-)",
+    expect(applied).toEqual([["remote task"]]);
+    expect(output[0]).toBe(
+      "Warning: replaced local changes that weren't saved.\nLoaded: 1 tasks from toon/todos:todo.txt (remote-)",
     );
     expect(loadGitHubSettings()).toMatchObject({
       lastSyncedSha: "remote-sha",
@@ -373,7 +365,7 @@ describe("github commands", () => {
     );
   });
 
-  it("maps 401 responses to a re-login hint", async () => {
+  it("maps 401 responses to a reconnect hint", async () => {
     configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -383,7 +375,7 @@ describe("github commands", () => {
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe(
-      "Error: GitHub rejected the token - run 'login' again.",
+      "Error: GitHub rejected the token - run 'connect' again.",
     );
   });
 });
