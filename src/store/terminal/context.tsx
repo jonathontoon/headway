@@ -12,6 +12,13 @@ import { terminalActions } from "./actions";
 import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
 
+function describeCancellation(label: string): string {
+  if (label === "login") {
+    return "Login cancelled, stopped waiting for authorization.";
+  }
+  return `${label} cancelled.`;
+}
+
 export function TerminalProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
     createInitialTerminalState(loadStoredTodos()),
@@ -44,9 +51,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
           pending.controller.abort();
           githubOperationRef.current = null;
           dispatch(
-            terminalActions.appendOutput(
-              `Stopped waiting on '${pending.label}'.`,
-            ),
+            terminalActions.appendOutput(describeCancellation(pending.label)),
           );
         }
 
