@@ -1,5 +1,5 @@
 import { formatOutput, formatPromptSymbol } from "../services/terminalFormat";
-import { TERMINAL_PROMPT } from "../constants";
+import { TERMINAL_BLOCK_GAP_MB, TERMINAL_PROMPT } from "../constants";
 
 type TerminalEntryProps = {
   readonly command?: string;
@@ -13,9 +13,11 @@ export function TerminalEntry({
   taskCount,
 }: TerminalEntryProps) {
   return (
-    <div className="mb-2 md:mb-3">
+    <div className={TERMINAL_BLOCK_GAP_MB}>
       {command !== undefined && (
-        <p className="m-0 mb-2 md:mb-3 text-terminal-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9]">
+        <p
+          className={`m-0 ${TERMINAL_BLOCK_GAP_MB} text-terminal-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9]`}
+        >
           <span data-testid="prompt" className="text-terminal-foreground">
             {formatPromptSymbol(TERMINAL_PROMPT)}
           </span>

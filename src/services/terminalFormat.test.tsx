@@ -52,7 +52,7 @@ describe("terminal output formatting", () => {
     render(
       <>
         {formatOutput(
-          "Ship release +work @laptop due:2020-01-01\ncreated: 2019-12-01  priority: A  due: 2020-01-01  status: open",
+          "(A) Ship release +work @laptop due:2020-01-01\ncreated: 2019-12-01",
           5,
         )}
       </>,
@@ -61,5 +61,17 @@ describe("terminal output formatting", () => {
     expect(screen.getByText("+work")).toHaveClass("text-role-accent");
     expect(screen.getByText("@laptop")).toHaveClass("text-role-context");
     expect(screen.getByText("due:2020-01-01")).toHaveClass("text-role-error");
+    expect(screen.getByText("(A)")).toHaveClass("text-terminal-1");
+  });
+
+  it("shows a completed show task with an x prefix and strikethrough", () => {
+    const { container } = render(
+      <>{formatOutput("x Ship release +work\ncreated: 2019-12-01", 5)}</>,
+    );
+
+    const [taskLine, secondaryLine] = container.querySelectorAll("div");
+    expect(taskLine.textContent).toBe(" x Ship release +work");
+    expect(taskLine).toHaveClass("line-through");
+    expect(secondaryLine).toHaveClass("line-through");
   });
 });

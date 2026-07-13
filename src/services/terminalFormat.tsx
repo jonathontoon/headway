@@ -1,10 +1,11 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { getLocalDate } from "../store/todos/summary";
 import {
   HELP_TEXT,
   MUTED_PATTERN,
   SECONDARY_LINE_PREFIXES,
   SUCCESS_PREFIXES,
+  TERMINAL_BLOCK_GAP_H,
 } from "../constants";
 
 const SECTION_HEADERS = new Set([
@@ -20,6 +21,7 @@ const SECTION_HEADERS = new Set([
 ]);
 
 const TASK_LINE_PATTERN = /^(\d+)\.\s+(?:\((\w)\)\s+)?(.*)$/;
+const SHOW_TASK_LINE_PATTERN = /^(x\s+)?(?:\((\w)\)\s+)?(.*)$/;
 const COUNT_ROW_PATTERN = /^(\d+)\s+(\+[\w-]+|[a-z][a-z ]*)$/;
 const HELP_ROW_PATTERN = /^(.+?)(?: - |\s{2,})(.+)$/;
 const URL_PATTERN = /^https?:\/\//;
@@ -29,8 +31,9 @@ const TASK_FRAGMENT_PATTERN = /(\+[\w-]+|@[\w-]+|due:\d{4}-\d{2}-\d{2})/g;
 const HELP_ARG_PATTERN = /(<[^>]+>|"[^"]*")/g;
 const HEART_PATTERN = /(♥)/;
 const SUMMARY_HEADER_PATTERN =
-  /^(?:\d+ tasks on your radar right now\.|\d+ projects, \d+ tasks between them\.)$/;
+  /^(?:\d+ tasks? on your radar right now\.|\d+ projects?, \d+ tasks? between them\.)$/;
 const SPINNER_LINE_PATTERN = /^[⠀-⣿] /;
+const SYNC_STATUS_MESSAGE_PATTERN = /^(?:Syncing|Not syncing)/;
 const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
 const DEVICE_CODE_PATTERN = /\b([A-Z0-9]{4}-[A-Z0-9]{4})\b/g;
 const DEVICE_CODE_TEST_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
@@ -245,11 +248,15 @@ function renderGreeting(line: string, key: number): ReactNode {
   );
 }
 
-function renderSecondaryLine(line: string, key: number): ReactNode {
+function renderSecondaryLine(
+  line: string,
+  key: number,
+  struck: boolean,
+): ReactNode {
   return (
     <div
       key={key}
-      className="block whitespace-pre-wrap text-role-muted pl-[3ch]"
+      className={`block whitespace-pre-wrap text-role-muted pl-[3ch] ${struck ? "line-through" : ""}`}
     >
       {line}
     </div>
@@ -341,6 +348,45 @@ function renderSummaryHeader(line: string, key: number): ReactNode {
   );
 }
 
+// Only error and warning get a distinct mark; success and everything else
+// (plain info/muted prose) share the neutral arrow, since color already
+// carries the success signal. Error/warning avoid x- and !-shaped glyphs: x
+// collides visually with the completed-task marker, and a bare "!" reads
+// too alarming for routine status messages.
+function messageGlyph(colorClass: string): string {
+  if (colorClass === "text-role-error") return "×";
+  if (colorClass === "text-role-warning") return "▫";
+  return "→";
+}
+
+// Wrapped continuation lines hang-indent to the column right after the
+// glyph, instead of falling back to the left margin under the glyph
+// itself. The indent width depends on the glyph's own width (e.g. "[×]"
+// is wider than "→"), so it's computed per-prefix rather than fixed.
+function hangingIndentStyle(prefix: string): CSSProperties {
+  const width = `${prefix.length}ch`;
+  return { paddingLeft: width, textIndent: `-${width}` };
+}
+
+// "Error:"/"Warning:" are pure classification labels - the × / ▫ glyph and
+// the color already say that, so the label itself is stripped from the
+// displayed text rather than shown twice. Success prefixes (Added:,
+// Updated:, ...) stay, since the verb itself is meaningful content, not
+// just a category label.
+function capitalize(text: string): string {
+  return text.length === 0 ? text : text[0].toUpperCase() + text.slice(1);
+}
+
+function stripRedundantLabel(line: string, colorClass: string): string {
+  if (colorClass === "text-role-error" && line.startsWith("Error:")) {
+    return capitalize(line.slice("Error:".length).trim());
+  }
+  if (colorClass === "text-role-warning" && line.startsWith("Warning:")) {
+    return capitalize(line.slice("Warning:".length).trim());
+  }
+  return line;
+}
+
 function renderMessageLine(line: string, key: number): ReactNode {
   let colorClass = "";
   if (line.startsWith("Error:")) {
@@ -349,14 +395,31 @@ function renderMessageLine(line: string, key: number): ReactNode {
     colorClass = "text-role-warning";
   } else if (SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix))) {
     colorClass = "text-role-success";
+  } else if (SYNC_STATUS_MESSAGE_PATTERN.test(line)) {
+    if (line.includes("everything's saved")) {
+      colorClass = "text-role-success";
+    } else if (
+      line.includes("unsaved changes") ||
+      line.includes("nothing's been saved yet")
+    ) {
+      colorClass = "text-role-warning";
+    } else if (MUTED_PATTERN.test(line)) {
+      colorClass = "text-role-muted";
+    }
   } else if (MUTED_PATTERN.test(line)) {
     colorClass = "text-role-muted";
   }
 
+  const prefix = ` ${messageGlyph(colorClass)} `;
+
   return (
-    <div key={key} className={`block whitespace-pre-wrap ${colorClass}`}>
-      {" → "}
-      {renderInlineText(line)}
+    <div
+      key={key}
+      className={`block whitespace-pre-wrap ${colorClass}`}
+      style={hangingIndentStyle(prefix)}
+    >
+      {prefix}
+      {renderInlineText(stripRedundantLabel(line, colorClass))}
     </div>
   );
 }
@@ -369,15 +432,27 @@ function renderSpinnerLine(line: string, key: number): ReactNode {
   );
 }
 
-function renderTaskDetailLine(
+function renderShowTaskLine(
   line: string,
   today: string,
   key: number,
 ): ReactNode {
+  const [, completedMarker, priority, rest] =
+    line.match(SHOW_TASK_LINE_PATTERN) ?? [];
+  const completed = Boolean(completedMarker);
+  const prefix = ` ${completed ? "x" : "→"} `;
+
   return (
-    <div key={key} className="block whitespace-pre-wrap">
-      {" → "}
-      {renderTaskFragments(line, today)}
+    <div
+      key={key}
+      className={`block whitespace-pre-wrap ${completed ? "line-through text-role-muted" : ""}`}
+      style={hangingIndentStyle(prefix)}
+    >
+      {prefix}
+      {!completed && priority && (
+        <span className={priorityClassName(priority)}>({priority}) </span>
+      )}
+      {renderTaskFragments(rest ?? line, today)}
     </div>
   );
 }
@@ -394,14 +469,13 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
 
   return lines.map((line, i) => {
     if (line === "") {
-      return <div key={i} className="h-[1rem]" aria-hidden="true" />;
+      return (
+        <div key={i} className={TERMINAL_BLOCK_GAP_H} aria-hidden="true" />
+      );
     }
     if (SECTION_HEADERS.has(line)) {
       return (
-        <div
-          key={i}
-          className="block whitespace-pre-wrap text-role-muted mt-[1rem]"
-        >
+        <div key={i} className="block whitespace-pre-wrap text-role-muted">
           {line}
         </div>
       );
@@ -416,7 +490,8 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
     if (SUMMARY_HEADER_PATTERN.test(line)) return renderSummaryHeader(line, i);
 
     if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-      return renderSecondaryLine(line, i);
+      const struck = Boolean(lines[i - 1]?.startsWith("x "));
+      return renderSecondaryLine(line, i, struck);
     }
 
     if (BOOT_BANNER_PATTERN.test(line)) return renderBootBanner(line, i);
@@ -424,10 +499,7 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
 
     if (line === "Type 'help' for all available commands.") {
       return (
-        <div
-          key={i}
-          className="block whitespace-pre-wrap text-role-muted mt-[1rem]"
-        >
+        <div key={i} className="block whitespace-pre-wrap text-role-muted">
           {line}
         </div>
       );
@@ -437,9 +509,10 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
     if (SPINNER_LINE_PATTERN.test(line)) return renderSpinnerLine(line, i);
 
     // `show <#>` prints the task line followed by a `created:` detail row;
-    // give that task line the same fragment coloring as a rendered list.
+    // give that task line the same fragment/priority coloring as a rendered
+    // list, plus the x/strikethrough treatment when the task is completed.
     if (lines[i + 1]?.startsWith("created:")) {
-      return renderTaskDetailLine(line, today, i);
+      return renderShowTaskLine(line, today, i);
     }
 
     return renderMessageLine(line, i);

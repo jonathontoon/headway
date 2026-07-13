@@ -16,6 +16,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [1.5.0] - 2026-07-13
+
+### Added
+
+- `connect`, `sync backup`, and `sync restore` now animate a spinner while waiting on GitHub.
+- `sync status` shows how long ago the last backup ran (e.g. "last backup 3 hours ago").
+
+### Changed
+
+- Overhauled command output formatting: a single canonical spacing rhythm throughout the terminal, distinct glyphs for success/error/warning messages, and hanging indents so wrapped lines stay aligned.
+- `show <#>` now colors the priority tag like a rendered list, drops the duplicated `due`/`priority`/`status` fields, and marks a completed task with an `x` and strikethrough instead of the arrow.
+- `sync status` now uses the same message-coloring convention as every other command instead of its own inline highlighting.
+- `Error:`/`Warning:` labels are no longer shown in message text - the glyph and color already say that.
+
+### Fixed
+
+- `projects` and `stats` no longer say "1 projects" or "1 tasks" for a single project or task.
+
 ## [1.4.0] - 2026-07-11
 
 ### Changed

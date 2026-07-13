@@ -4,6 +4,7 @@ import {
   formatTaskBody,
   getMetadataValue,
   parseTasks,
+  pluralize,
   taskLabel,
   type IndexedTask,
 } from "./format";
@@ -287,14 +288,14 @@ function runShow(
     return { nextTodos: state.todos, output: found };
   }
 
-  const due = getMetadataValue(found.task.metadata, "due") ?? "-";
-  const priority = found.task.priority ?? "-";
   const created = found.task.creationDate ?? "-";
-  const status = found.task.completed ? "complete" : "open";
+  const taskLine = found.task.completed
+    ? `x ${taskLabel(found.task)}`
+    : formatTaskBody(found.task);
 
   return {
     nextTodos: state.todos,
-    output: `${taskLabel(found.task)}\ncreated: ${created}  priority: ${priority}  due: ${due}  status: ${status}`,
+    output: `${taskLine}\ncreated: ${created}`,
   };
 }
 
@@ -656,7 +657,7 @@ function runProjects(state: TodoCommandState): TodoCommandResult {
   return {
     nextTodos: state.todos,
     output: [
-      `${rows.length} projects, ${total} tasks between them.`,
+      `${rows.length} ${pluralize(rows.length, "project", "projects")}, ${total} ${pluralize(total, "task", "tasks")} between them.`,
       ...rows.map(([project, count]) => `${count} +${project}`),
     ].join("\n"),
   };
@@ -684,7 +685,7 @@ function runStats(state: TodoCommandState, today: string): TodoCommandResult {
   return {
     nextTodos: state.todos,
     output: [
-      `${open.length} tasks on your radar right now.`,
+      `${open.length} ${pluralize(open.length, "task", "tasks")} on your radar right now.`,
       `${overdue} overdue`,
       `${dueToday} due today`,
       `${upcoming} on the horizon`,

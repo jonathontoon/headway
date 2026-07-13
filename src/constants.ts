@@ -1,6 +1,14 @@
 // Terminal UI
 export const TERMINAL_PROMPT = "~$";
 
+// Single canonical vertical gap used for every block break in the terminal:
+// between commands, between a command line and its output, and between
+// sections within a single command's output. Kept as full class strings
+// (rather than a raw "1rem" value) so Tailwind's content scanner picks them
+// up wherever they're referenced.
+export const TERMINAL_BLOCK_GAP_MB = "mb-[1rem]";
+export const TERMINAL_BLOCK_GAP_H = "h-[1rem]";
+
 // Command keywords
 export const COMMANDS = {
   help: "help",

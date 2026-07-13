@@ -5,6 +5,7 @@ import {
   pollForToken,
   putFile,
   requestDeviceCode,
+  type DeviceCode,
   type FetchFn,
   type SyncTarget,
   type WaitFn,
@@ -99,8 +100,51 @@ function describeTarget(target: SyncTarget): string {
   return `${target.owner}/${target.repo}:${target.path} (${target.branch})`;
 }
 
+const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat("en", {
+  numeric: "auto",
+});
+const RELATIVE_TIME_UNITS: readonly [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 60 * 60 * 24 * 365],
+  ["month", 60 * 60 * 24 * 30],
+  ["week", 60 * 60 * 24 * 7],
+  ["day", 60 * 60 * 24],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
+function formatRelativeTime(iso: string): string {
+  const diffSeconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+
+  for (const [unit, secondsInUnit] of RELATIVE_TIME_UNITS) {
+    if (diffSeconds >= secondsInUnit) {
+      return RELATIVE_TIME_FORMATTER.format(
+        -Math.round(diffSeconds / secondsInUnit),
+        unit,
+      );
+    }
+  }
+
+  return "just now";
+}
+
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_TICK_MS = 90;
+
+function startSpinner(
+  deps: GitHubCommandDeps,
+  label: string,
+): ReturnType<typeof setInterval> {
+  const render = (frame: string, replace: boolean) =>
+    deps.emit(`${frame} ${label}`, { replace });
+
+  render(SPINNER_FRAMES[0], false);
+
+  let frameIndex = 0;
+  return setInterval(() => {
+    frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
+    render(SPINNER_FRAMES[frameIndex], true);
+  }, SPINNER_TICK_MS);
+}
 
 async function runConnect(deps: GitHubCommandDeps): Promise<void> {
   if (!deps.clientId) {
@@ -110,11 +154,19 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
     return;
   }
 
-  const device = await requestDeviceCode(
-    deps.clientId,
-    deps.fetchFn,
-    deps.signal,
-  );
+  const connectingSpinnerId = startSpinner(deps, "Connecting to GitHub...");
+  let device: DeviceCode;
+  try {
+    device = await requestDeviceCode(deps.clientId, deps.fetchFn, deps.signal);
+  } catch (error) {
+    if (!isAbortError(error)) {
+      deps.emit(formatError(error), { replace: true });
+    }
+    return;
+  } finally {
+    clearInterval(connectingSpinnerId);
+  }
+
   const renderWaiting = (frame: string, replace: boolean) =>
     deps.emit(
       [
@@ -124,7 +176,7 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
       { replace },
     );
 
-  renderWaiting(SPINNER_FRAMES[0], false);
+  renderWaiting(SPINNER_FRAMES[0], true);
 
   // The spinner animates on its own clock; the network poll runs on
   // GitHub's much slower interval (typically every 5s), so tying the two
@@ -186,7 +238,7 @@ async function runSync(
       return;
     default:
       deps.emit(
-        `sync ${subcommand} is not a recognized command. Try 'sync setup', 'sync status', 'sync backup' or 'sync restore'.`,
+        `Error: sync ${subcommand} is not a recognized command. Try 'sync setup', 'sync status', 'sync backup' or 'sync restore'.`,
       );
   }
 }
@@ -210,6 +262,7 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
     ...target,
     lastSyncedSha: undefined,
     lastSyncedHash: undefined,
+    lastSyncedAt: undefined,
   });
   deps.emit(`Updated: sync target set to ${describeTarget(target)}`);
 }
@@ -217,23 +270,40 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
 function runStatus(deps: GitHubCommandDeps): void {
   const settings = loadGitHubSettings();
   const target = targetFrom(settings);
+  const login = settings.login;
 
-  const targetLine = target
-    ? `target: ${describeTarget(target)}`
-    : "target: not set - run 'sync setup <owner>/<repo>'";
-  const accountLine = settings.login
-    ? `account: ${settings.login}`
-    : "account: not connected - run 'connect'";
-
-  let stateLine = "state: never synced";
-  if (settings.lastSyncedHash !== undefined) {
-    const dirty = hashTodos(deps.getTodos()) !== settings.lastSyncedHash;
-    stateLine = dirty
-      ? "state: local changes not saved"
-      : `state: clean, synced at ${settings.lastSyncedSha?.slice(0, 7)}`;
+  if (!target) {
+    deps.emit(
+      login
+        ? `Syncing isn't set up yet, though you're connected as ${login} - run 'sync setup <owner>/<repo>' to choose a repo.`
+        : "Not syncing yet - run 'sync setup <owner>/<repo>' then 'connect' to get started.",
+    );
+    return;
   }
 
-  deps.emit([targetLine, accountLine, stateLine].join("\n"));
+  if (!login) {
+    deps.emit(
+      `Syncing target is set to ${describeTarget(target)}, but you're not connected - run 'connect' to finish setup.`,
+    );
+    return;
+  }
+
+  if (settings.lastSyncedHash === undefined) {
+    deps.emit(
+      `Syncing to ${describeTarget(target)} as ${login} - nothing's been saved yet, run 'sync backup' to save your tasks.`,
+    );
+    return;
+  }
+
+  const dirty = hashTodos(deps.getTodos()) !== settings.lastSyncedHash;
+  const lastBackup = settings.lastSyncedAt
+    ? ` (last backup ${formatRelativeTime(settings.lastSyncedAt)})`
+    : "";
+  deps.emit(
+    dirty
+      ? `Syncing to ${describeTarget(target)} as ${login} - you have unsaved changes, run 'sync backup' to save them.`
+      : `Syncing to ${describeTarget(target)} as ${login} - everything's saved${lastBackup}.`,
+  );
 }
 
 type SyncSession = {
@@ -270,40 +340,51 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
     return;
   }
 
-  const todos = deps.getTodos();
-  const remote = await getFile(
-    session.target,
-    session.token,
-    deps.fetchFn,
-    deps.signal,
-  );
-  let sha: string | undefined;
-  let warning = "";
+  const spinnerId = startSpinner(deps, "Saving to GitHub...");
+  try {
+    const todos = deps.getTodos();
+    const remote = await getFile(
+      session.target,
+      session.token,
+      deps.fetchFn,
+      deps.signal,
+    );
+    let sha: string | undefined;
+    let warning = "";
 
-  if (remote !== "not_found") {
-    sha = remote.sha;
+    if (remote !== "not_found") {
+      sha = remote.sha;
 
-    if (remote.sha !== session.settings.lastSyncedSha) {
-      warning = "Warning: overwrote a version already saved on GitHub.\n";
+      if (remote.sha !== session.settings.lastSyncedSha) {
+        warning = "Warning: overwrote a version already saved on GitHub.\n";
+      }
     }
-  }
 
-  const newSha = await putFile(
-    session.target,
-    session.token,
-    todos,
-    sha,
-    deps.fetchFn,
-    deps.signal,
-  );
-  storeGitHubSettings({
-    ...loadGitHubSettings(),
-    lastSyncedSha: newSha,
-    lastSyncedHash: hashTodos(todos),
-  });
-  deps.emit(
-    `${warning}Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
-  );
+    const newSha = await putFile(
+      session.target,
+      session.token,
+      todos,
+      sha,
+      deps.fetchFn,
+      deps.signal,
+    );
+    storeGitHubSettings({
+      ...loadGitHubSettings(),
+      lastSyncedSha: newSha,
+      lastSyncedHash: hashTodos(todos),
+      lastSyncedAt: new Date().toISOString(),
+    });
+    deps.emit(
+      `${warning}Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
+      { replace: true },
+    );
+  } catch (error) {
+    if (!isAbortError(error)) {
+      deps.emit(formatError(error), { replace: true });
+    }
+  } finally {
+    clearInterval(spinnerId);
+  }
 }
 
 async function runRestore(deps: GitHubCommandDeps): Promise<void> {
@@ -313,35 +394,47 @@ async function runRestore(deps: GitHubCommandDeps): Promise<void> {
     return;
   }
 
-  const dirty =
-    session.settings.lastSyncedHash === undefined ||
-    hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
+  const spinnerId = startSpinner(deps, "Loading from GitHub...");
+  try {
+    const dirty =
+      session.settings.lastSyncedHash === undefined ||
+      hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
 
-  const remote = await getFile(
-    session.target,
-    session.token,
-    deps.fetchFn,
-    deps.signal,
-  );
-
-  if (remote === "not_found") {
-    deps.emit(
-      `Error: ${session.target.path} not found in ${session.target.owner}/${session.target.repo} - run 'sync backup' first.`,
+    const remote = await getFile(
+      session.target,
+      session.token,
+      deps.fetchFn,
+      deps.signal,
     );
-    return;
+
+    if (remote === "not_found") {
+      deps.emit(
+        `Error: ${session.target.path} not found in ${session.target.owner}/${session.target.repo} - run 'sync backup' first.`,
+        { replace: true },
+      );
+      return;
+    }
+
+    const warning = dirty
+      ? "Warning: replaced local changes that weren't saved.\n"
+      : "";
+
+    deps.applyTodos(remote.lines);
+    storeGitHubSettings({
+      ...loadGitHubSettings(),
+      lastSyncedSha: remote.sha,
+      lastSyncedHash: hashTodos(remote.lines),
+      lastSyncedAt: new Date().toISOString(),
+    });
+    deps.emit(
+      `${warning}Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
+      { replace: true },
+    );
+  } catch (error) {
+    if (!isAbortError(error)) {
+      deps.emit(formatError(error), { replace: true });
+    }
+  } finally {
+    clearInterval(spinnerId);
   }
-
-  const warning = dirty
-    ? "Warning: replaced local changes that weren't saved.\n"
-    : "";
-
-  deps.applyTodos(remote.lines);
-  storeGitHubSettings({
-    ...loadGitHubSettings(),
-    lastSyncedSha: remote.sha,
-    lastSyncedHash: hashTodos(remote.lines),
-  });
-  deps.emit(
-    `${warning}Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
-  );
 }

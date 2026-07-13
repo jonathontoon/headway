@@ -49,8 +49,14 @@ describe("todo commands", () => {
       "Error: no task with that id.",
     );
 
-    expect(runTodoCommand("show 1", { todos, view }, clock).output).toContain(
-      "created: 2026-07-01  priority: A  due: 2026-07-04  status: open",
+    expect(runTodoCommand("show 1", { todos, view }, clock).output).toBe(
+      "(A) Pay electric bill +bills due:2026-07-04\ncreated: 2026-07-01",
+    );
+  });
+
+  it("shows a completed task with an x prefix and no priority tag", () => {
+    expect(runTodoCommand("show 5", { todos, view }, clock).output).toBe(
+      "x Send invoices +work @computer\ncreated: 2026-07-01",
     );
   });
 

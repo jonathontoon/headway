@@ -41,7 +41,13 @@ function makeDeps(overrides: Partial<GitHubCommandDeps> = {}) {
   const applied: (readonly string[])[] = [];
   const deps: GitHubCommandDeps = {
     getTodos: () => todos,
-    emit: (line) => output.push(line),
+    emit: (line, options) => {
+      if (options?.replace && output.length > 0) {
+        output[output.length - 1] = line;
+      } else {
+        output.push(line);
+      }
+    },
     applyTodos: (next) => applied.push(next),
     clientId: "client123",
     waitFn: () => Promise.resolve(),
@@ -125,31 +131,25 @@ describe("github commands", () => {
     const empty = makeDeps();
     await runGitHubCommand("sync", empty.deps);
     expect(empty.output[0]).toBe(
-      [
-        "target: not set - run 'sync setup <owner>/<repo>'",
-        "account: not connected - run 'connect'",
-        "state: never synced",
-      ].join("\n"),
+      "Not syncing yet - run 'sync setup <owner>/<repo>' then 'connect' to get started.",
     );
 
     configureTarget({
       lastSyncedSha: "abc1234def",
       lastSyncedHash: hashTodos(todos),
+      lastSyncedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     });
     const configured = makeDeps();
     await runGitHubCommand("sync status", configured.deps);
-    expect(configured.output[0]).toBe(
-      [
-        "target: toon/todos:todo.txt (main)",
-        "account: toon",
-        "state: clean, synced at abc1234",
-      ].join("\n"),
+    expect(configured.output[0]).toContain(
+      "Syncing to toon/todos:todo.txt (main) as toon - everything's saved",
     );
+    expect(configured.output[0]).toContain("last backup");
 
     configureTarget({ lastSyncedSha: "abc1234def", lastSyncedHash: "stale" });
     const dirty = makeDeps();
     await runGitHubCommand("sync status", dirty.deps);
-    expect(dirty.output[0]).toContain("state: local changes not saved");
+    expect(dirty.output[0]).toContain("you have unsaved changes");
   });
 
   it("requires a client id to connect", async () => {

@@ -2,6 +2,7 @@ import {
   formatSection,
   getMetadataValue,
   parseTasks,
+  pluralize,
   type IndexedTask,
 } from "./format";
 
@@ -9,10 +10,6 @@ function openTasksInFileOrder(
   todos: readonly string[],
 ): readonly IndexedTask[] {
   return parseTasks(todos).filter(({ task }) => !task.completed);
-}
-
-function pluralize(count: number, singular: string, plural: string): string {
-  return count === 1 ? singular : plural;
 }
 
 export function getLocalDate(): string {
@@ -66,12 +63,12 @@ export function formatBootMessage(
   ] as const) {
     if (tasks.length === 0) continue;
     const section = formatSection(tasks, position);
-    lines.push(heading, ...section.lines);
+    lines.push("", heading, ...section.lines);
     view = [...view, ...section.ids];
     position += tasks.length;
   }
 
-  lines.push("Type 'help' for all available commands.");
+  lines.push("", "Type 'help' for all available commands.");
 
   return { message: lines.join("\n"), view };
 }

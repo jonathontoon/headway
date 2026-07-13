@@ -12,6 +12,7 @@ export type GitHubSettings = {
   readonly login?: string;
   readonly lastSyncedSha?: string;
   readonly lastSyncedHash?: string;
+  readonly lastSyncedAt?: string;
 };
 
 export function loadGitHubSettings(): GitHubSettings {

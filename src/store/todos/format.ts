@@ -20,6 +20,14 @@ export function getMetadataValue(
   return metadata.find((item) => item.key === key)?.value;
 }
 
+export function pluralize(
+  count: number,
+  singular: string,
+  plural: string,
+): string {
+  return count === 1 ? singular : plural;
+}
+
 export function taskLabel(task: TodoTask): string {
   return task.text
     .replace(/\s+pri:[^:\s]+/g, "")
