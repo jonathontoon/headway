@@ -1,3 +1,4 @@
+import { kvGet, kvSet } from "../db";
 import {
   GITHUB_STORAGE_KEY,
   hashTodos,
@@ -10,12 +11,12 @@ describe("github settings", () => {
     localStorage.clear();
   });
 
-  it("returns empty settings when nothing is stored", () => {
-    expect(loadGitHubSettings()).toEqual({});
+  it("returns empty settings when nothing is stored", async () => {
+    await expect(loadGitHubSettings()).resolves.toEqual({});
   });
 
-  it("round-trips settings through localStorage", () => {
-    storeGitHubSettings({
+  it("round-trips settings through IndexedDB", async () => {
+    await storeGitHubSettings({
       owner: "toon",
       repo: "todos",
       branch: "main",
@@ -26,7 +27,7 @@ describe("github settings", () => {
       lastSyncedHash: "deadbeef",
     });
 
-    expect(loadGitHubSettings()).toEqual({
+    await expect(loadGitHubSettings()).resolves.toEqual({
       owner: "toon",
       repo: "todos",
       branch: "main",
@@ -38,27 +39,48 @@ describe("github settings", () => {
     });
   });
 
-  it("falls back to empty settings on corrupt storage", () => {
-    localStorage.setItem(GITHUB_STORAGE_KEY, "not json");
-    expect(loadGitHubSettings()).toEqual({});
+  it("falls back to empty settings on corrupt stored values", async () => {
+    await kvSet("github-settings", "a string");
+    await expect(loadGitHubSettings()).resolves.toEqual({});
 
-    localStorage.setItem(GITHUB_STORAGE_KEY, '"a string"');
-    expect(loadGitHubSettings()).toEqual({});
+    await kvSet("github-settings", 42);
+    await expect(loadGitHubSettings()).resolves.toEqual({});
   });
 
-  it("drops unknown keys and non-string fields from stored settings", () => {
+  it("drops unknown keys and non-string fields from stored settings", async () => {
+    await kvSet("github-settings", {
+      owner: "toon",
+      repo: 42,
+      token: null,
+      injected: "value",
+      lastSyncedAt: ["not", "a", "string"],
+    });
+
+    await expect(loadGitHubSettings()).resolves.toEqual({ owner: "toon" });
+  });
+
+  it("migrates legacy localStorage settings into IndexedDB once", async () => {
     localStorage.setItem(
       GITHUB_STORAGE_KEY,
-      JSON.stringify({
-        owner: "toon",
-        repo: 42,
-        token: null,
-        injected: "value",
-        lastSyncedAt: ["not", "a", "string"],
-      }),
+      JSON.stringify({ owner: "toon", repo: "todos", injected: "value" }),
     );
 
-    expect(loadGitHubSettings()).toEqual({ owner: "toon" });
+    await expect(loadGitHubSettings()).resolves.toEqual({
+      owner: "toon",
+      repo: "todos",
+    });
+    expect(localStorage.getItem(GITHUB_STORAGE_KEY)).toBeNull();
+    await expect(kvGet("github-settings")).resolves.toEqual({
+      owner: "toon",
+      repo: "todos",
+    });
+  });
+
+  it("migrates corrupt legacy settings as empty and removes the key", async () => {
+    localStorage.setItem(GITHUB_STORAGE_KEY, "not json");
+
+    await expect(loadGitHubSettings()).resolves.toEqual({});
+    expect(localStorage.getItem(GITHUB_STORAGE_KEY)).toBeNull();
   });
 
   it("hashes todos stably and detects changes", () => {

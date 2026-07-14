@@ -1,4 +1,7 @@
+import { kvGet, kvSet } from "../db";
+
 export const GITHUB_STORAGE_KEY = "headway-github";
+const GITHUB_DB_KEY = "github-settings";
 
 export const DEFAULT_BRANCH = "main";
 export const DEFAULT_PATH = "todo.txt";
@@ -27,8 +30,9 @@ const SETTINGS_KEYS = [
   "lastSyncedAt",
 ] as const;
 
-// localStorage is writable by anything running in the origin, so only the
-// known keys survive, and only when they hold strings.
+// IndexedDB is writable by anything running in the origin (no safer than
+// localStorage on that front), so only the known keys survive, and only
+// when they hold strings.
 function sanitizeSettings(value: unknown): GitHubSettings {
   if (typeof value !== "object" || value === null) {
     return {};
@@ -47,22 +51,43 @@ function sanitizeSettings(value: unknown): GitHubSettings {
   return settings;
 }
 
-export function loadGitHubSettings(): GitHubSettings {
+// One-time migration from the pre-1.6 localStorage key. The key is removed
+// after a successful IndexedDB write so there is a single source of truth.
+async function migrateLegacySettings(): Promise<GitHubSettings | undefined> {
   const stored = localStorage.getItem(GITHUB_STORAGE_KEY);
 
-  if (!stored) {
-    return {};
+  if (stored === null) {
+    return undefined;
   }
 
+  let settings: GitHubSettings;
   try {
-    return sanitizeSettings(JSON.parse(stored));
+    settings = sanitizeSettings(JSON.parse(stored));
   } catch {
-    return {};
+    settings = {};
   }
+
+  await kvSet(GITHUB_DB_KEY, settings);
+  localStorage.removeItem(GITHUB_STORAGE_KEY);
+  return settings;
 }
 
-export function storeGitHubSettings(settings: GitHubSettings): void {
-  localStorage.setItem(GITHUB_STORAGE_KEY, JSON.stringify(settings));
+export async function loadGitHubSettings(): Promise<GitHubSettings> {
+  const stored = await kvGet(GITHUB_DB_KEY);
+
+  if (stored !== undefined) {
+    return sanitizeSettings(stored);
+  }
+
+  return (await migrateLegacySettings()) ?? {};
+}
+
+export async function storeGitHubSettings(
+  settings: GitHubSettings,
+): Promise<void> {
+  // Structured clone rejects nothing here, but dropping undefined fields
+  // keeps the stored record identical to the old JSON form.
+  await kvSet(GITHUB_DB_KEY, JSON.parse(JSON.stringify(settings)));
 }
 
 // FNV-1a over the joined lines; detects local changes since the last sync.

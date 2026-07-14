@@ -1,13 +1,15 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import App from "./App";
+import { SAMPLE_TODOS } from "./store/todos/storage";
+
+function renderApp() {
+  return render(<App initialTodos={SAMPLE_TODOS} />);
+}
 
 describe("App Component", () => {
-  beforeEach(() => {
-    localStorage.removeItem("headway-todos");
-  });
 
   it("renders an editable terminal prompt", () => {
-    render(<App />);
+    renderApp();
     expect(screen.getByLabelText("Terminal prompt")).toBeInTheDocument();
     expect(screen.getByLabelText("Terminal command")).toHaveFocus();
     const bootOutput = document.querySelector(
@@ -20,7 +22,7 @@ describe("App Component", () => {
   });
 
   it("focuses the command input from the command capture area", () => {
-    render(<App />);
+    renderApp();
     const input = screen.getByLabelText("Terminal command");
 
     input.blur();
@@ -34,7 +36,7 @@ describe("App Component", () => {
   });
 
   it("runs terminal task commands", () => {
-    render(<App />);
+    renderApp();
     const input = screen.getByLabelText("Terminal command");
 
     fireEvent.change(input, { target: { value: "list +GarageSale" } });
@@ -51,7 +53,7 @@ describe("App Component", () => {
   });
 
   it("reports unknown commands instead of evaluating JavaScript", () => {
-    render(<App />);
+    renderApp();
     const input = screen.getByLabelText("Terminal command");
 
     fireEvent.change(input, { target: { value: "1 + 1" } });

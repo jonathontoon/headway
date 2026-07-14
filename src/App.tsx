@@ -7,7 +7,11 @@ import { TerminalProvider } from "./store/terminal/context";
 // import.meta.env.DEV's build-time `false` is needed to prove that.
 const TestShowcase = lazy(() => import("./components/TestShowcase"));
 
-function App() {
+type AppProps = {
+  readonly initialTodos: readonly string[];
+};
+
+function App({ initialTodos }: AppProps) {
   if (import.meta.env.DEV && window.location.pathname === "/test") {
     return (
       <Suspense fallback={null}>
@@ -17,7 +21,7 @@ function App() {
   }
 
   return (
-    <TerminalProvider>
+    <TerminalProvider initialTodos={initialTodos}>
       <Terminal />
     </TerminalProvider>
   );

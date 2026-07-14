@@ -57,7 +57,7 @@ function makeDeps(overrides: Partial<GitHubCommandDeps> = {}) {
 }
 
 function configureTarget(extra: Record<string, unknown> = {}) {
-  storeGitHubSettings({
+  return storeGitHubSettings({
     owner: "toon",
     repo: "todos",
     branch: "main",
@@ -99,11 +99,11 @@ describe("github commands", () => {
   });
 
   it("stores the sync target with defaults and resets bookkeeping", async () => {
-    storeGitHubSettings({ token: "gho_token", lastSyncedSha: "stale" });
+    await storeGitHubSettings({ token: "gho_token", lastSyncedSha: "stale" });
     const { deps, output } = makeDeps();
     await runGitHubCommand("sync setup toon/todos", deps);
 
-    expect(loadGitHubSettings()).toEqual({
+    expect((await loadGitHubSettings())).toEqual({
       token: "gho_token",
       owner: "toon",
       repo: "todos",
@@ -136,7 +136,7 @@ describe("github commands", () => {
         "Error: path must be a relative file path without '.' or '..' segments.",
       );
     }
-    expect(loadGitHubSettings().path).toBeUndefined();
+    expect((await loadGitHubSettings()).path).toBeUndefined();
   });
 
   it("reports status before and after configuration", async () => {
@@ -146,7 +146,7 @@ describe("github commands", () => {
       "Not syncing yet - run 'sync setup <owner>/<repo>' then 'connect' to get started.",
     );
 
-    configureTarget({
+    await configureTarget({
       lastSyncedSha: "abc1234def",
       lastSyncedHash: hashTodos(todos),
       lastSyncedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
@@ -158,7 +158,7 @@ describe("github commands", () => {
     );
     expect(configured.output[0]).toContain("last backup");
 
-    configureTarget({ lastSyncedSha: "abc1234def", lastSyncedHash: "stale" });
+    await configureTarget({ lastSyncedSha: "abc1234def", lastSyncedHash: "stale" });
     const dirty = makeDeps();
     await runGitHubCommand("sync status", dirty.deps);
     expect(dirty.output[0]).toContain("you have unsaved changes");
@@ -194,7 +194,7 @@ describe("github commands", () => {
     expect(output[output.length - 1]).toBe(
       "Connected as toon.\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
     );
-    expect(loadGitHubSettings()).toMatchObject({
+    expect((await loadGitHubSettings())).toMatchObject({
       token: "gho_token",
       login: "toon",
     });
@@ -236,7 +236,7 @@ describe("github commands", () => {
     // error and no "Connected" message follow, and nothing is persisted.
     expect(output.some((line) => line.startsWith("Error"))).toBe(false);
     expect(output.some((line) => line.startsWith("Connected"))).toBe(false);
-    expect(loadGitHubSettings().token).toBeUndefined();
+    expect((await loadGitHubSettings()).token).toBeUndefined();
   });
 
   it("disconnects only when a session exists", async () => {
@@ -244,7 +244,7 @@ describe("github commands", () => {
     await runGitHubCommand("disconnect", anonymous.deps);
     expect(anonymous.output[0]).toBe("No GitHub connection to disconnect.");
 
-    configureTarget();
+    await configureTarget();
     const fetchFn = fakeFetch({
       "POST /api/github/token/revoke": () =>
         new Response(null, { status: 204 }),
@@ -252,12 +252,12 @@ describe("github commands", () => {
     const { deps, output } = makeDeps({ fetchFn });
     await runGitHubCommand("disconnect", deps);
     expect(output[0]).toBe("Disconnected from GitHub and revoked the token.");
-    expect(loadGitHubSettings().token).toBeUndefined();
-    expect(loadGitHubSettings().owner).toBe("toon");
+    expect((await loadGitHubSettings()).token).toBeUndefined();
+    expect((await loadGitHubSettings()).owner).toBe("toon");
   });
 
   it("still disconnects locally when the worker cannot revoke the token", async () => {
-    configureTarget();
+    await configureTarget();
     const fetchFn = fakeFetch({
       "POST /api/github/token/revoke": () =>
         new Response("Token revocation is not configured", { status: 501 }),
@@ -268,7 +268,7 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Disconnected from GitHub, but the token could not be revoked automatically - review it at https://github.com/settings/applications.",
     );
-    expect(loadGitHubSettings().token).toBeUndefined();
+    expect((await loadGitHubSettings()).token).toBeUndefined();
   });
 
   it("requires a connection and a target before backup or restore", async () => {
@@ -278,7 +278,7 @@ describe("github commands", () => {
       "Error: not connected - run 'connect' first.",
     );
 
-    storeGitHubSettings({ token: "gho_token" });
+    await storeGitHubSettings({ token: "gho_token" });
     const untargeted = makeDeps();
     await runGitHubCommand("sync restore", untargeted.deps);
     expect(untargeted.output[0]).toBe(
@@ -287,7 +287,7 @@ describe("github commands", () => {
   });
 
   it("saves a new file when none exists remotely", async () => {
-    configureTarget();
+    await configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 404),
@@ -303,14 +303,14 @@ describe("github commands", () => {
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe("Saved: 2 tasks to toon/todos:todo.txt (new-sha)");
-    expect(loadGitHubSettings()).toMatchObject({
+    expect((await loadGitHubSettings())).toMatchObject({
       lastSyncedSha: "new-sha-1234",
       lastSyncedHash: hashTodos(todos),
     });
   });
 
   it("updates an existing file when the remote sha matches the last sync", async () => {
-    configureTarget({ lastSyncedSha: "remote-sha" });
+    await configureTarget({ lastSyncedSha: "remote-sha" });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({ sha: "remote-sha", content: encodeLines(["old"]) }),
@@ -329,7 +329,7 @@ describe("github commands", () => {
   });
 
   it("warns but still overwrites when backing up over unseen remote changes", async () => {
-    configureTarget({ lastSyncedSha: "old-sha" });
+    await configureTarget({ lastSyncedSha: "old-sha" });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({ sha: "changed-sha", content: encodeLines(["other"]) }),
@@ -343,11 +343,11 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Warning: overwrote a version already saved on GitHub.\nSaved: 2 tasks to toon/todos:todo.txt (new-sha)",
     );
-    expect(loadGitHubSettings()).toMatchObject({ lastSyncedSha: "new-sha" });
+    expect((await loadGitHubSettings())).toMatchObject({ lastSyncedSha: "new-sha" });
   });
 
   it("refuses to restore over unsaved changes without --force", async () => {
-    configureTarget();
+    await configureTarget();
     const fetchFn = fakeFetch({});
 
     const { deps, output, applied } = makeDeps({ fetchFn });
@@ -357,11 +357,11 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
     );
-    expect(loadGitHubSettings().lastSyncedSha).toBeUndefined();
+    expect((await loadGitHubSettings()).lastSyncedSha).toBeUndefined();
   });
 
   it("warns and replaces local tasks when restoring over unsaved changes with --force", async () => {
-    configureTarget();
+    await configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({
@@ -377,14 +377,14 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Warning: replaced local changes that weren't saved.\nLoaded: 1 tasks from toon/todos:todo.txt (remote-)",
     );
-    expect(loadGitHubSettings()).toMatchObject({
+    expect((await loadGitHubSettings())).toMatchObject({
       lastSyncedSha: "remote-sha",
       lastSyncedHash: hashTodos(["remote task"]),
     });
   });
 
   it("restores cleanly when local state matches the last sync", async () => {
-    configureTarget({ lastSyncedHash: hashTodos(todos) });
+    await configureTarget({ lastSyncedHash: hashTodos(todos) });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({
@@ -399,7 +399,7 @@ describe("github commands", () => {
   });
 
   it("reports a missing remote file on restore", async () => {
-    configureTarget({ lastSyncedHash: hashTodos(todos) });
+    await configureTarget({ lastSyncedHash: hashTodos(todos) });
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 404),
@@ -413,7 +413,7 @@ describe("github commands", () => {
   });
 
   it("maps 401 responses to a reconnect hint", async () => {
-    configureTarget();
+    await configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 401),
