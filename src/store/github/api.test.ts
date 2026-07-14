@@ -203,6 +203,29 @@ describe("github api", () => {
     expect(body.message).toBe("chore: sync todos from headway");
   });
 
+  it("encodes owner, repo, and path segments into the contents URL", async () => {
+    const urls: string[] = [];
+    const fetchFn: FetchFn = (input) => {
+      urls.push(typeof input === "string" ? input : input.toString());
+      return Promise.resolve(jsonResponse({ sha: "abc", content: "" }));
+    };
+
+    await getFile(
+      {
+        owner: "toon?",
+        repo: "todos#1",
+        branch: "feature/x",
+        path: "lists/todo list.txt",
+      },
+      "gho_token",
+      fetchFn,
+    );
+
+    expect(urls[0]).toBe(
+      "https://api.github.com/repos/toon%3F/todos%231/contents/lists/todo%20list.txt?ref=feature%2Fx",
+    );
+  });
+
   it("revokes a token through the worker and reports unsupported deployments", async () => {
     const calls: RequestInit[] = [];
     expect(

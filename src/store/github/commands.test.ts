@@ -127,6 +127,18 @@ describe("github commands", () => {
     );
   });
 
+  it("rejects traversal and empty segments in the setup path", async () => {
+    for (const path of ["../secrets.txt", "a//b.txt", "./todo.txt", "a/.."]) {
+      const { deps, output } = makeDeps();
+      await runGitHubCommand(`sync setup toon/todos main ${path}`, deps);
+
+      expect(output[0]).toBe(
+        "Error: path must be a relative file path without '.' or '..' segments.",
+      );
+    }
+    expect(loadGitHubSettings().path).toBeUndefined();
+  });
+
   it("reports status before and after configuration", async () => {
     const empty = makeDeps();
     await runGitHubCommand("sync", empty.deps);

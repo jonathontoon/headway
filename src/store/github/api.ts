@@ -69,8 +69,12 @@ function apiHeaders(token: string): HeadersInit {
   };
 }
 
+// Every segment is user input from `sync setup`; encoding keeps characters
+// like `?`, `#`, or `..` from redirecting the authenticated request to a
+// different API endpoint.
 function contentsUrl(target: SyncTarget): string {
-  return `https://api.github.com/repos/${target.owner}/${target.repo}/contents/${target.path}`;
+  const path = target.path.split("/").map(encodeURIComponent).join("/");
+  return `https://api.github.com/repos/${encodeURIComponent(target.owner)}/${encodeURIComponent(target.repo)}/contents/${path}`;
 }
 
 export async function requestDeviceCode(

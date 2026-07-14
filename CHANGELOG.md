@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `disconnect` now revokes the OAuth grant on GitHub (when the worker is configured with the app's client id and secret) instead of only deleting the token locally.
 - The device-flow proxy now rejects cross-origin requests, caps request bodies, and can pin the OAuth client id via a `GITHUB_CLIENT_ID` worker var, so other sites can't launder device-flow traffic through the deployment.
+- Owner, repo, and path from `sync setup` are URL-encoded (and `.`/`..` path segments rejected) so they can't retarget authenticated GitHub API requests.
 
 <!--
 ### Added

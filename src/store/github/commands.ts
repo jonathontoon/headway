@@ -266,6 +266,15 @@ async function runSync(
   }
 }
 
+// Path segments become part of an authenticated API URL, so `.`/`..`/empty
+// segments are rejected up front rather than letting a traversal like
+// `../../user` retarget the request.
+function isValidRepoPath(path: string): boolean {
+  return path
+    .split("/")
+    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
+}
+
 function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
   const match = args[0]?.match(/^([^/\s]+)\/([^/\s]+)$/);
 
@@ -274,11 +283,20 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
     return;
   }
 
+  const path = args[2] ?? DEFAULT_PATH;
+
+  if (!isValidRepoPath(path)) {
+    deps.emit(
+      "Error: path must be a relative file path without '.' or '..' segments.",
+    );
+    return;
+  }
+
   const target: SyncTarget = {
     owner: match[1],
     repo: match[2],
     branch: args[1] ?? DEFAULT_BRANCH,
-    path: args[2] ?? DEFAULT_PATH,
+    path,
   };
   storeGitHubSettings({
     ...loadGitHubSettings(),
