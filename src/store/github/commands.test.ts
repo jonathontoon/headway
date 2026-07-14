@@ -179,7 +179,9 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Visit https://github.com/login/device and enter code ABCD-1234.\n⠋ Waiting for authorization...",
     );
-    expect(output[output.length - 1]).toBe("Connected as toon.");
+    expect(output[output.length - 1]).toBe(
+      "Connected as toon.\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
+    );
     expect(loadGitHubSettings()).toMatchObject({
       token: "gho_token",
       login: "toon",

@@ -199,7 +199,12 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
     const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
 
     storeGitHubSettings({ ...loadGitHubSettings(), token, login });
-    deps.emit(`Connected as ${login}.`);
+    deps.emit(
+      [
+        `Connected as ${login}.`,
+        "This token can read and write every repo on your account - 'disconnect' revokes it.",
+      ].join("\n"),
+    );
   } finally {
     clearInterval(spinnerId);
   }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `connect` now explains that the stored token can read and write every repo on the account.
+
 ### Security
 
 - `disconnect` now revokes the OAuth grant on GitHub (when the worker is configured with the app's client id and secret) instead of only deleting the token locally.
