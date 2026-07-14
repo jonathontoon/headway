@@ -98,9 +98,12 @@ async function revokeGrant(body: string, env: Env): Promise<Response> {
     },
   );
 
-  // 404 means the grant is already gone, which is the state the caller
-  // wanted; report both as revoked.
-  if (response.status === 204 || response.status === 404) {
+  // GitHub also answers 404 when the client_id doesn't match the app that
+  // issued the token (e.g. a misconfigured GITHUB_CLIENT_ID, or a token
+  // from a previous OAuth app) - that's indistinguishable here from "grant
+  // already gone", and unlike a confirmed 204 it doesn't mean the original
+  // grant is actually revoked. Only report success on an explicit 204.
+  if (response.status === 204) {
     return new Response(null, { status: 204 });
   }
 

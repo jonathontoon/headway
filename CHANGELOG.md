@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Owner, repo, and path from `sync setup` are URL-encoded (and `.`/`..` path segments rejected) so they can't retarget authenticated GitHub API requests; this is now enforced at the request itself, not just at `sync setup`, so stale or tampered settings can't bypass it.
 - GitHub settings loaded from localStorage are validated field-by-field instead of trusted wholesale.
 - The device-flow proxy now checks a request's declared and actual size before buffering it, instead of after.
+- `disconnect` no longer reports a token as revoked on an ambiguous 404 from GitHub - only a confirmed 204 counts.
 
 <!--
 ### Added

@@ -206,6 +206,23 @@ describe("device flow proxy worker", () => {
     );
   });
 
+  it("does not report revoked when GitHub answers 404 (mismatched client id or app)", async () => {
+    const upstream = vi.fn(
+      async () => new Response("Not Found", { status: 404 }),
+    );
+    vi.stubGlobal("fetch", upstream);
+
+    const response = await worker.fetch(
+      new Request("https://headway.example/api/github/token/revoke", {
+        method: "POST",
+        body: JSON.stringify({ access_token: "gho_token" }),
+      }),
+      { GITHUB_CLIENT_ID: "pinned123", GITHUB_CLIENT_SECRET: "shhh" },
+    );
+
+    expect(response.status).toBe(502);
+  });
+
   it("rejects revocation requests without a token", async () => {
     const upstream = vi.fn();
     vi.stubGlobal("fetch", upstream);
