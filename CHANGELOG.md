@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - The device-flow proxy now rejects cross-origin requests, caps request bodies, and can pin the OAuth client id via a `GITHUB_CLIENT_ID` worker var, so other sites can't launder device-flow traffic through the deployment.
 - Static assets are now served with a Content-Security-Policy and related security headers.
 - Owner, repo, and path from `sync setup` are URL-encoded (and `.`/`..` path segments rejected) so they can't retarget authenticated GitHub API requests.
+- GitHub settings loaded from localStorage are validated field-by-field instead of trusted wholesale.
 
 <!--
 ### Added
