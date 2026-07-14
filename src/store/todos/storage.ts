@@ -60,21 +60,20 @@ export const SAMPLE_TODOS: readonly string[] = [
   "2026-07-06 Setup monitoring and logging infrastructure +DevOps @infrastructure @computer due:2026-07-25",
 ];
 
-export function loadStoredTodos(): readonly string[] {
-  const stored = localStorage.getItem(TODOS_STORAGE_KEY);
-
-  if (!stored) {
-    return SAMPLE_TODOS;
-  }
-
+export function parseStoredTodos(raw: string): readonly string[] | undefined {
   try {
-    const parsed = JSON.parse(stored);
+    const parsed = JSON.parse(raw);
     return Array.isArray(parsed)
       ? parsed.filter((item): item is string => typeof item === "string")
-      : SAMPLE_TODOS;
+      : undefined;
   } catch {
-    return SAMPLE_TODOS;
+    return undefined;
   }
+}
+
+export function loadStoredTodos(): readonly string[] {
+  const stored = localStorage.getItem(TODOS_STORAGE_KEY);
+  return (stored ? parseStoredTodos(stored) : undefined) ?? SAMPLE_TODOS;
 }
 
 export function storeTodos(todos: readonly string[]): void {

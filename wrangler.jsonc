@@ -11,4 +11,9 @@
     "run_worker_first": ["/api/*"],
   },
   "compatibility_flags": ["nodejs_compat"],
+  // Set GITHUB_CLIENT_ID here (or in the dashboard) to pin the device-flow
+  // proxy to this app's OAuth client id, and add GITHUB_CLIENT_SECRET via
+  // `wrangler secret put GITHUB_CLIENT_SECRET` to enable token revocation
+  // on `disconnect`.
+  // "vars": { "GITHUB_CLIENT_ID": "..." },
 }

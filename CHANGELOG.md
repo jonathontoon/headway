@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `sync restore` now refuses to replace unsaved local tasks; pass `sync restore --force` to overwrite them.
+- `connect` now explains that the stored token can read and write every repo on the account.
+- Todos edited in another tab are now picked up automatically instead of being overwritten by the next command.
+
+### Security
+
+- `disconnect` now revokes the OAuth grant on GitHub (when the worker is configured with the app's client id and secret) instead of only deleting the token locally.
+- The device-flow proxy now rejects cross-origin requests, caps request bodies, and can pin the OAuth client id via a `GITHUB_CLIENT_ID` worker var, so other sites can't launder device-flow traffic through the deployment.
+- Static assets are now served with a Content-Security-Policy and related security headers.
+- Owner, repo, and path from `sync setup` are URL-encoded (and `.`/`..` path segments rejected) so they can't retarget authenticated GitHub API requests; this is now enforced at the request itself, not just at `sync setup`, so stale or tampered settings can't bypass it.
+- GitHub settings loaded from localStorage are validated field-by-field instead of trusted wholesale.
+- The device-flow proxy now checks a request's declared and actual size before buffering it, instead of after.
+- `disconnect` no longer reports a token as revoked on an ambiguous 404 from GitHub - only a confirmed 204 counts.
+
 <!--
 ### Added
 ### Changed

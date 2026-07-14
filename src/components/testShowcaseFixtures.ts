@@ -157,8 +157,19 @@ const GITHUB_SECTION: ShowcaseSection = {
       output:
         "Visit https://github.com/login/device and enter code WDJB-MJHT.\n⠙ Waiting for authorization...",
     },
-    { output: "Connected as octocat." },
-    { command: "disconnect", output: "Disconnected from GitHub." },
+    {
+      output:
+        "Connected as octocat.\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
+    },
+    {
+      command: "disconnect",
+      output: "Disconnected from GitHub and revoked the token.",
+    },
+    {
+      command: "disconnect",
+      output:
+        "Disconnected from GitHub, but the token could not be revoked automatically - review it at https://github.com/settings/applications.",
+    },
     { command: "disconnect", output: "No GitHub connection to disconnect." },
     {
       command: "sync setup octocat/todos",
@@ -167,6 +178,11 @@ const GITHUB_SECTION: ShowcaseSection = {
     {
       command: "sync setup badformat",
       output: "Error: usage: sync setup <owner>/<repo> [branch] [path].",
+    },
+    {
+      command: "sync setup octocat/todos main ../secrets.txt",
+      output:
+        "Error: path must be a relative file path without '.' or '..' segments.",
     },
     {
       command: "sync status",
@@ -201,13 +217,19 @@ const GITHUB_SECTION: ShowcaseSection = {
       output:
         "Warning: overwrote a version already saved on GitHub.\nSaved: 8 tasks to octocat/todos:todo.txt (a1b2c3d)",
     },
-    { command: "sync restore", output: "⠋ Loading from GitHub..." },
     {
-      output: "Loaded: 8 tasks from octocat/todos:todo.txt (main) (a1b2c3d)",
+      command: "sync restore",
+      output:
+        "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
     },
+    { command: "sync restore --force", output: "⠋ Loading from GitHub..." },
     {
       output:
-        "Warning: replaced local changes that weren't saved.\nLoaded: 8 tasks from octocat/todos:todo.txt (main) (a1b2c3d)",
+        "Warning: replaced local changes that weren't saved.\nLoaded: 8 tasks from octocat/todos:todo.txt (a1b2c3d)",
+    },
+    { command: "sync restore", output: "⠋ Loading from GitHub..." },
+    {
+      output: "Loaded: 8 tasks from octocat/todos:todo.txt (a1b2c3d)",
     },
     {
       output:

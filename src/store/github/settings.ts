@@ -15,6 +15,38 @@ export type GitHubSettings = {
   readonly lastSyncedAt?: string;
 };
 
+const SETTINGS_KEYS = [
+  "owner",
+  "repo",
+  "branch",
+  "path",
+  "token",
+  "login",
+  "lastSyncedSha",
+  "lastSyncedHash",
+  "lastSyncedAt",
+] as const;
+
+// localStorage is writable by anything running in the origin, so only the
+// known keys survive, and only when they hold strings.
+function sanitizeSettings(value: unknown): GitHubSettings {
+  if (typeof value !== "object" || value === null) {
+    return {};
+  }
+
+  const record = value as Record<string, unknown>;
+  const settings: Partial<Record<(typeof SETTINGS_KEYS)[number], string>> = {};
+
+  for (const key of SETTINGS_KEYS) {
+    const field = record[key];
+    if (typeof field === "string") {
+      settings[key] = field;
+    }
+  }
+
+  return settings;
+}
+
 export function loadGitHubSettings(): GitHubSettings {
   const stored = localStorage.getItem(GITHUB_STORAGE_KEY);
 
@@ -23,10 +55,7 @@ export function loadGitHubSettings(): GitHubSettings {
   }
 
   try {
-    const parsed: unknown = JSON.parse(stored);
-    return typeof parsed === "object" && parsed !== null
-      ? (parsed as GitHubSettings)
-      : {};
+    return sanitizeSettings(JSON.parse(stored));
   } catch {
     return {};
   }

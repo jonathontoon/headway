@@ -127,6 +127,18 @@ describe("github commands", () => {
     );
   });
 
+  it("rejects traversal and empty segments in the setup path", async () => {
+    for (const path of ["../secrets.txt", "a//b.txt", "./todo.txt", "a/.."]) {
+      const { deps, output } = makeDeps();
+      await runGitHubCommand(`sync setup toon/todos main ${path}`, deps);
+
+      expect(output[0]).toBe(
+        "Error: path must be a relative file path without '.' or '..' segments.",
+      );
+    }
+    expect(loadGitHubSettings().path).toBeUndefined();
+  });
+
   it("reports status before and after configuration", async () => {
     const empty = makeDeps();
     await runGitHubCommand("sync", empty.deps);
@@ -179,7 +191,9 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Visit https://github.com/login/device and enter code ABCD-1234.\n⠋ Waiting for authorization...",
     );
-    expect(output[output.length - 1]).toBe("Connected as toon.");
+    expect(output[output.length - 1]).toBe(
+      "Connected as toon.\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
+    );
     expect(loadGitHubSettings()).toMatchObject({
       token: "gho_token",
       login: "toon",
@@ -231,11 +245,30 @@ describe("github commands", () => {
     expect(anonymous.output[0]).toBe("No GitHub connection to disconnect.");
 
     configureTarget();
-    const { deps, output } = makeDeps();
+    const fetchFn = fakeFetch({
+      "POST /api/github/token/revoke": () =>
+        new Response(null, { status: 204 }),
+    });
+    const { deps, output } = makeDeps({ fetchFn });
     await runGitHubCommand("disconnect", deps);
-    expect(output[0]).toBe("Disconnected from GitHub.");
+    expect(output[0]).toBe("Disconnected from GitHub and revoked the token.");
     expect(loadGitHubSettings().token).toBeUndefined();
     expect(loadGitHubSettings().owner).toBe("toon");
+  });
+
+  it("still disconnects locally when the worker cannot revoke the token", async () => {
+    configureTarget();
+    const fetchFn = fakeFetch({
+      "POST /api/github/token/revoke": () =>
+        new Response("Token revocation is not configured", { status: 501 }),
+    });
+    const { deps, output } = makeDeps({ fetchFn });
+    await runGitHubCommand("disconnect", deps);
+
+    expect(output[0]).toBe(
+      "Disconnected from GitHub, but the token could not be revoked automatically - review it at https://github.com/settings/applications.",
+    );
+    expect(loadGitHubSettings().token).toBeUndefined();
   });
 
   it("requires a connection and a target before backup or restore", async () => {
@@ -313,7 +346,21 @@ describe("github commands", () => {
     expect(loadGitHubSettings()).toMatchObject({ lastSyncedSha: "new-sha" });
   });
 
-  it("warns but still replaces local tasks when restoring over unsaved changes", async () => {
+  it("refuses to restore over unsaved changes without --force", async () => {
+    configureTarget();
+    const fetchFn = fakeFetch({});
+
+    const { deps, output, applied } = makeDeps({ fetchFn });
+    await runGitHubCommand("sync restore", deps);
+
+    expect(applied).toEqual([]);
+    expect(output[0]).toBe(
+      "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
+    );
+    expect(loadGitHubSettings().lastSyncedSha).toBeUndefined();
+  });
+
+  it("warns and replaces local tasks when restoring over unsaved changes with --force", async () => {
     configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -324,7 +371,7 @@ describe("github commands", () => {
     });
 
     const { deps, output, applied } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync restore", deps);
+    await runGitHubCommand("sync restore --force", deps);
 
     expect(applied).toEqual([["remote task"]]);
     expect(output[0]).toBe(

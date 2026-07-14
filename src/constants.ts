@@ -49,7 +49,7 @@ export const HELP_TEXT = [
   "sync setup <owner>/<repo> [branch] [path] - choose the repo file",
   "sync status - show sync target and state",
   "sync backup - save local tasks to GitHub",
-  "sync restore - load tasks from GitHub",
+  "sync restore [--force] - load tasks from GitHub",
   "",
   "OTHER",
   "stats - summary counts",

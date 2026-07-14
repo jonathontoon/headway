@@ -46,6 +46,21 @@ describe("github settings", () => {
     expect(loadGitHubSettings()).toEqual({});
   });
 
+  it("drops unknown keys and non-string fields from stored settings", () => {
+    localStorage.setItem(
+      GITHUB_STORAGE_KEY,
+      JSON.stringify({
+        owner: "toon",
+        repo: 42,
+        token: null,
+        injected: "value",
+        lastSyncedAt: ["not", "a", "string"],
+      }),
+    );
+
+    expect(loadGitHubSettings()).toEqual({ owner: "toon" });
+  });
+
   it("hashes todos stably and detects changes", () => {
     const todos = ["(A) Pay bill", "Call plumber"];
 

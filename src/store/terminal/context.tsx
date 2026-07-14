@@ -7,7 +7,12 @@ import {
 } from "react";
 import { isGitHubCommand, runGitHubCommand } from "../github/commands";
 import { runTodoCommand } from "../todos/commands";
-import { loadStoredTodos, storeTodos } from "../todos/storage";
+import {
+  loadStoredTodos,
+  parseStoredTodos,
+  storeTodos,
+  TODOS_STORAGE_KEY,
+} from "../todos/storage";
 import { terminalActions } from "./actions";
 import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
@@ -30,6 +35,25 @@ export function TerminalProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     todosRef.current = state.todos;
   }, [state.todos]);
+  // Another tab writing todos fires `storage` here (never in the tab that
+  // wrote); adopting its version keeps two open tabs from silently
+  // clobbering each other's tasks on the next command.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== TODOS_STORAGE_KEY || event.newValue === null) {
+        return;
+      }
+
+      const todos = parseStoredTodos(event.newValue);
+      if (todos) {
+        dispatch(terminalActions.applyTodos(todos));
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   // Tracks a github command currently in flight (e.g. the login device-flow
   // poll), so submitting another command can cancel it instead of blocking.
   const githubOperationRef = useRef<{

@@ -2,9 +2,12 @@ import {
   GitHubApiError,
   getAuthenticatedLogin,
   getFile,
+  isValidPathSegment,
+  isValidRepoPath,
   pollForToken,
   putFile,
   requestDeviceCode,
+  revokeToken,
   type DeviceCode,
   type FetchFn,
   type SyncTarget,
@@ -62,7 +65,7 @@ export async function runGitHubCommand(
         await runConnect(deps);
         return;
       case "disconnect":
-        runDisconnect(deps);
+        await runDisconnect(deps);
         return;
       case "sync":
         await runSync(args, deps);
@@ -198,13 +201,18 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
     const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
 
     storeGitHubSettings({ ...loadGitHubSettings(), token, login });
-    deps.emit(`Connected as ${login}.`);
+    deps.emit(
+      [
+        `Connected as ${login}.`,
+        "This token can read and write every repo on your account - 'disconnect' revokes it.",
+      ].join("\n"),
+    );
   } finally {
     clearInterval(spinnerId);
   }
 }
 
-function runDisconnect(deps: GitHubCommandDeps): void {
+async function runDisconnect(deps: GitHubCommandDeps): Promise<void> {
   const settings = loadGitHubSettings();
 
   if (!settings.token) {
@@ -212,8 +220,25 @@ function runDisconnect(deps: GitHubCommandDeps): void {
     return;
   }
 
+  // Clear local state first so disconnect always takes effect locally even
+  // when revocation fails; the token itself stays valid on GitHub until
+  // revoked, so the fallback message points at the manual revoke page.
   storeGitHubSettings({ ...settings, token: undefined, login: undefined });
-  deps.emit("Disconnected from GitHub.");
+
+  let revoked = false;
+  try {
+    revoked =
+      (await revokeToken(settings.token, deps.fetchFn, deps.signal)) ===
+      "revoked";
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+  }
+
+  deps.emit(
+    revoked
+      ? "Disconnected from GitHub and revoked the token."
+      : "Disconnected from GitHub, but the token could not be revoked automatically - review it at https://github.com/settings/applications.",
+  );
 }
 
 async function runSync(
@@ -234,7 +259,7 @@ async function runSync(
       await runBackup(deps);
       return;
     case "restore":
-      await runRestore(deps);
+      await runRestore(rest, deps);
       return;
     default:
       deps.emit(
@@ -251,11 +276,24 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
     return;
   }
 
+  const path = args[2] ?? DEFAULT_PATH;
+
+  if (
+    !isValidPathSegment(match[1]) ||
+    !isValidPathSegment(match[2]) ||
+    !isValidRepoPath(path)
+  ) {
+    deps.emit(
+      "Error: path must be a relative file path without '.' or '..' segments.",
+    );
+    return;
+  }
+
   const target: SyncTarget = {
     owner: match[1],
     repo: match[2],
     branch: args[1] ?? DEFAULT_BRANCH,
-    path: args[2] ?? DEFAULT_PATH,
+    path,
   };
   storeGitHubSettings({
     ...loadGitHubSettings(),
@@ -387,19 +425,32 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
   }
 }
 
-async function runRestore(deps: GitHubCommandDeps): Promise<void> {
+async function runRestore(
+  args: readonly string[],
+  deps: GitHubCommandDeps,
+): Promise<void> {
   const session = requireSession(deps);
 
   if (!session) {
     return;
   }
 
+  const dirty =
+    session.settings.lastSyncedHash === undefined ||
+    hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
+
+  // Restoring replaces local tasks outright, and unlike a backup there is
+  // no git history to recover them from - so an explicit --force is
+  // required instead of a warning after the data is already gone.
+  if (dirty && !args.includes("--force")) {
+    deps.emit(
+      "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
+    );
+    return;
+  }
+
   const spinnerId = startSpinner(deps, "Loading from GitHub...");
   try {
-    const dirty =
-      session.settings.lastSyncedHash === undefined ||
-      hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
-
     const remote = await getFile(
       session.target,
       session.token,

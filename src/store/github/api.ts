@@ -69,8 +69,36 @@ function apiHeaders(token: string): HeadersInit {
   };
 }
 
+// `encodeURIComponent` leaves `.`/`..` untouched (they're unreserved), so a
+// segment of exactly "." or ".." survives encoding and is normalized away by
+// the URL parser before the request is sent - letting it retarget the
+// request to a different endpoint. Reject those (and empty segments)
+// instead of just encoding.
+export function isValidPathSegment(segment: string): boolean {
+  return segment !== "" && segment !== "." && segment !== "..";
+}
+
+export function isValidRepoPath(path: string): boolean {
+  return path.split("/").every(isValidPathSegment);
+}
+
+// owner/repo/path are user input from `sync setup`, but may also arrive
+// here via settings loaded from localStorage (which predates this
+// validation, or could be tampered with) - so this is enforced at the
+// actual sink, not just where `sync setup` first accepts it.
 function contentsUrl(target: SyncTarget): string {
-  return `https://api.github.com/repos/${target.owner}/${target.repo}/contents/${target.path}`;
+  if (
+    !isValidPathSegment(target.owner) ||
+    !isValidPathSegment(target.repo) ||
+    !isValidRepoPath(target.path)
+  ) {
+    throw new Error(
+      "path must be a relative file path without '.' or '..' segments",
+    );
+  }
+
+  const path = target.path.split("/").map(encodeURIComponent).join("/");
+  return `https://api.github.com/repos/${encodeURIComponent(target.owner)}/${encodeURIComponent(target.repo)}/contents/${path}`;
 }
 
 export async function requestDeviceCode(
@@ -152,6 +180,32 @@ export async function pollForToken(
         );
     }
   }
+}
+
+// Revocation needs the app's client secret, so it goes through the worker.
+// "unsupported" means the worker isn't configured for it (501), which the
+// caller reports rather than treating as failure.
+export async function revokeToken(
+  token: string,
+  fetchFn: FetchFn = fetch,
+  signal?: AbortSignal,
+): Promise<"revoked" | "unsupported"> {
+  const response = await fetchFn("/api/github/token/revoke", {
+    method: "POST",
+    headers: jsonHeaders(),
+    body: JSON.stringify({ access_token: token }),
+    signal,
+  });
+
+  if (response.status === 501) {
+    return "unsupported";
+  }
+
+  if (!response.ok) {
+    throw new GitHubApiError(response.status, "could not revoke the token");
+  }
+
+  return "revoked";
 }
 
 export async function getAuthenticatedLogin(

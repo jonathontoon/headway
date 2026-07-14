@@ -6,6 +6,7 @@ import {
   pollForToken,
   putFile,
   requestDeviceCode,
+  revokeToken,
   type DeviceCode,
   type FetchFn,
   type SyncTarget,
@@ -200,6 +201,87 @@ describe("github api", () => {
     expect(body.sha).toBe("old-sha");
     expect(body.branch).toBe("main");
     expect(body.message).toBe("chore: sync todos from headway");
+  });
+
+  it("encodes owner, repo, and path segments into the contents URL", async () => {
+    const urls: string[] = [];
+    const fetchFn: FetchFn = (input) => {
+      urls.push(typeof input === "string" ? input : input.toString());
+      return Promise.resolve(jsonResponse({ sha: "abc", content: "" }));
+    };
+
+    await getFile(
+      {
+        owner: "toon?",
+        repo: "todos#1",
+        branch: "feature/x",
+        path: "lists/todo list.txt",
+      },
+      "gho_token",
+      fetchFn,
+    );
+
+    expect(urls[0]).toBe(
+      "https://api.github.com/repos/toon%3F/todos%231/contents/lists/todo%20list.txt?ref=feature%2Fx",
+    );
+  });
+
+  it("rejects a traversal path even when it bypasses sync setup (e.g. stale settings)", async () => {
+    const upstream = vi.fn();
+    await expect(
+      getFile(
+        { ...target, path: "../../user" },
+        "gho_token",
+        upstream as unknown as FetchFn,
+      ),
+    ).rejects.toThrow(/relative file path/);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("rejects a traversal owner or repo even when it bypasses sync setup", async () => {
+    const upstream = vi.fn();
+    await expect(
+      getFile(
+        { ...target, owner: ".." },
+        "gho_token",
+        upstream as unknown as FetchFn,
+      ),
+    ).rejects.toThrow(/relative file path/);
+
+    await expect(
+      putFile(
+        { ...target, repo: "." },
+        "gho_token",
+        ["task"],
+        undefined,
+        upstream as unknown as FetchFn,
+      ),
+    ).rejects.toThrow(/relative file path/);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("revokes a token through the worker and reports unsupported deployments", async () => {
+    const calls: RequestInit[] = [];
+    expect(
+      await revokeToken(
+        "gho_token",
+        fetchOnce(new Response(null, { status: 204 }), calls),
+      ),
+    ).toBe("revoked");
+    expect(JSON.parse(calls[0].body as string)).toEqual({
+      access_token: "gho_token",
+    });
+
+    expect(
+      await revokeToken(
+        "gho_token",
+        fetchOnce(new Response("", { status: 501 })),
+      ),
+    ).toBe("unsupported");
+
+    await expect(
+      revokeToken("gho_token", fetchOnce(new Response("", { status: 502 }))),
+    ).rejects.toThrow(GitHubApiError);
   });
 
   it("round-trips unicode content through base64", () => {
