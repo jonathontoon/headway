@@ -103,7 +103,7 @@ describe("github commands", () => {
     const { deps, output } = makeDeps();
     await runGitHubCommand("sync setup toon/todos", deps);
 
-    expect((await loadGitHubSettings())).toEqual({
+    expect(await loadGitHubSettings()).toEqual({
       token: "gho_token",
       owner: "toon",
       repo: "todos",
@@ -158,7 +158,10 @@ describe("github commands", () => {
     );
     expect(configured.output[0]).toContain("last backup");
 
-    await configureTarget({ lastSyncedSha: "abc1234def", lastSyncedHash: "stale" });
+    await configureTarget({
+      lastSyncedSha: "abc1234def",
+      lastSyncedHash: "stale",
+    });
     const dirty = makeDeps();
     await runGitHubCommand("sync status", dirty.deps);
     expect(dirty.output[0]).toContain("you have unsaved changes");
@@ -194,7 +197,7 @@ describe("github commands", () => {
     expect(output[output.length - 1]).toBe(
       "Connected as toon.\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
     );
-    expect((await loadGitHubSettings())).toMatchObject({
+    expect(await loadGitHubSettings()).toMatchObject({
       token: "gho_token",
       login: "toon",
     });
@@ -303,7 +306,7 @@ describe("github commands", () => {
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe("Saved: 2 tasks to toon/todos:todo.txt (new-sha)");
-    expect((await loadGitHubSettings())).toMatchObject({
+    expect(await loadGitHubSettings()).toMatchObject({
       lastSyncedSha: "new-sha-1234",
       lastSyncedHash: hashTodos(todos),
     });
@@ -343,7 +346,9 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Warning: overwrote a version already saved on GitHub.\nSaved: 2 tasks to toon/todos:todo.txt (new-sha)",
     );
-    expect((await loadGitHubSettings())).toMatchObject({ lastSyncedSha: "new-sha" });
+    expect(await loadGitHubSettings()).toMatchObject({
+      lastSyncedSha: "new-sha",
+    });
   });
 
   it("refuses to restore over unsaved changes without --force", async () => {
@@ -377,7 +382,7 @@ describe("github commands", () => {
     expect(output[0]).toBe(
       "Warning: replaced local changes that weren't saved.\nLoaded: 1 tasks from toon/todos:todo.txt (remote-)",
     );
-    expect((await loadGitHubSettings())).toMatchObject({
+    expect(await loadGitHubSettings()).toMatchObject({
       lastSyncedSha: "remote-sha",
       lastSyncedHash: hashTodos(["remote task"]),
     });

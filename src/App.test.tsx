@@ -7,7 +7,6 @@ function renderApp() {
 }
 
 describe("App Component", () => {
-
   it("renders an editable terminal prompt", () => {
     renderApp();
     expect(screen.getByLabelText("Terminal prompt")).toBeInTheDocument();

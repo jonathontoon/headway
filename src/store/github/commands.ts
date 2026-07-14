@@ -200,7 +200,11 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
     );
     const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
 
-    await storeGitHubSettings({ ...(await loadGitHubSettings()), token, login });
+    await storeGitHubSettings({
+      ...(await loadGitHubSettings()),
+      token,
+      login,
+    });
     deps.emit(
       [
         `Connected as ${login}.`,
@@ -223,7 +227,11 @@ async function runDisconnect(deps: GitHubCommandDeps): Promise<void> {
   // Clear local state first so disconnect always takes effect locally even
   // when revocation fails; the token itself stays valid on GitHub until
   // revoked, so the fallback message points at the manual revoke page.
-  await storeGitHubSettings({ ...settings, token: undefined, login: undefined });
+  await storeGitHubSettings({
+    ...settings,
+    token: undefined,
+    login: undefined,
+  });
 
   let revoked = false;
   try {

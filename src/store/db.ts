@@ -48,9 +48,13 @@ function runTransaction<T>(
 
         transaction.oncomplete = () => resolve(request.result);
         transaction.onerror = () =>
-          reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+          reject(
+            transaction.error ?? new Error("IndexedDB transaction failed"),
+          );
         transaction.onabort = () =>
-          reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
+          reject(
+            transaction.error ?? new Error("IndexedDB transaction aborted"),
+          );
       }),
   );
 }

@@ -57,7 +57,8 @@ export function TerminalProvider({
   // wrote); adopting its version keeps two open tabs from silently
   // clobbering each other's tasks on the next command.
   useEffect(
-    () => subscribeTodos((todos) => dispatch(terminalActions.applyTodos(todos))),
+    () =>
+      subscribeTodos((todos) => dispatch(terminalActions.applyTodos(todos))),
     [],
   );
 
