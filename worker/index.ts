@@ -21,6 +21,46 @@ type Env = {
   readonly GITHUB_CLIENT_SECRET?: string;
 };
 
+// Reads the body without ever materializing more than ~maxBytes: rejects
+// immediately on a Content-Length that's already too large, and otherwise
+// reads the stream chunk by chunk, canceling as soon as the running total
+// goes over the cap instead of buffering the whole (potentially huge) body
+// first and checking its length after the fact.
+async function readLimitedBody(
+  request: Request,
+  maxBytes: number,
+): Promise<string | undefined> {
+  const contentLength = request.headers.get("Content-Length");
+  if (contentLength !== null && Number(contentLength) > maxBytes) {
+    return undefined;
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) {
+    return "";
+  }
+
+  const decoder = new TextDecoder();
+  let text = "";
+  let total = 0;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return undefined;
+    }
+
+    text += decoder.decode(value, { stream: true });
+  }
+
+  text += decoder.decode();
+  return text;
+}
+
 function parseJsonObject(body: string): Record<string, unknown> | undefined {
   try {
     const parsed: unknown = JSON.parse(body);
@@ -86,9 +126,9 @@ export default {
       return new Response("Not found", { status: 404 });
     }
 
-    const body = await request.text();
+    const body = await readLimitedBody(request, MAX_BODY_BYTES);
 
-    if (body.length > MAX_BODY_BYTES) {
+    if (body === undefined) {
       return new Response("Payload too large", { status: 413 });
     }
 

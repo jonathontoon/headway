@@ -107,6 +107,34 @@ describe("device flow proxy worker", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
+  it("rejects oversized bodies sent without a Content-Length header, without forwarding upstream", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(3000));
+        controller.enqueue(new Uint8Array(3000));
+        controller.close();
+      },
+    });
+
+    const request = new Request(
+      "https://headway.example/api/github/device/code",
+      {
+        method: "POST",
+        body: stream,
+        duplex: "half",
+      } as RequestInit,
+    );
+    expect(request.headers.get("Content-Length")).toBeNull();
+
+    const response = await worker.fetch(request);
+
+    expect(response.status).toBe(413);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
   it("pins the client id when the deployment configures one", async () => {
     const upstream = vi.fn(async () => new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", upstream);
