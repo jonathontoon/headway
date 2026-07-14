@@ -231,11 +231,30 @@ describe("github commands", () => {
     expect(anonymous.output[0]).toBe("No GitHub connection to disconnect.");
 
     configureTarget();
-    const { deps, output } = makeDeps();
+    const fetchFn = fakeFetch({
+      "POST /api/github/token/revoke": () =>
+        new Response(null, { status: 204 }),
+    });
+    const { deps, output } = makeDeps({ fetchFn });
     await runGitHubCommand("disconnect", deps);
-    expect(output[0]).toBe("Disconnected from GitHub.");
+    expect(output[0]).toBe("Disconnected from GitHub and revoked the token.");
     expect(loadGitHubSettings().token).toBeUndefined();
     expect(loadGitHubSettings().owner).toBe("toon");
+  });
+
+  it("still disconnects locally when the worker cannot revoke the token", async () => {
+    configureTarget();
+    const fetchFn = fakeFetch({
+      "POST /api/github/token/revoke": () =>
+        new Response("Token revocation is not configured", { status: 501 }),
+    });
+    const { deps, output } = makeDeps({ fetchFn });
+    await runGitHubCommand("disconnect", deps);
+
+    expect(output[0]).toBe(
+      "Disconnected from GitHub, but the token could not be revoked automatically - review it at https://github.com/settings/applications.",
+    );
+    expect(loadGitHubSettings().token).toBeUndefined();
   });
 
   it("requires a connection and a target before backup or restore", async () => {

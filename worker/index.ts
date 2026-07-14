@@ -6,12 +6,19 @@ const DEVICE_FLOW_ROUTES: Readonly<Record<string, string>> = {
   "/api/github/device/token": "https://github.com/login/oauth/access_token",
 };
 
+// Revoking an OAuth grant requires the app's client secret, so it can only
+// happen here, never in the browser. Configure via
+// `wrangler secret put GITHUB_CLIENT_SECRET` plus a GITHUB_CLIENT_ID var;
+// the route answers 501 until both are set.
+const REVOKE_ROUTE = "/api/github/token/revoke";
+
 // Device-flow request bodies are a couple of short fields; anything larger
 // is not a legitimate client.
 const MAX_BODY_BYTES = 4096;
 
 type Env = {
   readonly GITHUB_CLIENT_ID?: string;
+  readonly GITHUB_CLIENT_SECRET?: string;
 };
 
 function parseJsonObject(body: string): Record<string, unknown> | undefined {
@@ -27,6 +34,39 @@ function parseJsonObject(body: string): Record<string, unknown> | undefined {
   }
 }
 
+async function revokeGrant(body: string, env: Env): Promise<Response> {
+  if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+    return new Response("Token revocation is not configured", { status: 501 });
+  }
+
+  const token = parseJsonObject(body)?.access_token;
+
+  if (typeof token !== "string" || token === "") {
+    return new Response("Bad request", { status: 400 });
+  }
+
+  const response = await fetch(
+    `https://api.github.com/applications/${encodeURIComponent(env.GITHUB_CLIENT_ID)}/grant`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Basic ${btoa(`${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`)}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ access_token: token }),
+    },
+  );
+
+  // 404 means the grant is already gone, which is the state the caller
+  // wanted; report both as revoked.
+  if (response.status === 204 || response.status === 404) {
+    return new Response(null, { status: 204 });
+  }
+
+  return new Response("Could not revoke the token", { status: 502 });
+}
+
 export default {
   async fetch(request: Request, env: Env = {}): Promise<Response> {
     const url = new URL(request.url);
@@ -40,8 +80,9 @@ export default {
     }
 
     const upstream = DEVICE_FLOW_ROUTES[url.pathname];
+    const isRevoke = url.pathname === REVOKE_ROUTE;
 
-    if (!upstream || request.method !== "POST") {
+    if ((!upstream && !isRevoke) || request.method !== "POST") {
       return new Response("Not found", { status: 404 });
     }
 
@@ -49,6 +90,10 @@ export default {
 
     if (body.length > MAX_BODY_BYTES) {
       return new Response("Payload too large", { status: 413 });
+    }
+
+    if (isRevoke) {
+      return revokeGrant(body, env);
     }
 
     // When the deployment pins its client id, refuse to proxy for any

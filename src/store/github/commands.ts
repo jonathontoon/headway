@@ -5,6 +5,7 @@ import {
   pollForToken,
   putFile,
   requestDeviceCode,
+  revokeToken,
   type DeviceCode,
   type FetchFn,
   type SyncTarget,
@@ -62,7 +63,7 @@ export async function runGitHubCommand(
         await runConnect(deps);
         return;
       case "disconnect":
-        runDisconnect(deps);
+        await runDisconnect(deps);
         return;
       case "sync":
         await runSync(args, deps);
@@ -204,7 +205,7 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
   }
 }
 
-function runDisconnect(deps: GitHubCommandDeps): void {
+async function runDisconnect(deps: GitHubCommandDeps): Promise<void> {
   const settings = loadGitHubSettings();
 
   if (!settings.token) {
@@ -212,8 +213,25 @@ function runDisconnect(deps: GitHubCommandDeps): void {
     return;
   }
 
+  // Clear local state first so disconnect always takes effect locally even
+  // when revocation fails; the token itself stays valid on GitHub until
+  // revoked, so the fallback message points at the manual revoke page.
   storeGitHubSettings({ ...settings, token: undefined, login: undefined });
-  deps.emit("Disconnected from GitHub.");
+
+  let revoked = false;
+  try {
+    revoked =
+      (await revokeToken(settings.token, deps.fetchFn, deps.signal)) ===
+      "revoked";
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+  }
+
+  deps.emit(
+    revoked
+      ? "Disconnected from GitHub and revoked the token."
+      : "Disconnected from GitHub, but the token could not be revoked automatically - review it at https://github.com/settings/applications.",
+  );
 }
 
 async function runSync(

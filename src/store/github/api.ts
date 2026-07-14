@@ -154,6 +154,32 @@ export async function pollForToken(
   }
 }
 
+// Revocation needs the app's client secret, so it goes through the worker.
+// "unsupported" means the worker isn't configured for it (501), which the
+// caller reports rather than treating as failure.
+export async function revokeToken(
+  token: string,
+  fetchFn: FetchFn = fetch,
+  signal?: AbortSignal,
+): Promise<"revoked" | "unsupported"> {
+  const response = await fetchFn("/api/github/token/revoke", {
+    method: "POST",
+    headers: jsonHeaders(),
+    body: JSON.stringify({ access_token: token }),
+    signal,
+  });
+
+  if (response.status === 501) {
+    return "unsupported";
+  }
+
+  if (!response.ok) {
+    throw new GitHubApiError(response.status, "could not revoke the token");
+  }
+
+  return "revoked";
+}
+
 export async function getAuthenticatedLogin(
   token: string,
   fetchFn: FetchFn = fetch,

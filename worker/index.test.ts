@@ -136,4 +136,61 @@ describe("device flow proxy worker", () => {
       }),
     );
   });
+
+  it("answers 501 for revocation until the worker is configured for it", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+
+    const response = await worker.fetch(
+      new Request("https://headway.example/api/github/token/revoke", {
+        method: "POST",
+        body: JSON.stringify({ access_token: "gho_token" }),
+      }),
+    );
+
+    expect(response.status).toBe(501);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("revokes the grant through GitHub's application API when configured", async () => {
+    const upstream = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", upstream);
+
+    const response = await worker.fetch(
+      new Request("https://headway.example/api/github/token/revoke", {
+        method: "POST",
+        body: JSON.stringify({ access_token: "gho_token" }),
+      }),
+      { GITHUB_CLIENT_ID: "pinned123", GITHUB_CLIENT_SECRET: "shhh" },
+    );
+
+    expect(response.status).toBe(204);
+    expect(upstream).toHaveBeenCalledWith(
+      "https://api.github.com/applications/pinned123/grant",
+      expect.objectContaining({
+        method: "DELETE",
+        body: JSON.stringify({ access_token: "gho_token" }),
+      }),
+    );
+    const headers = (upstream.mock.calls[0] as unknown[])[1] as RequestInit;
+    expect((headers.headers as Record<string, string>).Authorization).toBe(
+      `Basic ${btoa("pinned123:shhh")}`,
+    );
+  });
+
+  it("rejects revocation requests without a token", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+
+    const response = await worker.fetch(
+      new Request("https://headway.example/api/github/token/revoke", {
+        method: "POST",
+        body: "{}",
+      }),
+      { GITHUB_CLIENT_ID: "pinned123", GITHUB_CLIENT_SECRET: "shhh" },
+    );
+
+    expect(response.status).toBe(400);
+    expect(upstream).not.toHaveBeenCalled();
+  });
 });

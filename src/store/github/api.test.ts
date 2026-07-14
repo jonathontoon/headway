@@ -6,6 +6,7 @@ import {
   pollForToken,
   putFile,
   requestDeviceCode,
+  revokeToken,
   type DeviceCode,
   type FetchFn,
   type SyncTarget,
@@ -200,6 +201,30 @@ describe("github api", () => {
     expect(body.sha).toBe("old-sha");
     expect(body.branch).toBe("main");
     expect(body.message).toBe("chore: sync todos from headway");
+  });
+
+  it("revokes a token through the worker and reports unsupported deployments", async () => {
+    const calls: RequestInit[] = [];
+    expect(
+      await revokeToken(
+        "gho_token",
+        fetchOnce(new Response(null, { status: 204 }), calls),
+      ),
+    ).toBe("revoked");
+    expect(JSON.parse(calls[0].body as string)).toEqual({
+      access_token: "gho_token",
+    });
+
+    expect(
+      await revokeToken(
+        "gho_token",
+        fetchOnce(new Response("", { status: 501 })),
+      ),
+    ).toBe("unsupported");
+
+    await expect(
+      revokeToken("gho_token", fetchOnce(new Response("", { status: 502 }))),
+    ).rejects.toThrow(GitHubApiError);
   });
 
   it("round-trips unicode content through base64", () => {
