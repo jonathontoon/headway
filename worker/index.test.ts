@@ -67,4 +67,73 @@ describe("device flow proxy worker", () => {
     expect(wrongMethod.status).toBe(404);
     expect(upstream).not.toHaveBeenCalled();
   });
+
+  it("rejects cross-origin requests but allows same-origin ones", async () => {
+    const upstream = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", upstream);
+
+    const crossOrigin = await worker.fetch(
+      new Request("https://headway.example/api/github/device/code", {
+        method: "POST",
+        headers: { Origin: "https://evil.example" },
+        body: "{}",
+      }),
+    );
+    expect(crossOrigin.status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+
+    const sameOrigin = await worker.fetch(
+      new Request("https://headway.example/api/github/device/code", {
+        method: "POST",
+        headers: { Origin: "https://headway.example" },
+        body: "{}",
+      }),
+    );
+    expect(sameOrigin.status).toBe(200);
+  });
+
+  it("rejects oversized request bodies", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+
+    const response = await worker.fetch(
+      new Request("https://headway.example/api/github/device/code", {
+        method: "POST",
+        body: "x".repeat(5000),
+      }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("pins the client id when the deployment configures one", async () => {
+    const upstream = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", upstream);
+    const env = { GITHUB_CLIENT_ID: "pinned123" };
+
+    const mismatched = await worker.fetch(
+      new Request("https://headway.example/api/github/device/code", {
+        method: "POST",
+        body: JSON.stringify({ client_id: "someone-else", scope: "repo" }),
+      }),
+      env,
+    );
+    expect(mismatched.status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+
+    await worker.fetch(
+      new Request("https://headway.example/api/github/device/code", {
+        method: "POST",
+        body: JSON.stringify({ scope: "repo" }),
+      }),
+      env,
+    );
+    expect(upstream).toHaveBeenCalledWith(
+      "https://github.com/login/device/code",
+      expect.objectContaining({
+        body: JSON.stringify({ scope: "repo", client_id: "pinned123" }),
+      }),
+    );
+  });
 });

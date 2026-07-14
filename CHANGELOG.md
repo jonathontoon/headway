@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- The device-flow proxy now rejects cross-origin requests, caps request bodies, and can pin the OAuth client id via a `GITHUB_CLIENT_ID` worker var, so other sites can't launder device-flow traffic through the deployment.
+
 <!--
 ### Added
 ### Changed

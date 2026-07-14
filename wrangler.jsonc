@@ -11,4 +11,7 @@
     "run_worker_first": ["/api/*"],
   },
   "compatibility_flags": ["nodejs_compat"],
+  // Set GITHUB_CLIENT_ID here (or in the dashboard) to pin the device-flow
+  // proxy to this app's OAuth client id.
+  // "vars": { "GITHUB_CLIENT_ID": "..." },
 }
