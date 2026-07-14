@@ -68,9 +68,9 @@ describe("todos storage", () => {
 
     try {
       await storeTodos(["broadcast me"]);
-      // BroadcastChannel delivery is asynchronous.
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(received).toEqual([["broadcast me"]]);
+      // BroadcastChannel delivery is asynchronous with no completion
+      // signal, so poll briefly instead of racing a single timer tick.
+      await vi.waitFor(() => expect(received).toEqual([["broadcast me"]]));
     } finally {
       unsubscribe();
     }
