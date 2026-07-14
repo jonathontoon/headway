@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+<!--
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+-->
+
+## [1.6.0] - 2026-07-14
+
 ### Added
 
 - headway now works offline and can be installed as an app: a service worker caches the app shell (new versions activate automatically on the next visit) and a web manifest with icons enables installation. Sync commands still require a connection and fail with a clear error offline.
@@ -29,15 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - GitHub settings loaded from localStorage are validated field-by-field instead of trusted wholesale.
 - The device-flow proxy now checks a request's declared and actual size before buffering it, instead of after.
 - `disconnect` no longer reports a token as revoked on an ambiguous 404 from GitHub - only a confirmed 204 counts.
-
-<!--
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
--->
 
 ## [1.5.0] - 2026-07-13
 
