@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- headway now works offline and can be installed as an app: a service worker caches the app shell (new versions activate automatically on the next visit) and a web manifest with icons enables installation. Sync commands still require a connection and fail with a clear error offline.
+- The browser is asked to mark headway's storage as persistent (`navigator.storage.persist()`), protecting tasks from eviction under storage pressure.
+
 ### Changed
+
+- Tasks and GitHub settings moved from localStorage to IndexedDB; existing data is migrated automatically on first load and the old localStorage keys are removed (rolling back to an older deployment after that will not see changes made since the migration). Note: IndexedDB is not more resistant to same-origin scripts than localStorage - the CSP and validate-on-read checks remain the tamper defenses - but it brings non-blocking I/O, a larger quota, and eviction protection.
 
 - `sync restore` now refuses to replace unsaved local tasks; pass `sync restore --force` to overwrite them.
 - `connect` now explains that the stored token can read and write every repo on the account.
