@@ -200,7 +200,11 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
     );
     const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
 
-    storeGitHubSettings({ ...loadGitHubSettings(), token, login });
+    await storeGitHubSettings({
+      ...(await loadGitHubSettings()),
+      token,
+      login,
+    });
     deps.emit(
       [
         `Connected as ${login}.`,
@@ -213,7 +217,7 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
 }
 
 async function runDisconnect(deps: GitHubCommandDeps): Promise<void> {
-  const settings = loadGitHubSettings();
+  const settings = await loadGitHubSettings();
 
   if (!settings.token) {
     deps.emit("No GitHub connection to disconnect.");
@@ -223,7 +227,11 @@ async function runDisconnect(deps: GitHubCommandDeps): Promise<void> {
   // Clear local state first so disconnect always takes effect locally even
   // when revocation fails; the token itself stays valid on GitHub until
   // revoked, so the fallback message points at the manual revoke page.
-  storeGitHubSettings({ ...settings, token: undefined, login: undefined });
+  await storeGitHubSettings({
+    ...settings,
+    token: undefined,
+    login: undefined,
+  });
 
   let revoked = false;
   try {
@@ -250,10 +258,10 @@ async function runSync(
   switch (subcommand) {
     case undefined:
     case "status":
-      runStatus(deps);
+      await runStatus(deps);
       return;
     case "setup":
-      runSetup(rest, deps);
+      await runSetup(rest, deps);
       return;
     case "backup":
       await runBackup(deps);
@@ -268,7 +276,10 @@ async function runSync(
   }
 }
 
-function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
+async function runSetup(
+  args: readonly string[],
+  deps: GitHubCommandDeps,
+): Promise<void> {
   const match = args[0]?.match(/^([^/\s]+)\/([^/\s]+)$/);
 
   if (!match) {
@@ -295,8 +306,8 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
     branch: args[1] ?? DEFAULT_BRANCH,
     path,
   };
-  storeGitHubSettings({
-    ...loadGitHubSettings(),
+  await storeGitHubSettings({
+    ...(await loadGitHubSettings()),
     ...target,
     lastSyncedSha: undefined,
     lastSyncedHash: undefined,
@@ -305,8 +316,8 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
   deps.emit(`Updated: sync target set to ${describeTarget(target)}`);
 }
 
-function runStatus(deps: GitHubCommandDeps): void {
-  const settings = loadGitHubSettings();
+async function runStatus(deps: GitHubCommandDeps): Promise<void> {
+  const settings = await loadGitHubSettings();
   const target = targetFrom(settings);
   const login = settings.login;
 
@@ -350,8 +361,10 @@ type SyncSession = {
   readonly token: string;
 };
 
-function requireSession(deps: GitHubCommandDeps): SyncSession | undefined {
-  const settings = loadGitHubSettings();
+async function requireSession(
+  deps: GitHubCommandDeps,
+): Promise<SyncSession | undefined> {
+  const settings = await loadGitHubSettings();
 
   if (!settings.token) {
     deps.emit("Error: not connected - run 'connect' first.");
@@ -372,7 +385,7 @@ function requireSession(deps: GitHubCommandDeps): SyncSession | undefined {
 // destructive - the previous version is still in the repo's history on
 // GitHub. Conflicts are surfaced as a warning rather than blocked.
 async function runBackup(deps: GitHubCommandDeps): Promise<void> {
-  const session = requireSession(deps);
+  const session = await requireSession(deps);
 
   if (!session) {
     return;
@@ -406,8 +419,8 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
       deps.fetchFn,
       deps.signal,
     );
-    storeGitHubSettings({
-      ...loadGitHubSettings(),
+    await storeGitHubSettings({
+      ...(await loadGitHubSettings()),
       lastSyncedSha: newSha,
       lastSyncedHash: hashTodos(todos),
       lastSyncedAt: new Date().toISOString(),
@@ -429,7 +442,7 @@ async function runRestore(
   args: readonly string[],
   deps: GitHubCommandDeps,
 ): Promise<void> {
-  const session = requireSession(deps);
+  const session = await requireSession(deps);
 
   if (!session) {
     return;
@@ -471,8 +484,8 @@ async function runRestore(
       : "";
 
     deps.applyTodos(remote.lines);
-    storeGitHubSettings({
-      ...loadGitHubSettings(),
+    await storeGitHubSettings({
+      ...(await loadGitHubSettings()),
       lastSyncedSha: remote.sha,
       lastSyncedHash: hashTodos(remote.lines),
       lastSyncedAt: new Date().toISOString(),

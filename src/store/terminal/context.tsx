@@ -7,15 +7,26 @@ import {
 } from "react";
 import { isGitHubCommand, runGitHubCommand } from "../github/commands";
 import { runTodoCommand } from "../todos/commands";
-import {
-  loadStoredTodos,
-  parseStoredTodos,
-  storeTodos,
-  TODOS_STORAGE_KEY,
-} from "../todos/storage";
+import { storeTodos, subscribeTodos } from "../todos/storage";
 import { terminalActions } from "./actions";
 import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
+
+// Persistence is fire-and-forget so command handling stays synchronous; a
+// failed IndexedDB write only costs durability, not the in-memory state,
+// so it's surfaced as a terminal line rather than thrown.
+function persistTodos(
+  dispatch: (action: ReturnType<typeof terminalActions.appendOutput>) => void,
+  todos: readonly string[],
+): void {
+  storeTodos(todos).catch(() => {
+    dispatch(
+      terminalActions.appendOutput(
+        "Warning: could not save tasks to local storage.",
+      ),
+    );
+  });
+}
 
 function describeCancellation(label: string): string {
   if (label === "connect") {
@@ -24,9 +35,16 @@ function describeCancellation(label: string): string {
   return `${label} cancelled.`;
 }
 
-export function TerminalProvider({ children }: PropsWithChildren) {
+type TerminalProviderProps = PropsWithChildren<{
+  readonly initialTodos: readonly string[];
+}>;
+
+export function TerminalProvider({
+  children,
+  initialTodos,
+}: TerminalProviderProps) {
   const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
-    createInitialTerminalState(loadStoredTodos()),
+    createInitialTerminalState(initialTodos),
   );
 
   // GitHub commands resolve asynchronously; the ref keeps getTodos current
@@ -35,24 +53,14 @@ export function TerminalProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     todosRef.current = state.todos;
   }, [state.todos]);
-  // Another tab writing todos fires `storage` here (never in the tab that
+  // Another tab writing todos broadcasts them here (never in the tab that
   // wrote); adopting its version keeps two open tabs from silently
   // clobbering each other's tasks on the next command.
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== TODOS_STORAGE_KEY || event.newValue === null) {
-        return;
-      }
-
-      const todos = parseStoredTodos(event.newValue);
-      if (todos) {
-        dispatch(terminalActions.applyTodos(todos));
-      }
-    };
-
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  useEffect(
+    () =>
+      subscribeTodos((todos) => dispatch(terminalActions.applyTodos(todos))),
+    [],
+  );
 
   // Tracks a github command currently in flight (e.g. the login device-flow
   // poll), so submitting another command can cancel it instead of blocking.
@@ -101,7 +109,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
                   : terminalActions.appendOutput(output),
               ),
             applyTodos: (todos) => {
-              storeTodos(todos);
+              persistTodos(dispatch, todos);
               dispatch(terminalActions.applyTodos(todos));
             },
             clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
@@ -119,7 +127,7 @@ export function TerminalProvider({ children }: PropsWithChildren) {
           view: state.view,
         });
         if (result.nextTodos !== state.todos) {
-          storeTodos(result.nextTodos);
+          persistTodos(dispatch, result.nextTodos);
         }
         dispatch(
           terminalActions.submit(
