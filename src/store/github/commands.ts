@@ -257,7 +257,7 @@ async function runSync(
       await runBackup(deps);
       return;
     case "restore":
-      await runRestore(deps);
+      await runRestore(rest, deps);
       return;
     default:
       deps.emit(
@@ -410,19 +410,32 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
   }
 }
 
-async function runRestore(deps: GitHubCommandDeps): Promise<void> {
+async function runRestore(
+  args: readonly string[],
+  deps: GitHubCommandDeps,
+): Promise<void> {
   const session = requireSession(deps);
 
   if (!session) {
     return;
   }
 
+  const dirty =
+    session.settings.lastSyncedHash === undefined ||
+    hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
+
+  // Restoring replaces local tasks outright, and unlike a backup there is
+  // no git history to recover them from - so an explicit --force is
+  // required instead of a warning after the data is already gone.
+  if (dirty && !args.includes("--force")) {
+    deps.emit(
+      "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
+    );
+    return;
+  }
+
   const spinnerId = startSpinner(deps, "Loading from GitHub...");
   try {
-    const dirty =
-      session.settings.lastSyncedHash === undefined ||
-      hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
-
     const remote = await getFile(
       session.target,
       session.token,

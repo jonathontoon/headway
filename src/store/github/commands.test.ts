@@ -334,7 +334,21 @@ describe("github commands", () => {
     expect(loadGitHubSettings()).toMatchObject({ lastSyncedSha: "new-sha" });
   });
 
-  it("warns but still replaces local tasks when restoring over unsaved changes", async () => {
+  it("refuses to restore over unsaved changes without --force", async () => {
+    configureTarget();
+    const fetchFn = fakeFetch({});
+
+    const { deps, output, applied } = makeDeps({ fetchFn });
+    await runGitHubCommand("sync restore", deps);
+
+    expect(applied).toEqual([]);
+    expect(output[0]).toBe(
+      "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
+    );
+    expect(loadGitHubSettings().lastSyncedSha).toBeUndefined();
+  });
+
+  it("warns and replaces local tasks when restoring over unsaved changes with --force", async () => {
     configureTarget();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
@@ -345,7 +359,7 @@ describe("github commands", () => {
     });
 
     const { deps, output, applied } = makeDeps({ fetchFn });
-    await runGitHubCommand("sync restore", deps);
+    await runGitHubCommand("sync restore --force", deps);
 
     expect(applied).toEqual([["remote task"]]);
     expect(output[0]).toBe(

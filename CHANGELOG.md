@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- `sync restore` now refuses to replace unsaved local tasks; pass `sync restore --force` to overwrite them.
 - `connect` now explains that the stored token can read and write every repo on the account.
 
 ### Security
