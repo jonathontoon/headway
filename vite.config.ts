@@ -42,9 +42,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,woff2}"],
         navigateFallback: "/index.html",
-        // The OAuth proxy must reach the Cloudflare worker, never the
-        // precached SPA shell (wrangler run_worker_first: ["/api/*"]).
-        navigateFallbackDenylist: [/^\/api\//],
+        // /api/* must reach the Cloudflare worker (run_worker_first) and
+        // /donate is a Cloudflare _redirects rule (public/_redirects) -
+        // neither is an SPA route, so both must skip the cached shell.
+        navigateFallbackDenylist: [/^\/api\//, /^\/donate$/],
         // Single same-origin sw.js covered by script-src 'self'; no
         // runtime caching, so /api/* and api.github.com pass through
         // untouched and sync commands fail cleanly offline.
