@@ -2,6 +2,8 @@ import {
   GitHubApiError,
   getAuthenticatedLogin,
   getFile,
+  isValidPathSegment,
+  isValidRepoPath,
   pollForToken,
   putFile,
   requestDeviceCode,
@@ -266,15 +268,6 @@ async function runSync(
   }
 }
 
-// Path segments become part of an authenticated API URL, so `.`/`..`/empty
-// segments are rejected up front rather than letting a traversal like
-// `../../user` retarget the request.
-function isValidRepoPath(path: string): boolean {
-  return path
-    .split("/")
-    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
-}
-
 function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
   const match = args[0]?.match(/^([^/\s]+)\/([^/\s]+)$/);
 
@@ -285,7 +278,11 @@ function runSetup(args: readonly string[], deps: GitHubCommandDeps): void {
 
   const path = args[2] ?? DEFAULT_PATH;
 
-  if (!isValidRepoPath(path)) {
+  if (
+    !isValidPathSegment(match[1]) ||
+    !isValidPathSegment(match[2]) ||
+    !isValidRepoPath(path)
+  ) {
     deps.emit(
       "Error: path must be a relative file path without '.' or '..' segments.",
     );

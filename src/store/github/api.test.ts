@@ -226,6 +226,40 @@ describe("github api", () => {
     );
   });
 
+  it("rejects a traversal path even when it bypasses sync setup (e.g. stale settings)", async () => {
+    const upstream = vi.fn();
+    await expect(
+      getFile(
+        { ...target, path: "../../user" },
+        "gho_token",
+        upstream as unknown as FetchFn,
+      ),
+    ).rejects.toThrow(/relative file path/);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("rejects a traversal owner or repo even when it bypasses sync setup", async () => {
+    const upstream = vi.fn();
+    await expect(
+      getFile(
+        { ...target, owner: ".." },
+        "gho_token",
+        upstream as unknown as FetchFn,
+      ),
+    ).rejects.toThrow(/relative file path/);
+
+    await expect(
+      putFile(
+        { ...target, repo: "." },
+        "gho_token",
+        ["task"],
+        undefined,
+        upstream as unknown as FetchFn,
+      ),
+    ).rejects.toThrow(/relative file path/);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
   it("revokes a token through the worker and reports unsupported deployments", async () => {
     const calls: RequestInit[] = [];
     expect(
