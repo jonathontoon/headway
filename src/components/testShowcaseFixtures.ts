@@ -99,11 +99,11 @@ const COMMAND_SECTIONS: readonly {
   {
     title: "CLEAR",
     commands: [
-      "clear due 7",
-      "clear priority 1",
-      "clear tags 8",
-      "clear project 9",
-      "clear bogus 1",
+      "clear 7 due",
+      "clear 1 priority",
+      "clear 8 tags",
+      "clear 9 project",
+      "clear 1 bogus",
     ],
   },
   {
@@ -142,18 +142,36 @@ const GITHUB_SECTION: ShowcaseSection = {
   title: "GITHUB & SYNC",
   entries: [
     {
-      command: "connect",
+      command: "connect octocat/todos",
       output:
         "Error: no GitHub client id is configured - set VITE_GITHUB_CLIENT_ID and rebuild.",
     },
-    { command: "connect", output: "⠋ Connecting to GitHub..." },
+    {
+      command: "connect",
+      output: "Error: usage: connect <owner>/<repo> [branch] [path].",
+    },
+    {
+      command: "connect badformat",
+      output: "Error: usage: connect <owner>/<repo> [branch] [path].",
+    },
+    {
+      command: "connect octocat/todos main ../secrets.txt",
+      output:
+        "Error: path must be a relative file path without '.' or '..' segments.",
+    },
+    { command: "connect octocat/todos", output: "⠋ Connecting to GitHub..." },
     {
       output:
         "Visit https://github.com/login/device and enter code WDJB-MJHT.\n⠙ Waiting for authorization...",
     },
     {
       output:
-        "Connected as octocat.\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
+        "Connected as octocat.\nUpdated: sync target set to octocat/todos:todo.txt (main)\nThis token can read and write every repo on your account - 'disconnect' revokes it.",
+    },
+    {
+      command: "connect octocat/todos",
+      output:
+        "Connected as octocat.\nUpdated: sync target set to octocat/todos:todo.txt (main)",
     },
     {
       command: "disconnect",
@@ -166,27 +184,13 @@ const GITHUB_SECTION: ShowcaseSection = {
     },
     { command: "disconnect", output: "No GitHub connection to disconnect." },
     {
-      command: "sync setup octocat/todos",
-      output: "Updated: sync target set to octocat/todos:todo.txt (main)",
-    },
-    {
-      command: "sync setup badformat",
-      output: "Error: usage: sync setup <owner>/<repo> [branch] [path].",
-    },
-    {
-      command: "sync setup octocat/todos main ../secrets.txt",
-      output:
-        "Error: path must be a relative file path without '.' or '..' segments.",
+      command: "sync status",
+      output: "Not syncing yet - run 'connect <owner>/<repo>' to get started.",
     },
     {
       command: "sync status",
       output:
-        "Not syncing yet - run 'sync setup <owner>/<repo>' then 'connect' to get started.",
-    },
-    {
-      command: "sync status",
-      output:
-        "Syncing isn't set up yet, though you're connected as octocat - run 'sync setup <owner>/<repo>' to choose a repo.",
+        "Syncing isn't set up yet, though you're connected as octocat - run 'connect <owner>/<repo>' to choose a repo.",
     },
     {
       command: "sync status",
@@ -205,25 +209,20 @@ const GITHUB_SECTION: ShowcaseSection = {
     },
     { command: "sync backup", output: "⠋ Saving to GitHub..." },
     {
-      output: "Saved: 8 tasks to octocat/todos:todo.txt (a1b2c3d)",
+      output: "Saved: 8 tasks to octocat/todos:todo.txt",
     },
     {
       output:
-        "Warning: overwrote a version already saved on GitHub.\nSaved: 8 tasks to octocat/todos:todo.txt (a1b2c3d)",
+        "Warning: replaced a backup on GitHub that had changes you hadn't loaded.\nSaved: 8 tasks to octocat/todos:todo.txt",
     },
     {
       command: "sync restore",
       output:
-        "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
-    },
-    { command: "sync restore --force", output: "⠋ Loading from GitHub..." },
-    {
-      output:
-        "Warning: replaced local changes that weren't saved.\nLoaded: 8 tasks from octocat/todos:todo.txt (a1b2c3d)",
+        "Warning: you have local tasks that aren't backed up. Run 'sync restore' again to replace them.",
     },
     { command: "sync restore", output: "⠋ Loading from GitHub..." },
     {
-      output: "Loaded: 8 tasks from octocat/todos:todo.txt (a1b2c3d)",
+      output: "Loaded: 8 tasks from octocat/todos:todo.txt",
     },
     {
       output:
@@ -232,11 +231,11 @@ const GITHUB_SECTION: ShowcaseSection = {
     {
       command: "sync frobnicate",
       output:
-        "sync frobnicate is not a recognized command. Try 'sync setup', 'sync status', 'sync backup' or 'sync restore'.",
+        "sync frobnicate is not a recognized command. Try 'sync status', 'sync backup' or 'sync restore'.",
     },
-    { output: "Error: not connected - run 'connect' first." },
+    { output: "Error: not connected - run 'connect <owner>/<repo>' first." },
     {
-      output: "Error: no sync target - run 'sync setup <owner>/<repo>' first.",
+      output: "Error: no sync target - run 'connect <owner>/<repo>' first.",
     },
     { output: "Error: GitHub rejected the token - run 'connect' again." },
     { output: "Connection cancelled, stopped waiting for authorization." },

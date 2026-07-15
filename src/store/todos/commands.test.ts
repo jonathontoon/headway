@@ -111,19 +111,32 @@ describe("todo commands", () => {
     expect(project.nextTodos[2]).toContain("+home");
   });
 
-  it("clears due dates, priorities, tags, and projects", () => {
+  it("clears due dates, priorities, tags, and projects with the id first", () => {
     expect(
-      runTodoCommand("clear due 1", { todos, view }, clock).nextTodos[0],
+      runTodoCommand("clear 1 due", { todos, view }, clock).nextTodos[0],
     ).toBe("(A) 2026-07-01 Pay electric bill +bills");
     expect(
-      runTodoCommand("clear priority 1", { todos, view }, clock).nextTodos[0],
+      runTodoCommand("clear 1 priority", { todos, view }, clock).nextTodos[0],
     ).toBe("2026-07-01 Pay electric bill +bills due:2026-07-04");
     expect(
-      runTodoCommand("clear tags 2", { todos, view }, clock).nextTodos[1],
+      runTodoCommand("clear 2 tags", { todos, view }, clock).nextTodos[1],
     ).toBe("2026-07-02 Schedule Goodwill pickup +GarageSale due:2026-07-05");
     expect(
-      runTodoCommand("clear project 2", { todos, view }, clock).nextTodos[1],
+      runTodoCommand("clear 2 project", { todos, view }, clock).nextTodos[1],
     ).toBe("2026-07-02 Schedule Goodwill pickup @phone due:2026-07-05");
+  });
+
+  it("rejects the old target-first clear syntax and missing targets", () => {
+    for (const command of [
+      "clear due 1",
+      "clear 1",
+      "clear",
+      "clear 1 bogus",
+    ]) {
+      expect(runTodoCommand(command, { todos, view }, clock).output).toBe(
+        "Error: usage: clear <#> due|priority|tags|project.",
+      );
+    }
   });
 
   it("renders the completed view with a fixed date", () => {
@@ -172,6 +185,17 @@ describe("todo commands", () => {
     ).toBe("No incomplete tasks match /nomatch/i.");
   });
 
+  it("accepts any valid regex flags", () => {
+    expect(
+      runTodoCommand("list /QUARTERLY/iu", { todos, view: [] }, clock).output,
+    ).toBe("1. Submit quarterly report +work @computer");
+    // A global regex keeps lastIndex between .test() calls; both matching
+    // tasks must still be listed rather than every other one.
+    expect(
+      runTodoCommand("list /due:/g", { todos, view: [] }, clock).output,
+    ).toContain("2.");
+  });
+
   it("rejects non-regex filters and malformed regex literals", () => {
     expect(
       runTodoCommand("list +work", { todos, view: [] }, clock).output,
@@ -180,8 +204,8 @@ describe("todo commands", () => {
       runTodoCommand('list "quarterly"', { todos, view: [] }, clock).output,
     ).toBe("Error: expected a regex like /pattern/i.");
     expect(
-      runTodoCommand("list /work/g", { todos, view: [] }, clock).output,
-    ).toBe("Error: only the i regex flag is supported.");
+      runTodoCommand("list /work/x", { todos, view: [] }, clock).output,
+    ).toBe("Error: invalid regex /work/x.");
     expect(runTodoCommand("list /[/", { todos, view: [] }, clock).output).toBe(
       "Error: invalid regex /[/.",
     );

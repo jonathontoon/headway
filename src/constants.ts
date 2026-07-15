@@ -29,7 +29,7 @@ export const HELP_TEXT = [
   "priority <#> <A-Z> - set or update priority",
   "tag <#> @tag [@tag...] - add context tag(s)",
   "project <#> +Project - assign task to a project",
-  "clear due|priority|tags|project <#> [<#>...] - clear attributes",
+  "clear <#> due|priority|tags|project - clear an attribute",
   "",
   "VIEWS",
   "list                         list incomplete tasks",
@@ -39,12 +39,11 @@ export const HELP_TEXT = [
   "list /pattern/i              filter incomplete task text",
   "",
   "SYNC",
-  "connect - authorize with GitHub",
+  "connect <owner>/<repo> [branch] [path] - authorize and choose the repo file",
   "disconnect - remove your GitHub connection",
-  "sync setup <owner>/<repo> [branch] [path] - choose the repo file",
   "sync status - show sync target and state",
   "sync backup - save local tasks to GitHub",
-  "sync restore [--force] - load tasks from GitHub",
+  "sync restore - load tasks from GitHub",
   "",
   "OTHER",
   "donate - donation link",
@@ -98,7 +97,6 @@ export const COMMAND_VERBS = [
 
 // Second-word subcommand verbs, keyed by first-word command, used for Tab completion
 export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
-  clear: ["due", "priority", "tags", "project"],
   list: ["today", "upcoming", "completed"],
-  sync: ["setup", "status", "backup", "restore"],
+  sync: ["status", "backup", "restore"],
 };

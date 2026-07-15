@@ -14,7 +14,7 @@ describe("App Component", () => {
     const bootOutput = document.querySelector(
       '[data-testid="terminal-output"]',
     );
-    expect(bootOutput?.textContent).toContain("headway v2.0.0");
+    expect(bootOutput?.textContent).toContain("headway v3.0.0");
     expect(bootOutput?.textContent).toContain(
       "Type 'help' for all available commands.",
     );

@@ -483,10 +483,10 @@ function runClear(
   state: TodoCommandState,
   args: readonly string[],
 ): TodoCommandResult {
-  const [target, ...rest] = args;
+  const [idText, target, ...tags] = args;
 
   if (target === "due") {
-    return updateMany(state, rest, (task) => {
+    return updateMany(state, [idText ?? ""], (task) => {
       const text = removeMetadata(task.text, "due");
       const parsed = parseTodoLine(text);
       return {
@@ -498,14 +498,13 @@ function runClear(
   }
 
   if (target === "priority") {
-    return updateMany(state, rest, (task) => ({
+    return updateMany(state, [idText ?? ""], (task) => ({
       ...task,
       priority: undefined,
     }));
   }
 
   if (target === "tags") {
-    const [idText, ...tags] = rest;
     const tagSet = new Set(tags);
     return updateMany(state, [idText ?? ""], (task) => {
       const text = removeTokens(
@@ -519,7 +518,7 @@ function runClear(
   }
 
   if (target === "project") {
-    return updateMany(state, rest, (task) => {
+    return updateMany(state, [idText ?? ""], (task) => {
       const text = removeTokens(task.text, (word) =>
         PROJECT_PATTERN.test(word),
       );
@@ -530,7 +529,7 @@ function runClear(
 
   return {
     nextTodos: state.todos,
-    output: "Error: clear expects due, priority, tags, or project.",
+    output: "Error: usage: clear <#> due|priority|tags|project.",
   };
 }
 
@@ -572,12 +571,6 @@ function runList(
   }
 
   const [, pattern, flags] = match;
-  if (flags !== "" && flags !== "i") {
-    return {
-      nextTodos: state.todos,
-      output: "Error: only the i regex flag is supported.",
-    };
-  }
 
   let regex: RegExp;
   try {
@@ -590,6 +583,9 @@ function runList(
   }
 
   const tasks = incompleteTasks(state.todos).filter(({ task }) => {
+    // Sticky/global regexes advance lastIndex across .test() calls, which
+    // would silently skip alternating tasks.
+    regex.lastIndex = 0;
     return regex.test(task.text);
   });
 

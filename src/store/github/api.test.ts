@@ -226,7 +226,7 @@ describe("github api", () => {
     );
   });
 
-  it("rejects a traversal path even when it bypasses sync setup (e.g. stale settings)", async () => {
+  it("rejects a traversal path even when it bypasses connect validation (e.g. stale settings)", async () => {
     const upstream = vi.fn();
     await expect(
       getFile(
@@ -238,7 +238,7 @@ describe("github api", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  it("rejects a traversal owner or repo even when it bypasses sync setup", async () => {
+  it("rejects a traversal owner or repo even when it bypasses connect validation", async () => {
     const upstream = vi.fn();
     await expect(
       getFile(

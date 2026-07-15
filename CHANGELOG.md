@@ -16,6 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [3.0.0] - 2026-07-16
+
+### Changed
+
+- `connect` and `sync setup` are now one command: `connect <owner>/<repo> [branch] [path]` authorizes with GitHub (skipped when already connected) and sets the sync target in one step. Bare `connect` re-authorizes an existing target.
+- `clear` now follows the id-first format of the other task commands: `clear <#> due|priority|tags|project` (one task per invocation).
+- `list /pattern/flags` accepts every regex flag JavaScript does, not just `i`.
+- `sync restore` no longer takes `--force`. When local tasks aren't backed up it warns and asks you to run `sync restore` again to confirm; any other command or task change withdraws the pending confirmation.
+- `sync backup`/`sync restore` output no longer includes commit SHAs, and the backup conflict warning is phrased without git jargon.
+
+### Removed
+
+- The `sync setup` subcommand (folded into `connect`) and the `sync restore --force` flag.
+
 ## [2.0.0] - 2026-07-15
 
 ### Changed

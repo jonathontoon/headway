@@ -82,10 +82,10 @@ export function isValidRepoPath(path: string): boolean {
   return path.split("/").every(isValidPathSegment);
 }
 
-// owner/repo/path are user input from `sync setup`, but may also arrive
+// owner/repo/path are user input from `connect`, but may also arrive
 // here via settings loaded from localStorage (which predates this
 // validation, or could be tampered with) - so this is enforced at the
-// actual sink, not just where `sync setup` first accepts it.
+// actual sink, not just where `connect` first accepts it.
 function contentsUrl(target: SyncTarget): string {
   if (
     !isValidPathSegment(target.owner) ||

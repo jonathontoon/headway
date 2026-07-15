@@ -20,7 +20,7 @@ list /\+work|@home/i
 list /due:2026-07-31/
 ```
 
-The only supported regex flag is `i` for case-insensitive matching.
+Any regex flags JavaScript accepts are supported, e.g. `i` for case-insensitive matching.
 
 ## Getting started
 
@@ -54,22 +54,22 @@ You can back up your tasks to a GitHub repo. Syncing is always manual — nothin
 3. Build and deploy
 4. In the app:
    ```
-   connect                  # shows a code to enter at github.com/login/device
-   sync setup you/your-repo # defaults to branch "main" and path "todo.txt"
-   sync backup              # saves your tasks
+   connect you/your-repo # shows a code to enter at github.com/login/device,
+                         # defaults to branch "main" and path "todo.txt"
+   sync backup           # saves your tasks
    ```
 
 ### Commands
 
-| Command                                     | What it does                                                         |
-| ------------------------------------------- | -------------------------------------------------------------------- |
-| `connect` / `disconnect`                    | Authorize or remove your GitHub connection                           |
-| `sync setup <owner>/<repo> [branch] [path]` | Choose which repo file to sync with                                  |
-| `sync` or `sync status`                     | Show your sync target, account, and whether you have unsaved changes |
-| `sync backup`                               | Save local tasks to GitHub                                           |
-| `sync restore`                              | Load tasks from the repo, replacing local ones                       |
+| Command                                  | What it does                                                         |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| `connect <owner>/<repo> [branch] [path]` | Authorize with GitHub and choose which repo file to sync with        |
+| `disconnect`                             | Remove your GitHub connection                                        |
+| `sync` or `sync status`                  | Show your sync target, account, and whether you have unsaved changes |
+| `sync backup`                            | Save local tasks to GitHub                                           |
+| `sync restore`                           | Load tasks from the repo, replacing local ones                       |
 
-`sync backup`/`sync restore` never refuse to run — if the other side moved on since your last sync, they warn you and proceed anyway. Nothing is lost either way: every backup is its own commit, so older versions stay in the repo's history on GitHub.
+`sync backup` never refuses to run — if the repo moved on since your last sync, it warns you and proceeds anyway. Nothing is lost: every backup is its own commit, so older versions stay in the repo's history on GitHub. `sync restore` replaces local tasks that have no such safety net, so when you have unsaved local changes it asks you to run it a second time to confirm.
 
 ### How it works
 

@@ -59,10 +59,16 @@ export async function runGitHubCommand(
 ): Promise<void> {
   const [verb, ...args] = command.trim().split(/\s+/);
 
+  // Any command other than a repeated 'sync restore' withdraws the pending
+  // run-again confirmation, so a stale "run again" can't fire much later.
+  if (!(verb === "sync" && args[0] === "restore")) {
+    pendingRestoreKey = undefined;
+  }
+
   try {
     switch (verb) {
       case "connect":
-        await runConnect(deps);
+        await runConnect(args, deps);
         return;
       case "disconnect":
         await runDisconnect(deps);
@@ -101,6 +107,33 @@ function targetFrom(settings: GitHubSettings): SyncTarget | undefined {
 
 function describeTarget(target: SyncTarget): string {
   return `${target.owner}/${target.repo}:${target.path} (${target.branch})`;
+}
+
+// Parses "<owner>/<repo> [branch] [path]" args; returns an error message
+// string when they don't form a valid sync target.
+function parseTarget(args: readonly string[]): SyncTarget | string {
+  const match = args[0]?.match(/^([^/\s]+)\/([^/\s]+)$/);
+
+  if (!match) {
+    return "Error: usage: connect <owner>/<repo> [branch] [path].";
+  }
+
+  const path = args[2] ?? DEFAULT_PATH;
+
+  if (
+    !isValidPathSegment(match[1]) ||
+    !isValidPathSegment(match[2]) ||
+    !isValidRepoPath(path)
+  ) {
+    return "Error: path must be a relative file path without '.' or '..' segments.";
+  }
+
+  return {
+    owner: match[1],
+    repo: match[2],
+    branch: args[1] ?? DEFAULT_BRANCH,
+    path,
+  };
 }
 
 const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat("en", {
@@ -149,7 +182,50 @@ function startSpinner(
   }, SPINNER_TICK_MS);
 }
 
-async function runConnect(deps: GitHubCommandDeps): Promise<void> {
+async function runConnect(
+  args: readonly string[],
+  deps: GitHubCommandDeps,
+): Promise<void> {
+  const settings = await loadGitHubSettings();
+  const storedTarget = targetFrom(settings);
+
+  // Resolve the sync target before any network call: bare 'connect'
+  // re-authorizes an existing target, otherwise the repo args are required.
+  let target: SyncTarget;
+  if (args.length === 0) {
+    if (!storedTarget) {
+      deps.emit("Error: usage: connect <owner>/<repo> [branch] [path].");
+      return;
+    }
+    target = storedTarget;
+  } else {
+    const parsed = parseTarget(args);
+    if (typeof parsed === "string") {
+      deps.emit(parsed);
+      return;
+    }
+    target = parsed;
+  }
+
+  // Changing the target invalidates the sync bookkeeping; re-connecting to
+  // the same target keeps it so backup/restore still know the last sync.
+  const targetChanged =
+    !storedTarget || describeTarget(storedTarget) !== describeTarget(target);
+  const syncReset = targetChanged
+    ? {
+        lastSyncedSha: undefined,
+        lastSyncedHash: undefined,
+        lastSyncedAt: undefined,
+      }
+    : {};
+  const targetLine = `Updated: sync target set to ${describeTarget(target)}`;
+
+  if (settings.token && settings.login) {
+    await storeGitHubSettings({ ...settings, ...target, ...syncReset });
+    deps.emit([`Connected as ${settings.login}.`, targetLine].join("\n"));
+    return;
+  }
+
   if (!deps.clientId) {
     deps.emit(
       "Error: no GitHub client id is configured - set VITE_GITHUB_CLIENT_ID and rebuild.",
@@ -204,10 +280,13 @@ async function runConnect(deps: GitHubCommandDeps): Promise<void> {
       ...(await loadGitHubSettings()),
       token,
       login,
+      ...target,
+      ...syncReset,
     });
     deps.emit(
       [
         `Connected as ${login}.`,
+        targetLine,
         "This token can read and write every repo on your account - 'disconnect' revokes it.",
       ].join("\n"),
     );
@@ -253,67 +332,24 @@ async function runSync(
   args: readonly string[],
   deps: GitHubCommandDeps,
 ): Promise<void> {
-  const [subcommand, ...rest] = args;
+  const [subcommand] = args;
 
   switch (subcommand) {
     case undefined:
     case "status":
       await runStatus(deps);
       return;
-    case "setup":
-      await runSetup(rest, deps);
-      return;
     case "backup":
       await runBackup(deps);
       return;
     case "restore":
-      await runRestore(rest, deps);
+      await runRestore(deps);
       return;
     default:
       deps.emit(
-        `Error: sync ${subcommand} is not a recognized command. Try 'sync setup', 'sync status', 'sync backup' or 'sync restore'.`,
+        `Error: sync ${subcommand} is not a recognized command. Try 'sync status', 'sync backup' or 'sync restore'.`,
       );
   }
-}
-
-async function runSetup(
-  args: readonly string[],
-  deps: GitHubCommandDeps,
-): Promise<void> {
-  const match = args[0]?.match(/^([^/\s]+)\/([^/\s]+)$/);
-
-  if (!match) {
-    deps.emit("Error: usage: sync setup <owner>/<repo> [branch] [path].");
-    return;
-  }
-
-  const path = args[2] ?? DEFAULT_PATH;
-
-  if (
-    !isValidPathSegment(match[1]) ||
-    !isValidPathSegment(match[2]) ||
-    !isValidRepoPath(path)
-  ) {
-    deps.emit(
-      "Error: path must be a relative file path without '.' or '..' segments.",
-    );
-    return;
-  }
-
-  const target: SyncTarget = {
-    owner: match[1],
-    repo: match[2],
-    branch: args[1] ?? DEFAULT_BRANCH,
-    path,
-  };
-  await storeGitHubSettings({
-    ...(await loadGitHubSettings()),
-    ...target,
-    lastSyncedSha: undefined,
-    lastSyncedHash: undefined,
-    lastSyncedAt: undefined,
-  });
-  deps.emit(`Updated: sync target set to ${describeTarget(target)}`);
 }
 
 async function runStatus(deps: GitHubCommandDeps): Promise<void> {
@@ -324,8 +360,8 @@ async function runStatus(deps: GitHubCommandDeps): Promise<void> {
   if (!target) {
     deps.emit(
       login
-        ? `Syncing isn't set up yet, though you're connected as ${login} - run 'sync setup <owner>/<repo>' to choose a repo.`
-        : "Not syncing yet - run 'sync setup <owner>/<repo>' then 'connect' to get started.",
+        ? `Syncing isn't set up yet, though you're connected as ${login} - run 'connect <owner>/<repo>' to choose a repo.`
+        : "Not syncing yet - run 'connect <owner>/<repo>' to get started.",
     );
     return;
   }
@@ -367,14 +403,14 @@ async function requireSession(
   const settings = await loadGitHubSettings();
 
   if (!settings.token) {
-    deps.emit("Error: not connected - run 'connect' first.");
+    deps.emit("Error: not connected - run 'connect <owner>/<repo>' first.");
     return undefined;
   }
 
   const target = targetFrom(settings);
 
   if (!target) {
-    deps.emit("Error: no sync target - run 'sync setup <owner>/<repo>' first.");
+    deps.emit("Error: no sync target - run 'connect <owner>/<repo>' first.");
     return undefined;
   }
 
@@ -407,7 +443,8 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
       sha = remote.sha;
 
       if (remote.sha !== session.settings.lastSyncedSha) {
-        warning = "Warning: overwrote a version already saved on GitHub.\n";
+        warning =
+          "Warning: replaced a backup on GitHub that had changes you hadn't loaded.\n";
       }
     }
 
@@ -426,7 +463,7 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
       lastSyncedAt: new Date().toISOString(),
     });
     deps.emit(
-      `${warning}Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path} (${newSha.slice(0, 7)})`,
+      `${warning}Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path}`,
       { replace: true },
     );
   } catch (error) {
@@ -438,10 +475,17 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
   }
 }
 
-async function runRestore(
-  args: readonly string[],
-  deps: GitHubCommandDeps,
-): Promise<void> {
+// Restoring replaces local tasks outright, and unlike a backup there is no
+// git history to recover them from - so a dirty restore must be run twice.
+// The pending key pins the exact target and local tasks that were warned
+// about; any change to either (or any other command) withdraws it.
+let pendingRestoreKey: string | undefined;
+
+export function resetRestoreConfirmation(): void {
+  pendingRestoreKey = undefined;
+}
+
+async function runRestore(deps: GitHubCommandDeps): Promise<void> {
   const session = await requireSession(deps);
 
   if (!session) {
@@ -452,14 +496,18 @@ async function runRestore(
     session.settings.lastSyncedHash === undefined ||
     hashTodos(deps.getTodos()) !== session.settings.lastSyncedHash;
 
-  // Restoring replaces local tasks outright, and unlike a backup there is
-  // no git history to recover them from - so an explicit --force is
-  // required instead of a warning after the data is already gone.
-  if (dirty && !args.includes("--force")) {
-    deps.emit(
-      "Error: this would replace local tasks that aren't backed up - run 'sync restore --force' to continue.",
-    );
-    return;
+  if (dirty) {
+    const key = `${describeTarget(session.target)}|${hashTodos(deps.getTodos())}`;
+
+    if (pendingRestoreKey !== key) {
+      pendingRestoreKey = key;
+      deps.emit(
+        "Warning: you have local tasks that aren't backed up. Run 'sync restore' again to replace them.",
+      );
+      return;
+    }
+
+    pendingRestoreKey = undefined;
   }
 
   const spinnerId = startSpinner(deps, "Loading from GitHub...");
@@ -479,10 +527,6 @@ async function runRestore(
       return;
     }
 
-    const warning = dirty
-      ? "Warning: replaced local changes that weren't saved.\n"
-      : "";
-
     deps.applyTodos(remote.lines);
     await storeGitHubSettings({
       ...(await loadGitHubSettings()),
@@ -491,7 +535,7 @@ async function runRestore(
       lastSyncedAt: new Date().toISOString(),
     });
     deps.emit(
-      `${warning}Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path} (${remote.sha.slice(0, 7)})`,
+      `Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path}`,
       { replace: true },
     );
   } catch (error) {
