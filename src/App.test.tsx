@@ -14,7 +14,7 @@ describe("App Component", () => {
     const bootOutput = document.querySelector(
       '[data-testid="terminal-output"]',
     );
-    expect(bootOutput?.textContent).toContain("headway v1.6.0");
+    expect(bootOutput?.textContent).toContain("headway v2.0.0");
     expect(bootOutput?.textContent).toContain(
       "Type 'help' for all available commands.",
     );
@@ -38,14 +38,16 @@ describe("App Component", () => {
     renderApp();
     const input = screen.getByLabelText("Terminal command");
 
-    fireEvent.change(input, { target: { value: "list +GarageSale" } });
+    fireEvent.change(input, {
+      target: { value: "list /\\+GarageSale/" },
+    });
     fireEvent.submit(input.closest("form")!);
 
     const promptEls = document.querySelectorAll('[data-testid="prompt"]');
     expect(promptEls).toHaveLength(2);
     promptEls.forEach((el) => expect(el.textContent).toBe("~$"));
     const commandEl = document.querySelector('[data-testid="command"]');
-    expect(commandEl?.textContent?.trim()).toBe("list +GarageSale");
+    expect(commandEl?.textContent?.trim()).toBe("list /\\+GarageSale/");
     expect(
       screen.getAllByText(/Schedule Goodwill pickup/).length,
     ).toBeGreaterThan(0);

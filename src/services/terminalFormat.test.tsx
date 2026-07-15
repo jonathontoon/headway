@@ -10,7 +10,7 @@ describe("terminal output formatting", () => {
     expect(screen.getByText("due today and overdue")).toHaveClass(
       "text-role-muted",
     );
-    expect(screen.getByText("archive")).toHaveClass("text-role-command");
+    expect(screen.getByText("list completed")).toHaveClass("text-role-command");
     expect(screen.getByText("completed tasks")).toHaveClass("text-role-muted");
   });
 
@@ -39,39 +39,5 @@ describe("terminal output formatting", () => {
       expect(line).toHaveClass("text-role-success");
       unmount();
     }
-  });
-
-  it("accents the counts in summary header lines", () => {
-    render(<>{formatOutput("5 projects, 12 tasks between them.", 5)}</>);
-
-    expect(screen.getByText("5")).toHaveClass("text-role-accent");
-    expect(screen.getByText("12")).toHaveClass("text-role-accent");
-  });
-
-  it("colors the show command's task line like a rendered list", () => {
-    render(
-      <>
-        {formatOutput(
-          "(A) Ship release +work @laptop due:2020-01-01\ncreated: 2019-12-01",
-          5,
-        )}
-      </>,
-    );
-
-    expect(screen.getByText("+work")).toHaveClass("text-role-accent");
-    expect(screen.getByText("@laptop")).toHaveClass("text-role-context");
-    expect(screen.getByText("due:2020-01-01")).toHaveClass("text-role-error");
-    expect(screen.getByText("(A)")).toHaveClass("text-terminal-1");
-  });
-
-  it("shows a completed show task with an x prefix and strikethrough", () => {
-    const { container } = render(
-      <>{formatOutput("x Ship release +work\ncreated: 2019-12-01", 5)}</>,
-    );
-
-    const [taskLine, secondaryLine] = container.querySelectorAll("div");
-    expect(taskLine.textContent).toBe(" x Ship release +work");
-    expect(taskLine).toHaveClass("line-through");
-    expect(secondaryLine).toHaveClass("line-through");
   });
 });

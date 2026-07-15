@@ -44,22 +44,6 @@ describe("todo commands", () => {
     expect(result.output).toBe("Updated: Submit report +work @urgent");
   });
 
-  it("shows invalid ids and task detail", () => {
-    expect(runTodoCommand("show 99", { todos, view }, clock).output).toBe(
-      "Error: no task with that id.",
-    );
-
-    expect(runTodoCommand("show 1", { todos, view }, clock).output).toBe(
-      "(A) Pay electric bill +bills due:2026-07-04\ncreated: 2026-07-01",
-    );
-  });
-
-  it("shows a completed task with an x prefix and no priority tag", () => {
-    expect(runTodoCommand("show 5", { todos, view }, clock).output).toBe(
-      "x Send invoices +work @computer\ncreated: 2026-07-01",
-    );
-  });
-
   it("requires a recent list before resolving an id", () => {
     expect(
       runTodoCommand("edit 1 text", { todos, view: [] }, clock).output,
@@ -142,28 +126,10 @@ describe("todo commands", () => {
     ).toBe("2026-07-02 Schedule Goodwill pickup @phone due:2026-07-05");
   });
 
-  it("renders list views and stats with a fixed date", () => {
+  it("renders the completed view with a fixed date", () => {
     expect(
-      runTodoCommand("today", { todos, view: [] }, clock).output,
-    ).toContain("1. (A) Pay electric bill +bills due:2026-07-04");
-    expect(runTodoCommand("upcoming", { todos, view: [] }, clock).output).toBe(
-      "Upcoming is empty.",
-    );
-    expect(runTodoCommand("inbox", { todos, view: [] }, clock).output).toBe(
-      "1. Fix leaky faucet @home",
-    );
-    expect(
-      runTodoCommand("someday", { todos, view: [] }, clock).output,
-    ).toContain("1. Submit quarterly report +work @computer");
-    expect(
-      runTodoCommand("archive", { todos, view: [] }, clock).output,
+      runTodoCommand("list completed", { todos, view: [] }, clock).output,
     ).toContain("1. Send invoices +work @computer");
-    expect(
-      runTodoCommand("projects", { todos, view: [] }, clock).output,
-    ).toContain("3 projects, 3 tasks between them.");
-    expect(
-      runTodoCommand("stats", { todos, view: [] }, clock).output,
-    ).toContain("4 tasks on your radar right now.");
   });
 
   it("renders named views through list", () => {
@@ -183,41 +149,70 @@ describe("todo commands", () => {
       ).output,
     ).toBe("1. Book flights +travel due:2026-07-09");
     expect(
-      runTodoCommand("list inbox", { todos, view: [] }, clock).output,
-    ).toBe("1. Fix leaky faucet @home");
-    expect(
-      runTodoCommand("list someday", { todos, view: [] }, clock).output,
-    ).toContain("1. Submit quarterly report +work @computer");
+      runTodoCommand("list completed", { todos, view: [] }, clock).output,
+    ).toContain("1. Send invoices +work @computer");
   });
 
-  it("keeps list project, tag, and keyword filters", () => {
+  it("filters incomplete task text with regex literals", () => {
+    expect(
+      runTodoCommand("list /\\+work/", { todos, view: [] }, clock).output,
+    ).toContain("1. Submit quarterly report +work @computer");
+    expect(
+      runTodoCommand("list /@home/", { todos, view: [] }, clock).output,
+    ).toBe("1. Fix leaky faucet @home");
+    expect(
+      runTodoCommand("list /QUARTERLY/i", { todos, view: [] }, clock).output,
+    ).toBe("1. Submit quarterly report +work @computer");
+    expect(
+      runTodoCommand("list /due:2026-07-04/", { todos, view: [] }, clock)
+        .output,
+    ).toContain("1. (A) Pay electric bill +bills due:2026-07-04");
+    expect(
+      runTodoCommand("list /nomatch/i", { todos, view: [] }, clock).output,
+    ).toBe("No incomplete tasks match /nomatch/i.");
+  });
+
+  it("rejects non-regex filters and malformed regex literals", () => {
     expect(
       runTodoCommand("list +work", { todos, view: [] }, clock).output,
-    ).toContain("1. Submit quarterly report +work @computer");
-    expect(
-      runTodoCommand("list @home", { todos, view: [] }, clock).output,
-    ).toBe("1. Fix leaky faucet @home");
+    ).toBe("Error: expected a regex like /pattern/i.");
     expect(
       runTodoCommand('list "quarterly"', { todos, view: [] }, clock).output,
-    ).toBe("1. Submit quarterly report +work @computer");
-  });
-
-  it("treats quoted list view names as keyword filters", () => {
+    ).toBe("Error: expected a regex like /pattern/i.");
     expect(
-      runTodoCommand('list "today"', { todos, view: [] }, clock).output,
-    ).toBe('No incomplete tasks match "today".');
-  });
-
-  it("reports unknown commands", () => {
-    expect(runTodoCommand("lst", { todos, view: [] }, clock).output).toBe(
-      "lst is not a recognized command. Type 'help' for all available commands.",
+      runTodoCommand("list /work/g", { todos, view: [] }, clock).output,
+    ).toBe("Error: only the i regex flag is supported.");
+    expect(runTodoCommand("list /[/", { todos, view: [] }, clock).output).toBe(
+      "Error: invalid regex /[/.",
     );
   });
 
-  it("resolves ids against the most recently rendered list, not raw storage position", () => {
-    const listed = runTodoCommand("list someday", { todos, view: [] }, clock);
+  it("rejects removed commands and view aliases", () => {
+    for (const command of [
+      "show",
+      "stats",
+      "projects",
+      "archive",
+      "today",
+      "upcoming",
+      "inbox",
+      "someday",
+      "lst",
+    ]) {
+      expect(runTodoCommand(command, { todos, view: [] }, clock).output).toBe(
+        `${command} is not a recognized command. Type 'help' for all available commands.`,
+      );
+    }
+  });
 
-    // Only "Submit quarterly report" qualifies for someday, so it prints as
+  it("resolves ids against the most recently rendered list, not raw storage position", () => {
+    const listed = runTodoCommand(
+      "list /quarterly/i",
+      { todos, view: [] },
+      clock,
+    );
+
+    // Only "Submit quarterly report" matches the regex, so it prints as
     // position 1 even though it's stable line 4 - proving ids track the
     // rendered list, not raw todo.txt position.
     expect(listed.output).toBe("1. Submit quarterly report +work @computer");

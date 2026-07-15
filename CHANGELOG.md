@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+## [2.0.0] - 2026-07-15
+
+### Changed
+
+- Task views are now `list`, `list today`, `list upcoming`, and `list completed`. Custom task filtering uses an explicit `list /pattern/i` regular expression matched against todo.txt task text.
+
+### Removed
+
+- Removed the `show`, `stats`, `projects`, `archive`, `inbox`, `someday`, `today`, and `upcoming` commands, along with the old `list +Project`, `list @tag`, and `list "keyword"` filter forms.
+- The boot dashboard no longer includes an inbox section.
+
 ## [1.6.0] - 2026-07-14
 
 ### Added

@@ -4,7 +4,6 @@ import {
   formatTaskBody,
   getMetadataValue,
   parseTasks,
-  pluralize,
   taskLabel,
   type IndexedTask,
 } from "./format";
@@ -19,6 +18,7 @@ import type {
 const PRIORITY_PATTERN = /^[A-Z]$/;
 const CONTEXT_PATTERN = /^@\S+$/;
 const PROJECT_PATTERN = /^\+\S+$/;
+const REGEX_LITERAL_PATTERN = /^\/((?:\\.|[^/])*)\/([a-z]*)$/;
 
 type TaskUpdate = {
   readonly task: TodoTask;
@@ -275,27 +275,6 @@ function runEdit(
   return {
     nextTodos: replaceAt(state.todos, found.index, nextTask),
     output: `Updated: ${taskLabel(nextTask)}`,
-  };
-}
-
-function runShow(
-  state: TodoCommandState,
-  idText: string | undefined,
-): TodoCommandResult {
-  const found = findTask(state, idText);
-
-  if (typeof found === "string") {
-    return { nextTodos: state.todos, output: found };
-  }
-
-  const created = found.task.creationDate ?? "-";
-  const taskLine = found.task.completed
-    ? `x ${taskLabel(found.task)}`
-    : formatTaskBody(found.task);
-
-  return {
-    nextTodos: state.todos,
-    output: `${taskLine}\ncreated: ${created}`,
   };
 }
 
@@ -561,34 +540,62 @@ function runList(
   today: string,
 ): TodoCommandResult {
   const trimmedFilter = filterText.trim();
-  const isQuotedKeyword = /^".*"$/.test(trimmedFilter);
-  const filter = trimmedFilter.replace(/^"|"$/g, "");
 
-  if (!isQuotedKeyword) {
-    switch (filter) {
-      case "today":
-        return runToday(state, today);
-      case "upcoming":
-        return runUpcoming(state, today);
-      case "inbox":
-        return runInbox(state);
-      case "someday":
-        return runSomeday(state);
+  switch (trimmedFilter) {
+    case "today":
+      return runToday(state, today);
+    case "upcoming":
+      return runUpcoming(state, today);
+    case "completed": {
+      const { output, view } = buildListing(
+        completedTasks(state.todos),
+        "Completed is empty.",
+      );
+      return { nextTodos: state.todos, output, view };
     }
   }
 
+  if (trimmedFilter === "") {
+    const { output, view } = buildListing(
+      incompleteTasks(state.todos),
+      "No incomplete tasks.",
+    );
+    return { nextTodos: state.todos, output, view };
+  }
+
+  const match = trimmedFilter.match(REGEX_LITERAL_PATTERN);
+  if (!match) {
+    return {
+      nextTodos: state.todos,
+      output: "Error: expected a regex like /pattern/i.",
+    };
+  }
+
+  const [, pattern, flags] = match;
+  if (flags !== "" && flags !== "i") {
+    return {
+      nextTodos: state.todos,
+      output: "Error: only the i regex flag is supported.",
+    };
+  }
+
+  let regex: RegExp;
+  try {
+    regex = new RegExp(pattern, flags);
+  } catch {
+    return {
+      nextTodos: state.todos,
+      output: `Error: invalid regex ${trimmedFilter}.`,
+    };
+  }
+
   const tasks = incompleteTasks(state.todos).filter(({ task }) => {
-    if (filter === "") return true;
-    if (filter.startsWith("+")) return task.projects.includes(filter.slice(1));
-    if (filter.startsWith("@")) return task.contexts.includes(filter.slice(1));
-    return task.text.toLowerCase().includes(filter.toLowerCase());
+    return regex.test(task.text);
   });
 
   const { output, view } = buildListing(
     tasks,
-    filter === ""
-      ? "No incomplete tasks."
-      : `No incomplete tasks match "${filter}".`,
+    `No incomplete tasks match ${trimmedFilter}.`,
   );
 
   return { nextTodos: state.todos, output, view };
@@ -617,84 +624,6 @@ function runUpcoming(
   return { nextTodos: state.todos, output, view };
 }
 
-function runInbox(state: TodoCommandState): TodoCommandResult {
-  const tasks = incompleteTasks(state.todos).filter(
-    ({ task }) =>
-      task.projects.length === 0 && !getMetadataValue(task.metadata, "due"),
-  );
-
-  const { output, view } = buildListing(tasks, "Inbox is empty.");
-  return { nextTodos: state.todos, output, view };
-}
-
-function runSomeday(state: TodoCommandState): TodoCommandResult {
-  const tasks = incompleteTasks(state.todos).filter(
-    ({ task }) =>
-      task.projects.length > 0 && !getMetadataValue(task.metadata, "due"),
-  );
-
-  const { output, view } = buildListing(tasks, "Someday is empty.");
-  return { nextTodos: state.todos, output, view };
-}
-
-function runProjects(state: TodoCommandState): TodoCommandResult {
-  const counts = new Map<string, number>();
-
-  incompleteTasks(state.todos).forEach(({ task }) => {
-    task.projects.forEach((project) => {
-      counts.set(project, (counts.get(project) ?? 0) + 1);
-    });
-  });
-
-  const rows = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-
-  if (rows.length === 0) {
-    return { nextTodos: state.todos, output: "No projects." };
-  }
-
-  const total = rows.reduce((sum, [, count]) => sum + count, 0);
-
-  return {
-    nextTodos: state.todos,
-    output: [
-      `${rows.length} ${pluralize(rows.length, "project", "projects")}, ${total} ${pluralize(total, "task", "tasks")} between them.`,
-      ...rows.map(([project, count]) => `${count} +${project}`),
-    ].join("\n"),
-  };
-}
-
-function runStats(state: TodoCommandState, today: string): TodoCommandResult {
-  const open = incompleteTasks(state.todos);
-  const completed = completedTasks(state.todos);
-  const overdue = open.filter(({ task }) => {
-    const due = getMetadataValue(task.metadata, "due");
-    return due !== undefined && due < today;
-  }).length;
-  const dueToday = open.filter(
-    ({ task }) => getMetadataValue(task.metadata, "due") === today,
-  ).length;
-  const upcoming = open.filter(({ task }) => {
-    const due = getMetadataValue(task.metadata, "due");
-    return due !== undefined && due > today;
-  }).length;
-  const someday = open.filter(
-    ({ task }) =>
-      task.projects.length > 0 && !getMetadataValue(task.metadata, "due"),
-  ).length;
-
-  return {
-    nextTodos: state.todos,
-    output: [
-      `${open.length} ${pluralize(open.length, "task", "tasks")} on your radar right now.`,
-      `${overdue} overdue`,
-      `${dueToday} due today`,
-      `${upcoming} on the horizon`,
-      `${someday} parked in someday`,
-      `${completed.length} wrapped up`,
-    ].join("\n"),
-  };
-}
-
 function runCommand(
   trimmedCommand: string,
   state: TodoCommandState,
@@ -715,8 +644,6 @@ function runCommand(
       return runAdd(state, trimmedCommand.slice(3), clock);
     case "edit":
       return runEdit(state, args);
-    case "show":
-      return runShow(state, args[0]);
     case "delete":
       return runDelete(state, args);
     case "complete":
@@ -735,25 +662,6 @@ function runCommand(
       return runClear(state, args);
     case "list":
       return runList(state, args.join(" "), clock.today());
-    case "today":
-      return runToday(state, clock.today());
-    case "upcoming":
-      return runUpcoming(state, clock.today());
-    case "inbox":
-      return runInbox(state);
-    case "someday":
-      return runSomeday(state);
-    case "archive": {
-      const { output, view } = buildListing(
-        completedTasks(state.todos),
-        "Archive is empty.",
-      );
-      return { nextTodos: state.todos, output, view };
-    }
-    case "projects":
-      return runProjects(state);
-    case "stats":
-      return runStats(state, clock.today());
     case "donate":
       return {
         nextTodos: state.todos,

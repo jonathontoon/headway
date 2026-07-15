@@ -48,7 +48,7 @@ export const SHOWCASE_TASK_COUNT = SEED_TODOS.length + 1;
 const clock: TodoClock = { today: () => ANCHOR };
 
 // Run in one continuous session, in order - later commands rely on the
-// `view` (and task ids) produced by earlier `list`/`archive` calls, exactly
+// `view` (and task ids) produced by earlier `list` calls, exactly
 // like a real terminal session. Grouped into sections only for the page's
 // headings; state threads across every section.
 const COMMAND_SECTIONS: readonly {
@@ -58,20 +58,14 @@ const COMMAND_SECTIONS: readonly {
   {
     title: "LISTS",
     commands: [
-      "show 1",
       "list",
-      "show 1",
       "list today",
       "list upcoming",
-      "list inbox",
-      "list someday",
-      "list +Launch",
-      "list @home",
-      'list "roadmap"',
-      'list "nomatch"',
-      "archive",
-      "projects",
-      "stats",
+      "list completed",
+      "list /\\+Launch/",
+      "list /@home/i",
+      "list /roadmap/i",
+      "list /nomatch/i",
     ],
   },
   {
@@ -114,7 +108,7 @@ const COMMAND_SECTIONS: readonly {
   },
   {
     title: "DELETE",
-    commands: ["delete 2", "archive", "delete 1"],
+    commands: ["delete 2", "list completed", "delete 1"],
   },
   {
     title: "MISC",

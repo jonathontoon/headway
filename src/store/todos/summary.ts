@@ -39,11 +39,6 @@ export function formatBootMessage(
   const dueToday = open.filter(
     ({ task }) => getMetadataValue(task.metadata, "due") === today,
   );
-  const inbox = open.filter(
-    ({ task }) =>
-      task.projects.length === 0 && !getMetadataValue(task.metadata, "due"),
-  );
-
   const lines = [
     `↗ headway v${__APP_VERSION__}`,
     `${greeting}. You have ${overdue.length} ${pluralize(
@@ -59,7 +54,6 @@ export function formatBootMessage(
   for (const [heading, tasks] of [
     ["OVERDUE", overdue],
     ["TODAY", dueToday],
-    ["INBOX", inbox],
   ] as const) {
     if (tasks.length === 0) continue;
     const section = formatSection(tasks, position);

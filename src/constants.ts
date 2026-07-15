@@ -18,7 +18,6 @@ export const HELP_TEXT = [
   "TASKS",
   'add "text [+Project] [due:DATE] [@tag]" - add a task',
   "edit <#> <text> - replace task line directly",
-  "show <#> - print full detail for one task",
   "delete <#> [<#>...] - delete permanently",
   "",
   "STATUS",
@@ -36,12 +35,8 @@ export const HELP_TEXT = [
   "list                         list incomplete tasks",
   "list today                   due today and overdue",
   "list upcoming                future-dated tasks",
-  "list inbox                   no due date and no project",
-  "list someday                 project tasks with no due date",
-  'list +Project|@tag|"keyword"     filter incomplete tasks',
-  "",
-  "archive                      completed tasks",
-  "projects                     list all projects",
+  "list completed               completed tasks",
+  "list /pattern/i              filter incomplete task text",
   "",
   "SYNC",
   "connect - authorize with GitHub",
@@ -52,7 +47,6 @@ export const HELP_TEXT = [
   "sync restore [--force] - load tasks from GitHub",
   "",
   "OTHER",
-  "stats - summary counts",
   "donate - donation link",
 ].join("\n");
 
@@ -73,10 +67,7 @@ export const SUCCESS_PREFIXES = [
 export const MUTED_PATTERN =
   /\b(empty|is clear|No |not a recognized command|not found)\b/i;
 
-export const SECONDARY_LINE_PREFIXES = [
-  "created:",
-  "If it's saved you time",
-] as const;
+export const SECONDARY_LINE_PREFIXES = ["If it's saved you time"] as const;
 
 // Keyboard navigation
 export const KEYBOARD_KEYS = {
@@ -89,7 +80,6 @@ export const KEYBOARD_KEYS = {
 export const COMMAND_VERBS = [
   "add",
   "edit",
-  "show",
   "delete",
   "complete",
   "undo",
@@ -99,13 +89,6 @@ export const COMMAND_VERBS = [
   "project",
   "clear",
   "list",
-  "inbox",
-  "today",
-  "upcoming",
-  "someday",
-  "archive",
-  "projects",
-  "stats",
   "donate",
   "sync",
   "connect",
@@ -116,6 +99,6 @@ export const COMMAND_VERBS = [
 // Second-word subcommand verbs, keyed by first-word command, used for Tab completion
 export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
   clear: ["due", "priority", "tags", "project"],
-  list: ["today", "upcoming", "inbox", "someday"],
+  list: ["today", "upcoming", "completed"],
   sync: ["setup", "status", "backup", "restore"],
 };

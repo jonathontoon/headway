@@ -1,7 +1,7 @@
 import { formatBootMessage } from "./summary";
 
 describe("todo boot summary", () => {
-  it("formats the welcome message from overdue, today, and inbox tasks", () => {
+  it("formats the welcome message from overdue and today tasks", () => {
     const { message, view } = formatBootMessage(
       [
         "2026-06-20 Pay electric bill +bills due:2026-06-28",
@@ -15,7 +15,7 @@ describe("todo boot summary", () => {
 
     expect(message).toBe(
       [
-        "↗ headway v1.6.0",
+        "↗ headway v2.0.0",
         "Good evening. You have 1 overdue task, and 1 due today.",
         "",
         "OVERDUE",
@@ -24,12 +24,9 @@ describe("todo boot summary", () => {
         "TODAY",
         "2. (B) Schedule Goodwill pickup @phone +GarageSale due:2026-07-04",
         "",
-        "INBOX",
-        "3. (C) Fix leaky faucet @home",
-        "",
         "Type 'help' for all available commands.",
       ].join("\n"),
     );
-    expect(view).toEqual([1, 2, 3]);
+    expect(view).toEqual([1, 2]);
   });
 });

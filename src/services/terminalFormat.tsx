@@ -17,12 +17,9 @@ const SECTION_HEADERS = new Set([
   "OTHER",
   "OVERDUE",
   "TODAY",
-  "INBOX",
 ]);
 
 const TASK_LINE_PATTERN = /^(\d+)\.\s+(?:\((\w)\)\s+)?(.*)$/;
-const SHOW_TASK_LINE_PATTERN = /^(x\s+)?(?:\((\w)\)\s+)?(.*)$/;
-const COUNT_ROW_PATTERN = /^(\d+)\s+(\+[\w-]+|[a-z][a-z ]*)$/;
 const HELP_ROW_PATTERN = /^(.+?)(?: - |\s{2,})(.+)$/;
 const URL_PATTERN = /^https?:\/\//;
 const BOOT_BANNER_PATTERN = /^↗ /;
@@ -30,8 +27,6 @@ const GREETING_PATTERN = /^(Good morning|Good afternoon|Good evening)\./;
 const TASK_FRAGMENT_PATTERN = /(\+[\w-]+|@[\w-]+|due:\d{4}-\d{2}-\d{2})/g;
 const HELP_ARG_PATTERN = /(<[^>]+>|"[^"]*")/g;
 const HEART_PATTERN = /(♥)/;
-const SUMMARY_HEADER_PATTERN =
-  /^(?:\d+ tasks? on your radar right now\.|\d+ projects?, \d+ tasks? between them\.)$/;
 const SPINNER_LINE_PATTERN = /^[⠀-⣿] /;
 const SYNC_STATUS_MESSAGE_PATTERN = /^(?:Syncing|Not syncing)/;
 const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
@@ -118,30 +113,6 @@ function renderTaskLine(
         <span className={priorityClassName(priority)}>({priority}) </span>
       )}
       {renderTaskFragments(rest, today)}
-    </div>
-  );
-}
-
-function statLabelClassName(label: string): string | undefined {
-  if (label.startsWith("+")) return "text-role-accent";
-  if (label === "overdue") return "text-role-error";
-  if (label === "due today") return "text-role-warning";
-  if (label === "on the horizon") return "text-role-info";
-  if (label === "parked in someday") return "text-role-muted";
-  if (label.startsWith("wrapped up")) return "text-role-success";
-  return undefined;
-}
-
-function renderCountRow(match: RegExpMatchArray, key: number): ReactNode {
-  const [, count, label] = match;
-  return (
-    <div key={key} className="block whitespace-pre-wrap">
-      <span
-        className={`inline-block min-w-[3ch] text-right ${statLabelClassName(label) ?? ""}`}
-      >
-        {count}
-      </span>{" "}
-      <span>{label}</span>
     </div>
   );
 }
@@ -248,15 +219,11 @@ function renderGreeting(line: string, key: number): ReactNode {
   );
 }
 
-function renderSecondaryLine(
-  line: string,
-  key: number,
-  struck: boolean,
-): ReactNode {
+function renderSecondaryLine(line: string, key: number): ReactNode {
   return (
     <div
       key={key}
-      className={`block whitespace-pre-wrap text-role-muted pl-[3ch] ${struck ? "line-through" : ""}`}
+      className="block whitespace-pre-wrap text-role-muted pl-[3ch]"
     >
       {line}
     </div>
@@ -329,22 +296,6 @@ function renderInlineText(line: string): ReactNode {
     ) : (
       renderDeviceCodes(segment, i)
     ),
-  );
-}
-
-function renderSummaryHeader(line: string, key: number): ReactNode {
-  return (
-    <div key={key} className="block whitespace-pre-wrap">
-      {line.split(/(\d+)/).map((part, i) =>
-        /^\d+$/.test(part) ? (
-          <span key={i} className="text-role-accent">
-            {part}
-          </span>
-        ) : (
-          part
-        ),
-      )}
-    </div>
   );
 }
 
@@ -432,31 +383,6 @@ function renderSpinnerLine(line: string, key: number): ReactNode {
   );
 }
 
-function renderShowTaskLine(
-  line: string,
-  today: string,
-  key: number,
-): ReactNode {
-  const [, completedMarker, priority, rest] =
-    line.match(SHOW_TASK_LINE_PATTERN) ?? [];
-  const completed = Boolean(completedMarker);
-  const prefix = ` ${completed ? "x" : "→"} `;
-
-  return (
-    <div
-      key={key}
-      className={`block whitespace-pre-wrap ${completed ? "line-through text-role-muted" : ""}`}
-      style={hangingIndentStyle(prefix)}
-    >
-      {prefix}
-      {!completed && priority && (
-        <span className={priorityClassName(priority)}>({priority}) </span>
-      )}
-      {renderTaskFragments(rest ?? line, today)}
-    </div>
-  );
-}
-
 export function formatOutput(output: string, taskCount: number): ReactNode {
   if (output === HELP_TEXT) return renderHelpOutput();
 
@@ -484,14 +410,8 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
     const taskMatch = line.match(TASK_LINE_PATTERN);
     if (taskMatch) return renderTaskLine(taskMatch, today, i, idColumnWidth);
 
-    const countMatch = line.match(COUNT_ROW_PATTERN);
-    if (countMatch) return renderCountRow(countMatch, i);
-
-    if (SUMMARY_HEADER_PATTERN.test(line)) return renderSummaryHeader(line, i);
-
     if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-      const struck = Boolean(lines[i - 1]?.startsWith("x "));
-      return renderSecondaryLine(line, i, struck);
+      return renderSecondaryLine(line, i);
     }
 
     if (BOOT_BANNER_PATTERN.test(line)) return renderBootBanner(line, i);
@@ -507,13 +427,6 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
 
     if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
     if (SPINNER_LINE_PATTERN.test(line)) return renderSpinnerLine(line, i);
-
-    // `show <#>` prints the task line followed by a `created:` detail row;
-    // give that task line the same fragment/priority coloring as a rendered
-    // list, plus the x/strikethrough treatment when the task is completed.
-    if (lines[i + 1]?.startsWith("created:")) {
-      return renderShowTaskLine(line, today, i);
-    }
 
     return renderMessageLine(line, i);
   });

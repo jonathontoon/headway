@@ -5,11 +5,22 @@ A terminal-style todo.txt app in your browser. No databases, no signup, no distr
 ## What it does
 
 - **Add/edit/delete tasks** with todo.txt syntax: priorities (A-Z), due dates, projects (+name), contexts (@tag), and metadata
-- **Five built-in views**: today/upcoming/inbox/someday/archive, plus search by project or tag
+- **Four built-in views**: all open tasks, today, upcoming, and completed — plus regex filters across todo.txt text and metadata
 - **Priority-aware sorting**: A-E get warm-to-cool colors; your most important tasks stand out
 - **GitHub sync** (optional): back up your todo.txt to a repo you control, and load changes from there
 
 Everything runs client-side. Your tasks live in your browser's localStorage until you sync them to GitHub.
+
+### Filtering tasks
+
+Use `list /pattern/i` to filter incomplete task text with a JavaScript regular expression. It also matches todo.txt projects, contexts, and metadata:
+
+```text
+list /\+work|@home/i
+list /due:2026-07-31/
+```
+
+The only supported regex flag is `i` for case-insensitive matching.
 
 ## Getting started
 
