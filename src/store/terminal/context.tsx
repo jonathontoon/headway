@@ -83,7 +83,7 @@ export function TerminalProvider({
           pending.controller.abort();
           githubOperationRef.current = null;
           dispatch(
-            terminalActions.appendOutput(describeCancellation(pending.label)),
+            terminalActions.cancelPending(describeCancellation(pending.label)),
           );
         }
 
@@ -94,6 +94,7 @@ export function TerminalProvider({
               undefined,
               state.todos,
               state.view,
+              true,
             ),
           );
 
@@ -117,6 +118,7 @@ export function TerminalProvider({
           }).finally(() => {
             if (githubOperationRef.current?.controller === controller) {
               githubOperationRef.current = null;
+              dispatch(terminalActions.endPending());
             }
           });
           return;
@@ -135,6 +137,7 @@ export function TerminalProvider({
             result.output,
             result.nextTodos,
             result.view ?? state.view,
+            false,
           ),
         );
       },
@@ -142,6 +145,15 @@ export function TerminalProvider({
         dispatch(terminalActions.navigateHistory(direction));
       },
       cancelCommand() {
+        const pending = githubOperationRef.current;
+        if (pending) {
+          pending.controller.abort();
+          githubOperationRef.current = null;
+          dispatch(
+            terminalActions.cancelPending(describeCancellation(pending.label)),
+          );
+          return;
+        }
         dispatch(terminalActions.cancel());
       },
       clearScreen() {

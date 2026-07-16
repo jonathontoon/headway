@@ -10,4 +10,5 @@ export type TerminalState = {
   readonly historyIndex: number | null;
   readonly todos: readonly string[];
   readonly view: readonly number[];
+  readonly pending: boolean;
 };

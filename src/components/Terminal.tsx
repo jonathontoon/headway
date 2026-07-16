@@ -7,6 +7,7 @@ import {
 import { useTerminal } from "../hooks/useTerminal";
 import { TerminalHistory } from "./TerminalHistory";
 import { TerminalCommandForm } from "./TerminalCommandForm";
+import { TerminalPendingHint } from "./TerminalPendingHint";
 
 export function Terminal() {
   const {
@@ -42,14 +43,18 @@ export function Terminal() {
       onContextMenu={handleContextMenu}
     >
       <TerminalHistory entries={state.entries} taskCount={state.todos.length} />
-      <TerminalCommandForm
-        command={state.command}
-        onSubmit={handleSubmit}
-        onChange={setCommand}
-        onNavigateHistory={navigateHistory}
-        onCancel={cancelCommand}
-        onClearScreen={clearScreen}
-      />
+      {state.pending ? (
+        <TerminalPendingHint onCancel={cancelCommand} />
+      ) : (
+        <TerminalCommandForm
+          command={state.command}
+          onSubmit={handleSubmit}
+          onChange={setCommand}
+          onNavigateHistory={navigateHistory}
+          onCancel={cancelCommand}
+          onClearScreen={clearScreen}
+        />
+      )}
       <div
         ref={bottomRef}
         className="h-0 scroll-mb-[calc(1rem+env(safe-area-inset-bottom))] sm:scroll-mb-[calc(1.5rem+env(safe-area-inset-bottom))] md:scroll-mb-[calc(2rem+env(safe-area-inset-bottom))]"

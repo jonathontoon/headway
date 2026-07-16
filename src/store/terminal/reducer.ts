@@ -21,6 +21,7 @@ export function createInitialTerminalState(
     historyIndex: null,
     todos,
     view,
+    pending: false,
   };
 }
 
@@ -96,6 +97,17 @@ export function terminalReducer(
         command: "",
         historyIndex: null,
       };
+    case "endPending":
+      return { ...state, pending: false };
+    case "cancelPending":
+      return {
+        ...state,
+        pending: false,
+        entries: [
+          ...state.entries,
+          { id: state.entries.length, output: action.output },
+        ],
+      };
     case "submit":
       return {
         ...state,
@@ -111,6 +123,7 @@ export function terminalReducer(
         historyIndex: null,
         todos: action.todos,
         view: action.view,
+        pending: action.pending,
       };
     case "appendOutput":
       return {

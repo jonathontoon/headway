@@ -53,6 +53,22 @@ describe("App Component", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("hides the prompt behind a cancel hint while a GitHub command is pending, and cancels on any key", () => {
+    renderApp();
+    const input = screen.getByLabelText("Terminal command");
+
+    fireEvent.change(input, { target: { value: "connect owner/repo" } });
+    fireEvent.submit(input.closest("form")!);
+
+    expect(screen.queryByLabelText("Terminal command")).not.toBeInTheDocument();
+    expect(screen.getByText("Press any key to cancel")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "a" });
+
+    expect(screen.getByLabelText("Terminal command")).toBeInTheDocument();
+    expect(screen.getByText(/cancelled/i)).toBeInTheDocument();
+  });
+
   it("reports unknown commands instead of evaluating JavaScript", () => {
     renderApp();
     const input = screen.getByLabelText("Terminal command");
