@@ -18,10 +18,7 @@ export function TerminalPendingHint({ onCancel }: TerminalPendingHintProps) {
   }, [onCancel]);
 
   return (
-    <p
-      onClick={onCancel}
-      className="m-0 text-role-muted whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9] cursor-pointer"
-    >
+    <p className="m-0 text-role-muted whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9]">
       Press any key to cancel
     </p>
   );
