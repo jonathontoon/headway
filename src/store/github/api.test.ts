@@ -57,7 +57,7 @@ describe("github api", () => {
       interval: 5,
       expiresIn: 900,
     });
-    expect(JSON.parse(calls[0].body as string)).toEqual({
+    expect(JSON.parse(calls[0]!.body as string)).toEqual({
       client_id: "client123",
       scope: "repo",
     });
@@ -159,7 +159,7 @@ describe("github api", () => {
       controller.signal,
     );
 
-    expect(calls[0].signal).toBe(controller.signal);
+    expect(calls[0]!.signal).toBe(controller.signal);
   });
 
   it("reads a remote file with its blob sha", async () => {
@@ -197,7 +197,7 @@ describe("github api", () => {
     );
 
     expect(sha).toBe("new-sha");
-    const body = JSON.parse(calls[0].body as string);
+    const body = JSON.parse(calls[0]!.body as string);
     expect(body.sha).toBe("old-sha");
     expect(body.branch).toBe("main");
     expect(body.message).toBe("chore: sync todos from headway");
@@ -268,7 +268,7 @@ describe("github api", () => {
         fetchOnce(new Response(null, { status: 204 }), calls),
       ),
     ).toBe("revoked");
-    expect(JSON.parse(calls[0].body as string)).toEqual({
+    expect(JSON.parse(calls[0]!.body as string)).toEqual({
       access_token: "gho_token",
     });
 

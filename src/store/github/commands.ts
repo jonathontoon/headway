@@ -50,7 +50,7 @@ const GITHUB_VERBS = new Set(["connect", "disconnect", "sync"]);
 
 export function isGitHubCommand(command: string): boolean {
   const [verb] = command.trim().split(/\s+/);
-  return GITHUB_VERBS.has(verb);
+  return verb !== undefined && GITHUB_VERBS.has(verb);
 }
 
 export async function runGitHubCommand(
@@ -113,24 +113,26 @@ function describeTarget(target: SyncTarget): string {
 // string when they don't form a valid sync target.
 function parseTarget(args: readonly string[]): SyncTarget | string {
   const match = args[0]?.match(/^([^/\s]+)\/([^/\s]+)$/);
+  const owner = match?.[1];
+  const repo = match?.[2];
 
-  if (!match) {
+  if (owner === undefined || repo === undefined) {
     return "Error: usage: connect <owner>/<repo> [branch] [path].";
   }
 
   const path = args[2] ?? DEFAULT_PATH;
 
   if (
-    !isValidPathSegment(match[1]) ||
-    !isValidPathSegment(match[2]) ||
+    !isValidPathSegment(owner) ||
+    !isValidPathSegment(repo) ||
     !isValidRepoPath(path)
   ) {
     return "Error: path must be a relative file path without '.' or '..' segments.";
   }
 
   return {
-    owner: match[1],
-    repo: match[2],
+    owner,
+    repo,
     branch: args[1] ?? DEFAULT_BRANCH,
     path,
   };
@@ -173,12 +175,12 @@ function startSpinner(
   const render = (frame: string, replace: boolean) =>
     deps.emit(`${frame} ${label}`, { replace });
 
-  render(SPINNER_FRAMES[0], false);
+  render(SPINNER_FRAMES[0] ?? "", false);
 
   let frameIndex = 0;
   return setInterval(() => {
     frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
-    render(SPINNER_FRAMES[frameIndex], true);
+    render(SPINNER_FRAMES[frameIndex] ?? "", true);
   }, SPINNER_TICK_MS);
 }
 
@@ -255,7 +257,7 @@ async function runConnect(
       { replace },
     );
 
-  renderWaiting(SPINNER_FRAMES[0], true);
+  renderWaiting(SPINNER_FRAMES[0] ?? "", true);
 
   // The spinner animates on its own clock; the network poll runs on
   // GitHub's much slower interval (typically every 5s), so tying the two
@@ -263,7 +265,7 @@ async function runConnect(
   let frameIndex = 0;
   const spinnerId = setInterval(() => {
     frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
-    renderWaiting(SPINNER_FRAMES[frameIndex], true);
+    renderWaiting(SPINNER_FRAMES[frameIndex] ?? "", true);
   }, SPINNER_TICK_MS);
 
   try {

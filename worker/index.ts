@@ -139,6 +139,10 @@ export default {
       return revokeGrant(body, env);
     }
 
+    if (upstream === undefined) {
+      return new Response("Not found", { status: 404 });
+    }
+
     // When the deployment pins its client id, refuse to proxy for any
     // other OAuth app and forward the pinned id regardless of what the
     // caller sent.

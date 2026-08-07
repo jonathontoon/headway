@@ -2,7 +2,9 @@ import { THEME } from "./theme";
 import { THEME_ROLE_NAMES, type Theme, type ThemeRoleValue } from "./types";
 
 export function resolveRoleColor(theme: Theme, value: ThemeRoleValue): string {
-  return typeof value === "number" ? theme.colors[value] : value;
+  return typeof value === "number"
+    ? (theme.colors[value] ?? theme.foreground)
+    : value;
 }
 
 export function applyTheme(theme: Theme): void {

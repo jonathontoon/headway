@@ -4,8 +4,8 @@ import { formatBootMessage } from "../store/todos/summary";
 import type { TodoClock, TodoCommandState } from "../store/todos/types";
 
 export type ShowcaseEntry = {
-  readonly command?: string;
-  readonly output?: string;
+  readonly command?: string | undefined;
+  readonly output?: string | undefined;
 };
 
 export type ShowcaseSection = {
@@ -15,6 +15,9 @@ export type ShowcaseSection = {
 
 function addDays(date: string, days: number): string {
   const [year, month, day] = date.split("-").map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    throw new Error(`Invalid showcase date: ${date}`);
+  }
   const result = new Date(Date.UTC(year, month - 1, day));
   result.setUTCDate(result.getUTCDate() + days);
   return result.toISOString().slice(0, 10);

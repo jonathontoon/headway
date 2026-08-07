@@ -30,27 +30,32 @@ function completeCommand(command: string): string | null {
   }
 
   const words = command.split(" ");
+  const firstWord = words[0];
+  if (firstWord === undefined) {
+    return null;
+  }
 
   if (words.length === 1) {
-    const matches = COMMAND_VERBS.filter((verb) => verb.startsWith(words[0]));
+    const matches = COMMAND_VERBS.filter((verb) => verb.startsWith(firstWord));
     if (matches.length !== 1) {
       return null;
     }
     return `${matches[0]} `;
   }
 
-  if (words.length === 2 && words[1].length > 0) {
-    const candidates = SUBCOMMAND_VERBS[words[0]];
+  const secondWord = words[1];
+  if (words.length === 2 && secondWord !== undefined && secondWord.length > 0) {
+    const candidates = SUBCOMMAND_VERBS[firstWord];
     if (!candidates) {
       return null;
     }
 
-    const matches = candidates.filter((verb) => verb.startsWith(words[1]));
+    const matches = candidates.filter((verb) => verb.startsWith(secondWord));
     if (matches.length !== 1) {
       return null;
     }
 
-    return `${words[0]} ${matches[0]} `;
+    return `${firstWord} ${matches[0]} `;
   }
 
   return null;

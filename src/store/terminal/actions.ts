@@ -9,7 +9,7 @@ export type TerminalAction =
   | {
       readonly type: "submit";
       readonly command: string;
-      readonly output?: string;
+      readonly output?: string | undefined;
       readonly todos: readonly string[];
       readonly view: readonly number[];
       readonly pending: boolean;

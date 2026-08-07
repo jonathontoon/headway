@@ -6,15 +6,15 @@ export const DEFAULT_BRANCH = "main";
 export const DEFAULT_PATH = "todo.txt";
 
 export type GitHubSettings = {
-  readonly owner?: string;
-  readonly repo?: string;
-  readonly branch?: string;
-  readonly path?: string;
-  readonly token?: string;
-  readonly login?: string;
-  readonly lastSyncedSha?: string;
-  readonly lastSyncedHash?: string;
-  readonly lastSyncedAt?: string;
+  readonly owner?: string | undefined;
+  readonly repo?: string | undefined;
+  readonly branch?: string | undefined;
+  readonly path?: string | undefined;
+  readonly token?: string | undefined;
+  readonly login?: string | undefined;
+  readonly lastSyncedSha?: string | undefined;
+  readonly lastSyncedHash?: string | undefined;
+  readonly lastSyncedAt?: string | undefined;
 };
 
 const SETTINGS_KEYS = [

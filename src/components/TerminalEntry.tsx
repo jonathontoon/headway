@@ -2,8 +2,8 @@ import { formatOutput, formatPromptSymbol } from "../services/terminalFormat";
 import { TERMINAL_BLOCK_GAP_MB, TERMINAL_PROMPT } from "../constants";
 
 type TerminalEntryProps = {
-  readonly command?: string;
-  readonly output?: string;
+  readonly command?: string | undefined;
+  readonly output?: string | undefined;
   readonly taskCount: number;
 };
 

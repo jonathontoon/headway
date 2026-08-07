@@ -50,7 +50,7 @@ function navigateHistory(
     return {
       ...state,
       historyIndex: nextIndex,
-      command: commands[nextIndex],
+      command: commands[nextIndex] ?? "",
     };
   }
 
@@ -70,7 +70,7 @@ function navigateHistory(
   return {
     ...state,
     historyIndex: nextIndex,
-    command: commands[nextIndex],
+    command: commands[nextIndex] ?? "",
   };
 }
 

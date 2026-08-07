@@ -26,14 +26,24 @@ function fakeFetch(routes: Record<string, Route>): FetchFn {
     const method = init?.method ?? "GET";
     const key = Object.keys(routes).find((route) => {
       const [routeMethod, routeUrl] = route.split(" ");
-      return method === routeMethod && url.startsWith(routeUrl);
+      return (
+        routeMethod !== undefined &&
+        routeUrl !== undefined &&
+        method === routeMethod &&
+        url.startsWith(routeUrl)
+      );
     });
 
     if (!key) {
       throw new Error(`unexpected fetch: ${method} ${url}`);
     }
 
-    return Promise.resolve(routes[key](init));
+    const route = routes[key];
+    if (!route) {
+      throw new Error(`unexpected fetch: ${method} ${url}`);
+    }
+
+    return Promise.resolve(route(init));
   };
 }
 

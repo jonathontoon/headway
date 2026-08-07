@@ -1,7 +1,7 @@
 export type TerminalEntry = {
   readonly id: number;
-  readonly command?: string;
-  readonly output?: string;
+  readonly command?: string | undefined;
+  readonly output?: string | undefined;
 };
 
 export type TerminalState = {

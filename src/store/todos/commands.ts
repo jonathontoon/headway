@@ -54,7 +54,12 @@ function findTask(
     return "Error: no task with that id.";
   }
 
-  const result = parseTodoLine(state.todos[lineNumber - 1]);
+  const line = state.todos[lineNumber - 1];
+  if (line === undefined) {
+    return "Error: no task with that id.";
+  }
+
+  const result = parseTodoLine(line);
   if (!result.ok) {
     return `Error: task ${position} is not valid todo.txt.`;
   }
@@ -387,15 +392,16 @@ function runDue(
 ): TodoCommandResult {
   const [idText, date] = args;
 
-  if (!isTodoDate(date ?? "")) {
+  const dateText = date ?? "";
+  if (!isTodoDate(dateText)) {
     return {
       nextTodos: state.todos,
-      output: `Error: invalid date "${date ?? ""}" - expected YYYY-MM-DD.`,
+      output: `Error: invalid date "${dateText}" - expected YYYY-MM-DD.`,
     };
   }
 
   return updateMany(state, [idText ?? ""], (task) => {
-    const text = addOrReplaceMetadata(task.text, "due", date);
+    const text = addOrReplaceMetadata(task.text, "due", dateText);
     const parsed = parseTodoLine(text);
     return {
       task: {
@@ -403,7 +409,7 @@ function runDue(
         text,
         metadata: parsed.ok ? parsed.task.metadata : task.metadata,
       },
-      output: `Updated: due:${date}`,
+      output: `Updated: due:${dateText}`,
     };
   });
 }
@@ -461,12 +467,13 @@ function runProject(
 ): TodoCommandResult {
   const [idText, project] = args;
 
-  if (!PROJECT_PATTERN.test(project ?? "")) {
+  const projectText = project ?? "";
+  if (!PROJECT_PATTERN.test(projectText)) {
     return { nextTodos: state.todos, output: "Error: expected +Project." };
   }
 
   return updateMany(state, [idText ?? ""], (task) => {
-    const text = addUniqueTokens(task.text, [project]);
+    const text = addUniqueTokens(task.text, [projectText]);
     const parsed = parseTodoLine(text);
     return {
       task: {
@@ -474,7 +481,7 @@ function runProject(
         text,
         projects: parsed.ok ? parsed.task.projects : task.projects,
       },
-      output: `Updated: assigned to ${project}`,
+      output: `Updated: assigned to ${projectText}`,
     };
   });
 }
@@ -570,7 +577,8 @@ function runList(
     };
   }
 
-  const [, pattern, flags] = match;
+  const pattern = match[1] ?? "";
+  const flags = match[2] ?? "";
 
   let regex: RegExp;
   try {

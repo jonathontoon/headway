@@ -69,6 +69,10 @@ function apiHeaders(token: string): HeadersInit {
   };
 }
 
+function requestInit(init: RequestInit, signal?: AbortSignal): RequestInit {
+  return signal === undefined ? init : { ...init, signal };
+}
+
 // `encodeURIComponent` leaves `.`/`..` untouched (they're unreserved), so a
 // segment of exactly "." or ".." survives encoding and is normalized away by
 // the URL parser before the request is sent - letting it retarget the
@@ -105,12 +109,17 @@ export async function requestDeviceCode(
   fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<DeviceCode> {
-  const response = await fetchFn("/api/github/device/code", {
-    method: "POST",
-    headers: jsonHeaders(),
-    body: JSON.stringify({ client_id: clientId, scope: "repo" }),
-    signal,
-  });
+  const response = await fetchFn(
+    "/api/github/device/code",
+    requestInit(
+      {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify({ client_id: clientId, scope: "repo" }),
+      },
+      signal,
+    ),
+  );
   const data = await response.json();
 
   if (!response.ok || data.error) {
@@ -146,16 +155,21 @@ export async function pollForToken(
       throw new Error("the device code expired - run 'connect' again");
     }
 
-    const response = await fetchFn("/api/github/device/token", {
-      method: "POST",
-      headers: jsonHeaders(),
-      body: JSON.stringify({
-        client_id: clientId,
-        device_code: device.deviceCode,
-        grant_type: DEVICE_GRANT_TYPE,
-      }),
-      signal,
-    });
+    const response = await fetchFn(
+      "/api/github/device/token",
+      requestInit(
+        {
+          method: "POST",
+          headers: jsonHeaders(),
+          body: JSON.stringify({
+            client_id: clientId,
+            device_code: device.deviceCode,
+            grant_type: DEVICE_GRANT_TYPE,
+          }),
+        },
+        signal,
+      ),
+    );
     const data = await response.json();
 
     if (data.access_token) {
@@ -189,12 +203,17 @@ export async function revokeToken(
   fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<"revoked" | "unsupported"> {
-  const response = await fetchFn("/api/github/token/revoke", {
-    method: "POST",
-    headers: jsonHeaders(),
-    body: JSON.stringify({ access_token: token }),
-    signal,
-  });
+  const response = await fetchFn(
+    "/api/github/token/revoke",
+    requestInit(
+      {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify({ access_token: token }),
+      },
+      signal,
+    ),
+  );
 
   if (response.status === 501) {
     return "unsupported";
@@ -212,10 +231,10 @@ export async function getAuthenticatedLogin(
   fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<string> {
-  const response = await fetchFn("https://api.github.com/user", {
-    headers: apiHeaders(token),
-    signal,
-  });
+  const response = await fetchFn(
+    "https://api.github.com/user",
+    requestInit({ headers: apiHeaders(token) }, signal),
+  );
 
   if (!response.ok) {
     throw new GitHubApiError(response.status, "could not read GitHub user");
@@ -233,7 +252,7 @@ export async function getFile(
 ): Promise<RemoteFile | "not_found"> {
   const response = await fetchFn(
     `${contentsUrl(target)}?ref=${encodeURIComponent(target.branch)}`,
-    { headers: apiHeaders(token), signal },
+    requestInit({ headers: apiHeaders(token) }, signal),
   );
 
   if (response.status === 404) {
@@ -259,17 +278,22 @@ export async function putFile(
   fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<string> {
-  const response = await fetchFn(contentsUrl(target), {
-    method: "PUT",
-    headers: apiHeaders(token),
-    body: JSON.stringify({
-      message: "chore: sync todos from headway",
-      content: encodeLines(lines),
-      branch: target.branch,
-      ...(sha ? { sha } : {}),
-    }),
-    signal,
-  });
+  const response = await fetchFn(
+    contentsUrl(target),
+    requestInit(
+      {
+        method: "PUT",
+        headers: apiHeaders(token),
+        body: JSON.stringify({
+          message: "chore: sync todos from headway",
+          content: encodeLines(lines),
+          branch: target.branch,
+          ...(sha ? { sha } : {}),
+        }),
+      },
+      signal,
+    ),
+  );
 
   if (!response.ok) {
     throw new GitHubApiError(

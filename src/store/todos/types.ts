@@ -5,9 +5,9 @@ export type TodoMetadata = {
 
 export type TodoTask = {
   readonly completed: boolean;
-  readonly priority?: string;
-  readonly completionDate?: string;
-  readonly creationDate?: string;
+  readonly priority?: string | undefined;
+  readonly completionDate?: string | undefined;
+  readonly creationDate?: string | undefined;
   readonly text: string;
   readonly projects: readonly string[];
   readonly contexts: readonly string[];
@@ -25,8 +25,8 @@ export type TodoCommandState = {
 
 export type TodoCommandResult = {
   readonly nextTodos: readonly string[];
-  readonly output?: string;
-  readonly view?: readonly number[];
+  readonly output?: string | undefined;
+  readonly view?: readonly number[] | undefined;
 };
 
 export type TodoClock = {

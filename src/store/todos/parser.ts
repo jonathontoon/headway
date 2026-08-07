@@ -19,7 +19,9 @@ function extractContexts(words: readonly string[]): readonly string[] {
 function extractMetadata(words: readonly string[]): readonly TodoMetadata[] {
   return words.flatMap((word) => {
     const match = word.match(METADATA_PATTERN);
-    return match ? [{ key: match[1], value: match[2] }] : [];
+    const key = match?.[1];
+    const value = match?.[2];
+    return key !== undefined && value !== undefined ? [{ key, value }] : [];
   });
 }
 
@@ -45,13 +47,15 @@ export function parseTodoLine(line: string): ParseTodoResult {
     completed = true;
     index += 1;
 
-    if (words[index] !== undefined && isTodoDate(words[index])) {
-      completionDate = words[index];
+    const maybeCompletionDate = words[index];
+    if (maybeCompletionDate !== undefined && isTodoDate(maybeCompletionDate)) {
+      completionDate = maybeCompletionDate;
       index += 1;
     }
 
-    if (words[index] !== undefined && isTodoDate(words[index])) {
-      creationDate = words[index];
+    const maybeCreationDate = words[index];
+    if (maybeCreationDate !== undefined && isTodoDate(maybeCreationDate)) {
+      creationDate = maybeCreationDate;
       index += 1;
     }
   } else {
@@ -61,8 +65,9 @@ export function parseTodoLine(line: string): ParseTodoResult {
       index += 1;
     }
 
-    if (words[index] !== undefined && isTodoDate(words[index])) {
-      creationDate = words[index];
+    const maybeCreationDate = words[index];
+    if (maybeCreationDate !== undefined && isTodoDate(maybeCreationDate)) {
+      creationDate = maybeCreationDate;
       index += 1;
     }
   }
