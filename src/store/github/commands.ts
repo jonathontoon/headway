@@ -172,6 +172,10 @@ function formatRelativeTime(iso: string): string {
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_TICK_MS = 90;
 
+function spinnerFrame(index: number): string {
+  return SPINNER_FRAMES[index % SPINNER_FRAMES.length]!;
+}
+
 function startSpinner(
   deps: GitHubCommandDeps,
   label: string,
@@ -179,12 +183,12 @@ function startSpinner(
   const render = (frame: string, replace: boolean) =>
     deps.emit(`${frame} ${label}`, { replace });
 
-  render(SPINNER_FRAMES[0] ?? "", false);
+  render(spinnerFrame(0), false);
 
   let frameIndex = 0;
   return setInterval(() => {
     frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
-    render(SPINNER_FRAMES[frameIndex] ?? "", true);
+    render(spinnerFrame(frameIndex), true);
   }, SPINNER_TICK_MS);
 }
 
@@ -278,7 +282,7 @@ async function runConnect(
       { replace },
     );
 
-  renderWaiting(SPINNER_FRAMES[0] ?? "", true);
+  renderWaiting(spinnerFrame(0), true);
 
   // The spinner animates on its own clock; the network poll runs on
   // GitHub's much slower interval (typically every 5s), so tying the two
@@ -286,7 +290,7 @@ async function runConnect(
   let frameIndex = 0;
   const spinnerId = setInterval(() => {
     frameIndex = (frameIndex + 1) % SPINNER_FRAMES.length;
-    renderWaiting(SPINNER_FRAMES[frameIndex] ?? "", true);
+    renderWaiting(spinnerFrame(frameIndex), true);
   }, SPINNER_TICK_MS);
 
   try {
