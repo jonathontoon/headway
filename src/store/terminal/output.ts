@@ -3,7 +3,7 @@ import { formatTask } from "../todos/format";
 
 export type MessageTone = "error" | "warning" | "success" | "muted" | "normal";
 
-export const TERMINAL_OUTPUT_KIND = {
+export const OUTPUT_TYPE = {
   BLANK: "BLANK",
   TEXT: "TEXT",
   TASKS: "TASKS",
@@ -16,37 +16,36 @@ export const TERMINAL_OUTPUT_KIND = {
   GROUP: "GROUP",
 } as const;
 
-export type TerminalOutputKind =
-  (typeof TERMINAL_OUTPUT_KIND)[keyof typeof TERMINAL_OUTPUT_KIND];
+export type TerminalOutputType = (typeof OUTPUT_TYPE)[keyof typeof OUTPUT_TYPE];
 
 export type TerminalOutput =
-  | { readonly kind: typeof TERMINAL_OUTPUT_KIND.BLANK }
+  | { readonly type: typeof OUTPUT_TYPE.BLANK }
   | {
-      readonly kind: typeof TERMINAL_OUTPUT_KIND.TEXT;
+      readonly type: typeof OUTPUT_TYPE.TEXT;
       readonly text: string;
       readonly tone: MessageTone;
     }
   | {
-      readonly kind: typeof TERMINAL_OUTPUT_KIND.TASKS;
+      readonly type: typeof OUTPUT_TYPE.TASKS;
       readonly tasks: readonly TerminalTask[];
     }
-  | { readonly kind: typeof TERMINAL_OUTPUT_KIND.HELP }
+  | { readonly type: typeof OUTPUT_TYPE.HELP }
   | {
-      readonly kind: typeof TERMINAL_OUTPUT_KIND.PROGRESS;
+      readonly type: typeof OUTPUT_TYPE.PROGRESS;
       readonly text: string;
     }
-  | { readonly kind: typeof TERMINAL_OUTPUT_KIND.BOOT; readonly text: string }
+  | { readonly type: typeof OUTPUT_TYPE.BOOT; readonly text: string }
   | {
-      readonly kind: typeof TERMINAL_OUTPUT_KIND.GREETING;
+      readonly type: typeof OUTPUT_TYPE.GREETING;
       readonly text: string;
     }
   | {
-      readonly kind: typeof TERMINAL_OUTPUT_KIND.SECONDARY;
+      readonly type: typeof OUTPUT_TYPE.SECONDARY;
       readonly text: string;
     }
-  | { readonly kind: typeof TERMINAL_OUTPUT_KIND.LINK; readonly href: string }
+  | { readonly type: typeof OUTPUT_TYPE.LINK; readonly href: string }
   | {
-      readonly kind: typeof TERMINAL_OUTPUT_KIND.GROUP;
+      readonly type: typeof OUTPUT_TYPE.GROUP;
       readonly items: readonly TerminalOutput[];
     };
 
@@ -56,43 +55,43 @@ export type TerminalTask = {
 };
 
 function message(text: string, tone: MessageTone = "normal"): TerminalOutput {
-  return { kind: TERMINAL_OUTPUT_KIND.TEXT, text, tone };
+  return { type: OUTPUT_TYPE.TEXT, text, tone };
 }
 
 export const terminalOutput = {
-  blank: (): TerminalOutput => ({ kind: TERMINAL_OUTPUT_KIND.BLANK }),
+  blank: (): TerminalOutput => ({ type: OUTPUT_TYPE.BLANK }),
   text: message,
   error: (text: string): TerminalOutput => message(text, "error"),
   warning: (text: string): TerminalOutput => message(text, "warning"),
   success: (text: string): TerminalOutput => message(text, "success"),
   muted: (text: string): TerminalOutput => message(text, "muted"),
-  help: (): TerminalOutput => ({ kind: TERMINAL_OUTPUT_KIND.HELP }),
+  help: (): TerminalOutput => ({ type: OUTPUT_TYPE.HELP }),
   progress: (text: string): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.PROGRESS,
+    type: OUTPUT_TYPE.PROGRESS,
     text,
   }),
   boot: (text: string): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.BOOT,
+    type: OUTPUT_TYPE.BOOT,
     text,
   }),
   greeting: (text: string): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.GREETING,
+    type: OUTPUT_TYPE.GREETING,
     text,
   }),
   secondary: (text: string): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.SECONDARY,
+    type: OUTPUT_TYPE.SECONDARY,
     text,
   }),
   link: (href: string): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.LINK,
+    type: OUTPUT_TYPE.LINK,
     href,
   }),
   tasks: (tasks: readonly TerminalTask[]): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.TASKS,
+    type: OUTPUT_TYPE.TASKS,
     tasks,
   }),
   group: (...items: readonly TerminalOutput[]): TerminalOutput => ({
-    kind: TERMINAL_OUTPUT_KIND.GROUP,
+    type: OUTPUT_TYPE.GROUP,
     items,
   }),
 };
@@ -103,24 +102,24 @@ export function outputText(
   if (output === undefined) return undefined;
   if (typeof output === "string") return output;
 
-  switch (output.kind) {
-    case TERMINAL_OUTPUT_KIND.BLANK:
+  switch (output.type) {
+    case OUTPUT_TYPE.BLANK:
       return "";
-    case TERMINAL_OUTPUT_KIND.TEXT:
-    case TERMINAL_OUTPUT_KIND.PROGRESS:
-    case TERMINAL_OUTPUT_KIND.BOOT:
-    case TERMINAL_OUTPUT_KIND.GREETING:
-    case TERMINAL_OUTPUT_KIND.SECONDARY:
+    case OUTPUT_TYPE.TEXT:
+    case OUTPUT_TYPE.PROGRESS:
+    case OUTPUT_TYPE.BOOT:
+    case OUTPUT_TYPE.GREETING:
+    case OUTPUT_TYPE.SECONDARY:
       return output.text;
-    case TERMINAL_OUTPUT_KIND.LINK:
+    case OUTPUT_TYPE.LINK:
       return output.href;
-    case TERMINAL_OUTPUT_KIND.HELP:
+    case OUTPUT_TYPE.HELP:
       return "help";
-    case TERMINAL_OUTPUT_KIND.TASKS:
+    case OUTPUT_TYPE.TASKS:
       return output.tasks
         .map(({ position, task }) => formatTask(position, task))
         .join("\n");
-    case TERMINAL_OUTPUT_KIND.GROUP:
+    case OUTPUT_TYPE.GROUP:
       return output.items
         .map(outputText)
         .filter((item): item is string => item !== undefined)

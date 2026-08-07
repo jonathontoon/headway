@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Terminal } from "./components/Terminal";
-import { TerminalProvider } from "./store/terminal/context";
+import { TerminalProvider } from "./store/terminal/provider";
 
 // Dynamically imported so its module (fixture data, sample GitHub output
 // strings) is never fetched or evaluated in a production build - only

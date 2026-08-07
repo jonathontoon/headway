@@ -1,5 +1,5 @@
 import {
-  TERMINAL_ACTION_TYPE,
+  ACTION_TYPE,
   createInitialTerminalState,
   terminalReducer,
 } from "./reducer";
@@ -14,7 +14,7 @@ describe("terminal reducer pending state", () => {
 
   it("submit sets pending per the action's flag", () => {
     const pending = terminalReducer(initial, {
-      type: TERMINAL_ACTION_TYPE.SUBMIT,
+      type: ACTION_TYPE.SUBMIT,
       command: "connect owner/repo",
       output: undefined,
       todos: [],
@@ -24,7 +24,7 @@ describe("terminal reducer pending state", () => {
     expect(pending.pending).toBe(true);
 
     const idle = terminalReducer(pending, {
-      type: TERMINAL_ACTION_TYPE.SUBMIT,
+      type: ACTION_TYPE.SUBMIT,
       command: "list",
       output: terminalOutput.text("output"),
       todos: [],
@@ -36,7 +36,7 @@ describe("terminal reducer pending state", () => {
 
   it("endPending clears pending without touching entries", () => {
     const pending = terminalReducer(initial, {
-      type: TERMINAL_ACTION_TYPE.SUBMIT,
+      type: ACTION_TYPE.SUBMIT,
       command: "connect owner/repo",
       output: undefined,
       todos: [],
@@ -44,7 +44,7 @@ describe("terminal reducer pending state", () => {
       pending: true,
     });
     const ended = terminalReducer(pending, {
-      type: TERMINAL_ACTION_TYPE.END_PENDING,
+      type: ACTION_TYPE.END_PENDING,
     });
 
     expect(ended.pending).toBe(false);
@@ -53,7 +53,7 @@ describe("terminal reducer pending state", () => {
 
   it("cancelPending clears pending and appends the cancellation message", () => {
     const pending = terminalReducer(initial, {
-      type: TERMINAL_ACTION_TYPE.SUBMIT,
+      type: ACTION_TYPE.SUBMIT,
       command: "connect owner/repo",
       output: undefined,
       todos: [],
@@ -61,7 +61,7 @@ describe("terminal reducer pending state", () => {
       pending: true,
     });
     const cancelled = terminalReducer(pending, {
-      type: TERMINAL_ACTION_TYPE.CANCEL_PENDING,
+      type: ACTION_TYPE.CANCEL_PENDING,
       output: terminalOutput.text("Connection cancelled."),
     });
 

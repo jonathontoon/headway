@@ -141,7 +141,7 @@ const buildBootSection = (): ShowcaseSection => {
 // GitHub/sync output requires network and async spinners, so it can't be
 // driven through the real dispatcher here. These are literal copies of the
 // message templates in src/store/github/commands.ts and
-// src/store/terminal/context.tsx - keep them in sync with that file.
+// src/store/terminal/provider.tsx - keep them in sync with that file.
 const GITHUB_SECTION: ShowcaseSection = {
   title: "GITHUB & SYNC",
   entries: [

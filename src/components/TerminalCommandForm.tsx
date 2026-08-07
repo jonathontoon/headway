@@ -4,9 +4,10 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { useTerminalCursor } from "../hooks/useTerminalCursor";
+import { useCursor } from "../hooks/useCursor";
 import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
 import { COMMAND_VERBS, SUBCOMMAND_VERBS } from "../commands/registry";
+import { Direction } from "../store/terminal/direction";
 import { TerminalCursorOverlay } from "./TerminalCursorOverlay";
 import { TerminalPromptSymbol } from "./TerminalPromptSymbol";
 
@@ -14,7 +15,7 @@ type TerminalCommandFormProps = {
   readonly command: string;
   readonly onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   readonly onChange: (command: string) => void;
-  readonly onNavigateHistory: (direction: "previous" | "next") => void;
+  readonly onNavigateHistory: (direction: Direction) => void;
   readonly onCancel: () => void;
   readonly onClearScreen: () => void;
 };
@@ -75,7 +76,7 @@ export const TerminalCommandForm = ({
     charUnderCursor,
     after,
     isCursorBlinking,
-  } = useTerminalCursor(command);
+  } = useCursor(command);
 
   useEffect(() => {
     const focusInputForTyping = (event: globalThis.KeyboardEvent) => {
@@ -104,13 +105,13 @@ export const TerminalCommandForm = ({
 
     if (event.key === KEYBOARD_KEYS.arrowUp) {
       event.preventDefault();
-      onNavigateHistory("previous");
+      onNavigateHistory(Direction.Previous);
       return;
     }
 
     if (event.key === KEYBOARD_KEYS.arrowDown) {
       event.preventDefault();
-      onNavigateHistory("next");
+      onNavigateHistory(Direction.Next);
       return;
     }
 

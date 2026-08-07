@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const CURSOR_BLINK_RESUME_DELAY_MS = 500;
 
-export function useTerminalCursor(command: string) {
+export function useCursor(command: string) {
   const inputRef = useRef<HTMLInputElement>(null);
   const commandTextRef = useRef<HTMLSpanElement>(null);
   const commandMeasurementRef = useRef<HTMLSpanElement>(null);

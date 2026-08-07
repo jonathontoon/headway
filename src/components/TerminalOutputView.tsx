@@ -1,5 +1,5 @@
 import type { TerminalOutput } from "../store/terminal/output";
-import { TERMINAL_OUTPUT_KIND } from "../store/terminal/output";
+import { OUTPUT_TYPE } from "../store/terminal/output";
 import { getLocalDate } from "../store/todos/summary";
 import { TerminalBlank } from "./TerminalBlank";
 import { TerminalBootBanner } from "./TerminalBootBanner";
@@ -23,12 +23,12 @@ export const TerminalOutputView = ({
   const today = getLocalDate();
   const idColumnWidth = String(taskCount).length + 1;
 
-  switch (output.kind) {
-    case TERMINAL_OUTPUT_KIND.BLANK:
+  switch (output.type) {
+    case OUTPUT_TYPE.BLANK:
       return <TerminalBlank />;
-    case TERMINAL_OUTPUT_KIND.TEXT:
+    case OUTPUT_TYPE.TEXT:
       return <TerminalMessage line={output.text} tone={output.tone} />;
-    case TERMINAL_OUTPUT_KIND.TASKS:
+    case OUTPUT_TYPE.TASKS:
       return output.tasks.map((task) => (
         <TerminalTask
           key={task.position}
@@ -37,22 +37,22 @@ export const TerminalOutputView = ({
           idColumnWidth={idColumnWidth}
         />
       ));
-    case TERMINAL_OUTPUT_KIND.HELP:
+    case OUTPUT_TYPE.HELP:
       return <TerminalHelpOutput />;
-    case TERMINAL_OUTPUT_KIND.PROGRESS:
+    case OUTPUT_TYPE.PROGRESS:
       return <TerminalSpinner line={output.text} />;
-    case TERMINAL_OUTPUT_KIND.BOOT:
+    case OUTPUT_TYPE.BOOT:
       return <TerminalBootBanner line={output.text} />;
-    case TERMINAL_OUTPUT_KIND.GREETING:
+    case OUTPUT_TYPE.GREETING:
       return <TerminalGreeting line={output.text} />;
-    case TERMINAL_OUTPUT_KIND.SECONDARY:
+    case OUTPUT_TYPE.SECONDARY:
       return <TerminalSecondary line={output.text} />;
-    case TERMINAL_OUTPUT_KIND.LINK:
+    case OUTPUT_TYPE.LINK:
       return <TerminalURL line={output.href} />;
-    case TERMINAL_OUTPUT_KIND.GROUP:
+    case OUTPUT_TYPE.GROUP:
       return output.items.map((item, index) => (
         <TerminalOutputView
-          key={`${item.kind}-${index}`}
+          key={`${item.type}-${index}`}
           output={item}
           taskCount={taskCount}
         />

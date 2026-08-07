@@ -1,4 +1,5 @@
 import type { TerminalOutput } from "./output";
+import { Direction } from "./direction";
 import type { TerminalState } from "./types";
 import {
   formatBootMessage,
@@ -6,7 +7,7 @@ import {
   getTimeGreeting,
 } from "../todos/summary";
 
-export const TERMINAL_ACTION_TYPE = {
+export const ACTION_TYPE = {
   CLEAR_SCREEN: "CLEAR_SCREEN",
   CANCEL: "CANCEL",
   END_PENDING: "END_PENDING",
@@ -19,19 +20,18 @@ export const TERMINAL_ACTION_TYPE = {
   NAVIGATE_HISTORY: "NAVIGATE_HISTORY",
 } as const;
 
-export type TerminalActionType =
-  (typeof TERMINAL_ACTION_TYPE)[keyof typeof TERMINAL_ACTION_TYPE];
+export type TerminalActionType = (typeof ACTION_TYPE)[keyof typeof ACTION_TYPE];
 
 export type TerminalAction =
-  | { readonly type: typeof TERMINAL_ACTION_TYPE.CLEAR_SCREEN }
-  | { readonly type: typeof TERMINAL_ACTION_TYPE.CANCEL }
-  | { readonly type: typeof TERMINAL_ACTION_TYPE.END_PENDING }
+  | { readonly type: typeof ACTION_TYPE.CLEAR_SCREEN }
+  | { readonly type: typeof ACTION_TYPE.CANCEL }
+  | { readonly type: typeof ACTION_TYPE.END_PENDING }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.CANCEL_PENDING;
+      readonly type: typeof ACTION_TYPE.CANCEL_PENDING;
       readonly output: TerminalOutput;
     }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.SUBMIT;
+      readonly type: typeof ACTION_TYPE.SUBMIT;
       readonly command: string;
       readonly output?: TerminalOutput | undefined;
       readonly todos: readonly string[];
@@ -39,24 +39,24 @@ export type TerminalAction =
       readonly pending: boolean;
     }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.APPEND_OUTPUT;
+      readonly type: typeof ACTION_TYPE.APPEND_OUTPUT;
       readonly output: TerminalOutput;
     }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.REPLACE_LAST_OUTPUT;
+      readonly type: typeof ACTION_TYPE.REPLACE_LAST_OUTPUT;
       readonly output: TerminalOutput;
     }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.APPLY_TODOS;
+      readonly type: typeof ACTION_TYPE.APPLY_TODOS;
       readonly todos: readonly string[];
     }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.SET_COMMAND;
+      readonly type: typeof ACTION_TYPE.SET_COMMAND;
       readonly command: string;
     }
   | {
-      readonly type: typeof TERMINAL_ACTION_TYPE.NAVIGATE_HISTORY;
-      readonly direction: "previous" | "next";
+      readonly type: typeof ACTION_TYPE.NAVIGATE_HISTORY;
+      readonly direction: Direction;
     };
 
 export function createInitialTerminalState(
@@ -86,7 +86,7 @@ function getCommandHistory(state: TerminalState): readonly string[] {
 
 function navigateHistory(
   state: TerminalState,
-  direction: "previous" | "next",
+  direction: Direction,
 ): TerminalState {
   const commands = getCommandHistory(state);
 
@@ -94,7 +94,7 @@ function navigateHistory(
     return state;
   }
 
-  if (direction === "previous") {
+  if (direction === Direction.Previous) {
     const nextIndex =
       state.historyIndex === null
         ? commands.length - 1
@@ -132,12 +132,12 @@ export function terminalReducer(
   action: TerminalAction,
 ): TerminalState {
   switch (action.type) {
-    case TERMINAL_ACTION_TYPE.CLEAR_SCREEN:
+    case ACTION_TYPE.CLEAR_SCREEN:
       return {
         ...state,
         entries: [],
       };
-    case TERMINAL_ACTION_TYPE.CANCEL:
+    case ACTION_TYPE.CANCEL:
       return {
         ...state,
         entries: [
@@ -150,9 +150,9 @@ export function terminalReducer(
         command: "",
         historyIndex: null,
       };
-    case TERMINAL_ACTION_TYPE.END_PENDING:
+    case ACTION_TYPE.END_PENDING:
       return { ...state, pending: false };
-    case TERMINAL_ACTION_TYPE.CANCEL_PENDING:
+    case ACTION_TYPE.CANCEL_PENDING:
       return {
         ...state,
         pending: false,
@@ -161,7 +161,7 @@ export function terminalReducer(
           { id: state.entries.length, output: action.output },
         ],
       };
-    case TERMINAL_ACTION_TYPE.SUBMIT:
+    case ACTION_TYPE.SUBMIT:
       return {
         ...state,
         entries: [
@@ -178,7 +178,7 @@ export function terminalReducer(
         view: action.view,
         pending: action.pending,
       };
-    case TERMINAL_ACTION_TYPE.APPEND_OUTPUT:
+    case ACTION_TYPE.APPEND_OUTPUT:
       return {
         ...state,
         entries: [
@@ -189,7 +189,7 @@ export function terminalReducer(
           },
         ],
       };
-    case TERMINAL_ACTION_TYPE.REPLACE_LAST_OUTPUT: {
+    case ACTION_TYPE.REPLACE_LAST_OUTPUT: {
       const lastIndex = state.entries.length - 1;
       if (lastIndex < 0) {
         return state;
@@ -201,18 +201,18 @@ export function terminalReducer(
         ),
       };
     }
-    case TERMINAL_ACTION_TYPE.APPLY_TODOS:
+    case ACTION_TYPE.APPLY_TODOS:
       return {
         ...state,
         todos: action.todos,
         view: [],
       };
-    case TERMINAL_ACTION_TYPE.SET_COMMAND:
+    case ACTION_TYPE.SET_COMMAND:
       return {
         ...state,
         command: action.command,
       };
-    case TERMINAL_ACTION_TYPE.NAVIGATE_HISTORY:
+    case ACTION_TYPE.NAVIGATE_HISTORY:
       return navigateHistory(state, action.direction);
   }
 
