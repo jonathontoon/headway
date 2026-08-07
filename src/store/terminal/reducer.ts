@@ -1,10 +1,32 @@
-import type { TerminalAction } from "./actions";
+import type { TerminalOutput } from "./output";
 import type { TerminalState } from "./types";
 import {
   formatBootMessage,
   getLocalDate,
   getTimeGreeting,
 } from "../todos/summary";
+
+export type TerminalAction =
+  | { readonly type: "clearScreen" }
+  | { readonly type: "cancel" }
+  | { readonly type: "endPending" }
+  | { readonly type: "cancelPending"; readonly output: TerminalOutput }
+  | {
+      readonly type: "submit";
+      readonly command: string;
+      readonly output?: TerminalOutput | undefined;
+      readonly todos: readonly string[];
+      readonly view: readonly number[];
+      readonly pending: boolean;
+    }
+  | { readonly type: "appendOutput"; readonly output: TerminalOutput }
+  | { readonly type: "replaceLastOutput"; readonly output: TerminalOutput }
+  | { readonly type: "applyTodos"; readonly todos: readonly string[] }
+  | { readonly type: "setCommand"; readonly command: string }
+  | {
+      readonly type: "navigateHistory";
+      readonly direction: "previous" | "next";
+    };
 
 export function createInitialTerminalState(
   todos: readonly string[],

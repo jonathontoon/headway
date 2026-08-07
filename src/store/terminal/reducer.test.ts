@@ -1,4 +1,3 @@
-import { terminalActions } from "./actions";
 import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { terminalOutput } from "./output";
 
@@ -10,47 +9,55 @@ describe("terminal reducer pending state", () => {
   });
 
   it("submit sets pending per the action's flag", () => {
-    const pending = terminalReducer(
-      initial,
-      terminalActions.submit("connect owner/repo", undefined, [], [], true),
-    );
+    const pending = terminalReducer(initial, {
+      type: "submit",
+      command: "connect owner/repo",
+      output: undefined,
+      todos: [],
+      view: [],
+      pending: true,
+    });
     expect(pending.pending).toBe(true);
 
-    const idle = terminalReducer(
-      pending,
-      terminalActions.submit(
-        "list",
-        terminalOutput.text("output"),
-        [],
-        [],
-        false,
-      ),
-    );
+    const idle = terminalReducer(pending, {
+      type: "submit",
+      command: "list",
+      output: terminalOutput.text("output"),
+      todos: [],
+      view: [],
+      pending: false,
+    });
     expect(idle.pending).toBe(false);
   });
 
   it("endPending clears pending without touching entries", () => {
-    const pending = terminalReducer(
-      initial,
-      terminalActions.submit("connect owner/repo", undefined, [], [], true),
-    );
-    const ended = terminalReducer(pending, terminalActions.endPending());
+    const pending = terminalReducer(initial, {
+      type: "submit",
+      command: "connect owner/repo",
+      output: undefined,
+      todos: [],
+      view: [],
+      pending: true,
+    });
+    const ended = terminalReducer(pending, { type: "endPending" });
 
     expect(ended.pending).toBe(false);
     expect(ended.entries).toEqual(pending.entries);
   });
 
   it("cancelPending clears pending and appends the cancellation message", () => {
-    const pending = terminalReducer(
-      initial,
-      terminalActions.submit("connect owner/repo", undefined, [], [], true),
-    );
-    const cancelled = terminalReducer(
-      pending,
-      terminalActions.cancelPending(
-        terminalOutput.text("Connection cancelled."),
-      ),
-    );
+    const pending = terminalReducer(initial, {
+      type: "submit",
+      command: "connect owner/repo",
+      output: undefined,
+      todos: [],
+      view: [],
+      pending: true,
+    });
+    const cancelled = terminalReducer(pending, {
+      type: "cancelPending",
+      output: terminalOutput.text("Connection cancelled."),
+    });
 
     expect(cancelled.pending).toBe(false);
     expect(cancelled.entries.at(-1)).toEqual({

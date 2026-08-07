@@ -8,8 +8,11 @@ import {
 import { isGitHubCommand, runGitHubCommand } from "../github/commands";
 import { runTodoCommand } from "../todos/commands";
 import { storeTodos, subscribeTodos } from "../todos/storage";
-import { terminalActions } from "./actions";
-import { createInitialTerminalState, terminalReducer } from "./reducer";
+import {
+  createInitialTerminalState,
+  terminalReducer,
+  type TerminalAction,
+} from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
 import { terminalOutput, toTerminalOutput } from "./output";
 
@@ -17,17 +20,16 @@ import { terminalOutput, toTerminalOutput } from "./output";
 // failed IndexedDB write only costs durability, not the in-memory state,
 // so it's surfaced as a terminal line rather than thrown.
 function persistTodos(
-  dispatch: (action: ReturnType<typeof terminalActions.appendOutput>) => void,
+  dispatch: (action: TerminalAction) => void,
   todos: readonly string[],
 ): void {
   storeTodos(todos).catch(() => {
-    dispatch(
-      terminalActions.appendOutput(
-        terminalOutput.warning(
-          "Warning: could not save tasks to local storage.",
-        ),
+    dispatch({
+      type: "appendOutput",
+      output: terminalOutput.warning(
+        "Warning: could not save tasks to local storage.",
       ),
-    );
+    });
   });
 }
 
@@ -57,8 +59,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
   // wrote); adopting its version keeps two open tabs from silently
   // clobbering each other's tasks on the next command.
   useEffect(
-    () =>
-      subscribeTodos((todos) => dispatch(terminalActions.applyTodos(todos))),
+    () => subscribeTodos((todos) => dispatch({ type: "applyTodos", todos })),
     [],
   );
 
@@ -78,11 +79,10 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
 
     pending.controller.abort();
     githubOperationRef.current = null;
-    dispatch(
-      terminalActions.cancelPending(
-        terminalOutput.text(describeCancellation(pending.label)),
-      ),
-    );
+    dispatch({
+      type: "cancelPending",
+      output: terminalOutput.text(describeCancellation(pending.label)),
+    });
     return true;
   }
 
@@ -90,22 +90,21 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
     () => ({
       state,
       setCommand(command) {
-        dispatch(terminalActions.setCommand(command));
+        dispatch({ type: "setCommand", command });
       },
       submitCommand() {
         const trimmed = state.command.trim();
         cancelPendingOperation();
 
         if (isGitHubCommand(trimmed)) {
-          dispatch(
-            terminalActions.submit(
-              state.command,
-              undefined,
-              state.todos,
-              state.view,
-              true,
-            ),
-          );
+          dispatch({
+            type: "submit",
+            command: state.command,
+            output: undefined,
+            todos: state.todos,
+            view: state.view,
+            pending: true,
+          });
 
           const controller = new AbortController();
           githubOperationRef.current = { controller, label: trimmed };
@@ -115,12 +114,15 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
             emit: (output, options) =>
               dispatch(
                 options?.replace
-                  ? terminalActions.replaceLastOutput(toTerminalOutput(output))
-                  : terminalActions.appendOutput(toTerminalOutput(output)),
+                  ? {
+                      type: "replaceLastOutput",
+                      output: toTerminalOutput(output),
+                    }
+                  : { type: "appendOutput", output: toTerminalOutput(output) },
               ),
             applyTodos: (todos) => {
               persistTodos(dispatch, todos);
-              dispatch(terminalActions.applyTodos(todos));
+              dispatch({ type: "applyTodos", todos });
             },
             clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
             restoreConfirmation: {
@@ -133,7 +135,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
           }).finally(() => {
             if (githubOperationRef.current?.controller === controller) {
               githubOperationRef.current = null;
-              dispatch(terminalActions.endPending());
+              dispatch({ type: "endPending" });
             }
           });
           return;
@@ -146,29 +148,29 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
         if (result.nextTodos !== state.todos) {
           persistTodos(dispatch, result.nextTodos);
         }
-        dispatch(
-          terminalActions.submit(
-            state.command,
+        dispatch({
+          type: "submit",
+          command: state.command,
+          output:
             result.output === undefined
               ? undefined
               : toTerminalOutput(result.output),
-            result.nextTodos,
-            result.view ?? state.view,
-            false,
-          ),
-        );
+          todos: result.nextTodos,
+          view: result.view ?? state.view,
+          pending: false,
+        });
       },
       navigateHistory(direction) {
-        dispatch(terminalActions.navigateHistory(direction));
+        dispatch({ type: "navigateHistory", direction });
       },
       cancelCommand() {
         if (cancelPendingOperation()) {
           return;
         }
-        dispatch(terminalActions.cancel());
+        dispatch({ type: "cancel" });
       },
       clearScreen() {
-        dispatch(terminalActions.clearScreen());
+        dispatch({ type: "clearScreen" });
       },
     }),
     [state],
