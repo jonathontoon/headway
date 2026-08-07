@@ -188,6 +188,23 @@ function startSpinner(
   }, SPINNER_TICK_MS);
 }
 
+async function runWithSpinner(
+  deps: GitHubCommandDeps,
+  label: string,
+  operation: () => Promise<void>,
+): Promise<void> {
+  const spinnerId = startSpinner(deps, label);
+  try {
+    await operation();
+  } catch (error) {
+    if (!isAbortError(error)) {
+      deps.emit(formatError(error), { replace: true });
+    }
+  } finally {
+    clearInterval(spinnerId);
+  }
+}
+
 async function runConnect(
   args: readonly string[],
   deps: GitHubCommandDeps,
@@ -433,8 +450,7 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
     return;
   }
 
-  const spinnerId = startSpinner(deps, "Saving to GitHub...");
-  try {
+  await runWithSpinner(deps, "Saving to GitHub...", async () => {
     const todos = deps.getTodos();
     const remote = await getFile(
       session.target,
@@ -472,13 +488,7 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
       `${warning}Saved: ${todos.length} tasks to ${session.target.owner}/${session.target.repo}:${session.target.path}`,
       { replace: true },
     );
-  } catch (error) {
-    if (!isAbortError(error)) {
-      deps.emit(formatError(error), { replace: true });
-    }
-  } finally {
-    clearInterval(spinnerId);
-  }
+  });
 }
 
 async function runRestore(deps: GitHubCommandDeps): Promise<void> {
@@ -506,8 +516,7 @@ async function runRestore(deps: GitHubCommandDeps): Promise<void> {
     deps.restoreConfirmation.set(undefined);
   }
 
-  const spinnerId = startSpinner(deps, "Loading from GitHub...");
-  try {
+  await runWithSpinner(deps, "Loading from GitHub...", async () => {
     const remote = await getFile(
       session.target,
       session.token,
@@ -534,11 +543,5 @@ async function runRestore(deps: GitHubCommandDeps): Promise<void> {
       `Loaded: ${remote.lines.length} tasks from ${session.target.owner}/${session.target.repo}:${session.target.path}`,
       { replace: true },
     );
-  } catch (error) {
-    if (!isAbortError(error)) {
-      deps.emit(formatError(error), { replace: true });
-    }
-  } finally {
-    clearInterval(spinnerId);
-  }
+  });
 }
