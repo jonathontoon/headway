@@ -19,9 +19,11 @@ function extractContexts(words: readonly string[]): readonly string[] {
 function extractMetadata(words: readonly string[]): readonly TodoMetadata[] {
   return words.flatMap((word) => {
     const match = word.match(METADATA_PATTERN);
-    const key = match?.[1];
-    const value = match?.[2];
-    return key !== undefined && value !== undefined ? [{ key, value }] : [];
+    if (!match) {
+      return [];
+    }
+
+    return [{ key: match[1]!, value: match[2]! }];
   });
 }
 

@@ -102,10 +102,7 @@ function renderTaskFragments(text: string, today: string): ReactNode {
     }
     const dueMatch = part.match(/^due:(\d{4}-\d{2}-\d{2})$/);
     if (dueMatch) {
-      const date = dueMatch[1];
-      if (date === undefined) {
-        return part;
-      }
+      const date = dueMatch[1]!;
       const className =
         date < today
           ? "text-role-error"
@@ -128,9 +125,9 @@ function renderTaskLine(
   key: number,
   idColumnWidth: number,
 ): ReactNode {
-  const id = match[1] ?? "";
+  const id = match[1]!;
   const priority = match[2];
-  const rest = match[3] ?? "";
+  const rest = match[3]!;
 
   return (
     <div key={key} className="block whitespace-pre-wrap">
@@ -187,8 +184,8 @@ function renderHelpOutput(): ReactNode {
 
         const helpMatch = line.match(HELP_ROW_PATTERN);
         if (helpMatch) {
-          const command = helpMatch[1] ?? "";
-          const description = helpMatch[2] ?? "";
+          const command = helpMatch[1]!;
+          const description = helpMatch[2]!;
           return (
             <Fragment key={i}>
               <span className="whitespace-pre-wrap text-role-command pl-[1ch]">
@@ -372,9 +369,7 @@ function hangingIndentStyle(prefix: string): CSSProperties {
 // Updated:, ...) stay, since the verb itself is meaningful content, not
 // just a category label.
 function capitalize(text: string): string {
-  return text.length === 0
-    ? text
-    : (text[0]?.toUpperCase() ?? "") + text.slice(1);
+  return text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1);
 }
 
 function stripRedundantLabel(line: string, tone: MessageTone): string {

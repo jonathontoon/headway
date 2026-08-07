@@ -525,8 +525,8 @@ function runList(
     };
   }
 
-  const pattern = match[1] ?? "";
-  const flags = match[2] ?? "";
+  const pattern = match[1]!;
+  const flags = match[2]!;
 
   let regex: RegExp;
   try {
