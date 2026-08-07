@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { HELP_TEXT, SUCCESS_PREFIXES } from "../constants";
-import { formatOutput } from "./terminalFormat";
+import { HELP_TEXT } from "../constants";
+import { formatOutput, SUCCESS_PREFIXES } from "./terminalFormat";
 
 describe("terminal output formatting", () => {
   it("colors aligned help rows as command and description columns", () => {

@@ -1,12 +1,6 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { getLocalDate } from "../store/todos/summary";
-import {
-  HELP_TEXT,
-  MUTED_PATTERN,
-  SECONDARY_LINE_PREFIXES,
-  SUCCESS_PREFIXES,
-  TERMINAL_BLOCK_GAP_H,
-} from "../constants";
+import { HELP_TEXT, TERMINAL_BLOCK_GAP_H } from "../constants";
 
 const SECTION_HEADERS = new Set([
   "TASKS",
@@ -32,6 +26,38 @@ const SYNC_STATUS_MESSAGE_PATTERN = /^(?:Syncing|Not syncing)/;
 const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
 const DEVICE_CODE_PATTERN = /\b([A-Z0-9]{4}-[A-Z0-9]{4})\b/g;
 const DEVICE_CODE_TEST_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+export const SUCCESS_PREFIXES = [
+  "Added:",
+  "Updated:",
+  "Deleted:",
+  "Completed:",
+  "Reopened:",
+  "Saved:",
+  "Loaded:",
+  "Connected",
+  "Disconnected",
+] as const;
+const MUTED_PATTERN =
+  /\b(empty|is clear|No |not a recognized command|not found)\b/i;
+const SECONDARY_LINE_PREFIXES = ["If it's saved you time"] as const;
+
+type MessageTone = "error" | "warning" | "success" | "muted" | "normal";
+
+type OutputLine =
+  | { readonly kind: "blank" }
+  | { readonly kind: "section"; readonly text: string }
+  | { readonly kind: "task"; readonly match: RegExpMatchArray }
+  | { readonly kind: "secondary"; readonly text: string }
+  | { readonly kind: "boot"; readonly text: string }
+  | { readonly kind: "greeting"; readonly text: string }
+  | { readonly kind: "helpHint"; readonly text: string }
+  | { readonly kind: "url"; readonly text: string }
+  | { readonly kind: "spinner"; readonly text: string }
+  | {
+      readonly kind: "message";
+      readonly text: string;
+      readonly tone: MessageTone;
+    };
 
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
@@ -310,9 +336,24 @@ function renderInlineText(line: string): ReactNode {
 // carries the success signal. Error/warning avoid x- and !-shaped glyphs: x
 // collides visually with the completed-task marker, and a bare "!" reads
 // too alarming for routine status messages.
-function messageGlyph(colorClass: string): string {
-  if (colorClass === "text-role-error") return "×";
-  if (colorClass === "text-role-warning") return "▫";
+function toneClassName(tone: MessageTone): string {
+  switch (tone) {
+    case "error":
+      return "text-role-error";
+    case "warning":
+      return "text-role-warning";
+    case "success":
+      return "text-role-success";
+    case "muted":
+      return "text-role-muted";
+    case "normal":
+      return "";
+  }
+}
+
+function messageGlyph(tone: MessageTone): string {
+  if (tone === "error") return "×";
+  if (tone === "warning") return "▫";
   return "→";
 }
 
@@ -336,40 +377,77 @@ function capitalize(text: string): string {
     : (text[0]?.toUpperCase() ?? "") + text.slice(1);
 }
 
-function stripRedundantLabel(line: string, colorClass: string): string {
-  if (colorClass === "text-role-error" && line.startsWith("Error:")) {
+function stripRedundantLabel(line: string, tone: MessageTone): string {
+  if (tone === "error" && line.startsWith("Error:")) {
     return capitalize(line.slice("Error:".length).trim());
   }
-  if (colorClass === "text-role-warning" && line.startsWith("Warning:")) {
+  if (tone === "warning" && line.startsWith("Warning:")) {
     return capitalize(line.slice("Warning:".length).trim());
   }
   return line;
 }
 
-function renderMessageLine(line: string, key: number): ReactNode {
-  let colorClass = "";
+function messageTone(line: string): MessageTone {
   if (line.startsWith("Error:")) {
-    colorClass = "text-role-error";
-  } else if (line.startsWith("Warning:")) {
-    colorClass = "text-role-warning";
-  } else if (SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-    colorClass = "text-role-success";
-  } else if (SYNC_STATUS_MESSAGE_PATTERN.test(line)) {
+    return "error";
+  }
+  if (line.startsWith("Warning:")) {
+    return "warning";
+  }
+  if (SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix))) {
+    return "success";
+  }
+  if (SYNC_STATUS_MESSAGE_PATTERN.test(line)) {
     if (line.includes("everything's saved")) {
-      colorClass = "text-role-success";
-    } else if (
+      return "success";
+    }
+    if (
       line.includes("unsaved changes") ||
       line.includes("nothing's been saved yet")
     ) {
-      colorClass = "text-role-warning";
-    } else if (MUTED_PATTERN.test(line)) {
-      colorClass = "text-role-muted";
+      return "warning";
     }
-  } else if (MUTED_PATTERN.test(line)) {
-    colorClass = "text-role-muted";
+    if (MUTED_PATTERN.test(line)) {
+      return "muted";
+    }
+  }
+  if (MUTED_PATTERN.test(line)) {
+    return "muted";
+  }
+  return "normal";
+}
+
+function classifyOutputLine(line: string): OutputLine {
+  if (line === "") return { kind: "blank" };
+  if (SECTION_HEADERS.has(line)) return { kind: "section", text: line };
+
+  const taskMatch = line.match(TASK_LINE_PATTERN);
+  if (taskMatch) return { kind: "task", match: taskMatch };
+
+  if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
+    return { kind: "secondary", text: line };
   }
 
-  const prefix = ` ${messageGlyph(colorClass)} `;
+  if (BOOT_BANNER_PATTERN.test(line)) return { kind: "boot", text: line };
+  if (GREETING_PATTERN.test(line)) return { kind: "greeting", text: line };
+
+  if (line === "Type 'help' for all available commands.") {
+    return { kind: "helpHint", text: line };
+  }
+
+  if (URL_PATTERN.test(line)) return { kind: "url", text: line };
+  if (SPINNER_LINE_PATTERN.test(line)) return { kind: "spinner", text: line };
+
+  return { kind: "message", text: line, tone: messageTone(line) };
+}
+
+function renderMessageLine(
+  line: string,
+  tone: MessageTone,
+  key: number,
+): ReactNode {
+  const colorClass = toneClassName(tone);
+  const prefix = ` ${messageGlyph(tone)} `;
 
   return (
     <div
@@ -378,7 +456,7 @@ function renderMessageLine(line: string, key: number): ReactNode {
       style={hangingIndentStyle(prefix)}
     >
       {prefix}
-      {renderInlineText(stripRedundantLabel(line, colorClass))}
+      {renderInlineText(stripRedundantLabel(line, tone))}
     </div>
   );
 }
@@ -395,47 +473,44 @@ export function formatOutput(output: string, taskCount: number): ReactNode {
   if (output === HELP_TEXT) return renderHelpOutput();
 
   const today = getLocalDate();
-  const lines = output.split("\n");
+  const lines = output.split("\n").map(classifyOutputLine);
   // Sized to the total task count (not just what's in this block) so the id
   // column lines up the same way across every rendered list, not just within
   // one of them.
   const idColumnWidth = String(taskCount).length + 1;
 
   return lines.map((line, i) => {
-    if (line === "") {
-      return (
-        <div key={i} className={TERMINAL_BLOCK_GAP_H} aria-hidden="true" />
-      );
+    switch (line.kind) {
+      case "blank":
+        return (
+          <div key={i} className={TERMINAL_BLOCK_GAP_H} aria-hidden="true" />
+        );
+      case "section":
+        return (
+          <div key={i} className="block whitespace-pre-wrap text-role-muted">
+            {line.text}
+          </div>
+        );
+      case "task":
+        return renderTaskLine(line.match, today, i, idColumnWidth);
+      case "secondary":
+        return renderSecondaryLine(line.text, i);
+      case "boot":
+        return renderBootBanner(line.text, i);
+      case "greeting":
+        return renderGreeting(line.text, i);
+      case "helpHint":
+        return (
+          <div key={i} className="block whitespace-pre-wrap text-role-muted">
+            {line.text}
+          </div>
+        );
+      case "url":
+        return renderUrlLine(line.text, i);
+      case "spinner":
+        return renderSpinnerLine(line.text, i);
+      case "message":
+        return renderMessageLine(line.text, line.tone, i);
     }
-    if (SECTION_HEADERS.has(line)) {
-      return (
-        <div key={i} className="block whitespace-pre-wrap text-role-muted">
-          {line}
-        </div>
-      );
-    }
-
-    const taskMatch = line.match(TASK_LINE_PATTERN);
-    if (taskMatch) return renderTaskLine(taskMatch, today, i, idColumnWidth);
-
-    if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-      return renderSecondaryLine(line, i);
-    }
-
-    if (BOOT_BANNER_PATTERN.test(line)) return renderBootBanner(line, i);
-    if (GREETING_PATTERN.test(line)) return renderGreeting(line, i);
-
-    if (line === "Type 'help' for all available commands.") {
-      return (
-        <div key={i} className="block whitespace-pre-wrap text-role-muted">
-          {line}
-        </div>
-      );
-    }
-
-    if (URL_PATTERN.test(line)) return renderUrlLine(line, i);
-    if (SPINNER_LINE_PATTERN.test(line)) return renderSpinnerLine(line, i);
-
-    return renderMessageLine(line, i);
   });
 }
