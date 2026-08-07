@@ -1,12 +1,5 @@
 import { HELP_TEXT } from "../../constants";
-import {
-  formatSection,
-  formatTaskBody,
-  getMetadataValue,
-  parseTasks,
-  taskLabel,
-  type IndexedTask,
-} from "./format";
+import { formatTaskBody, getMetadataValue, taskLabel } from "./format";
 import { isTodoDate, parseTodoLine, serializeTodo } from "./parser";
 import type {
   TodoClock,
@@ -14,6 +7,13 @@ import type {
   TodoCommandState,
   TodoTask,
 } from "./types";
+import {
+  filterIncompleteTasks,
+  listCompletedTasks,
+  listIncompleteTasks,
+  listTodayTasks,
+  listUpcomingTasks,
+} from "./views";
 
 const PRIORITY_PATTERN = /^[A-Z]$/;
 const CONTEXT_PATTERN = /^@\S+$/;
@@ -179,52 +179,6 @@ function updateMany(
   });
 
   return { nextTodos, output: outputs.join("\n") || undefined };
-}
-
-function compareTasks(a: IndexedTask, b: IndexedTask): number {
-  // Sort by priority first (A-Z, with no priority at the end)
-  if (
-    a.task.priority &&
-    b.task.priority &&
-    a.task.priority !== b.task.priority
-  ) {
-    return a.task.priority.localeCompare(b.task.priority);
-  }
-  if (a.task.priority) return -1;
-  if (b.task.priority) return 1;
-
-  // Then by due date
-  const aDue = getMetadataValue(a.task.metadata, "due");
-  const bDue = getMetadataValue(b.task.metadata, "due");
-
-  if (aDue && bDue && aDue !== bDue) return aDue.localeCompare(bDue);
-  if (aDue) return -1;
-  if (bDue) return 1;
-
-  // Finally by original order
-  return a.id - b.id;
-}
-
-function incompleteTasks(todos: readonly string[]): readonly IndexedTask[] {
-  return parseTasks(todos)
-    .filter(({ task }) => !task.completed)
-    .sort(compareTasks);
-}
-
-function completedTasks(todos: readonly string[]): readonly IndexedTask[] {
-  return parseTasks(todos).filter(({ task }) => task.completed);
-}
-
-function buildListing(
-  tasks: readonly IndexedTask[],
-  emptyMessage: string,
-): { readonly output: string; readonly view: readonly number[] } {
-  if (tasks.length === 0) {
-    return { output: emptyMessage, view: [] };
-  }
-
-  const { lines, ids } = formatSection(tasks, 1);
-  return { output: lines.join("\n"), view: ids };
 }
 
 function runAdd(
@@ -553,19 +507,13 @@ function runList(
     case "upcoming":
       return runUpcoming(state, today);
     case "completed": {
-      const { output, view } = buildListing(
-        completedTasks(state.todos),
-        "Completed is empty.",
-      );
+      const { output, view } = listCompletedTasks(state.todos);
       return { nextTodos: state.todos, output, view };
     }
   }
 
   if (trimmedFilter === "") {
-    const { output, view } = buildListing(
-      incompleteTasks(state.todos),
-      "No incomplete tasks.",
-    );
+    const { output, view } = listIncompleteTasks(state.todos);
     return { nextTodos: state.todos, output, view };
   }
 
@@ -590,15 +538,14 @@ function runList(
     };
   }
 
-  const tasks = incompleteTasks(state.todos).filter(({ task }) => {
-    // Sticky/global regexes advance lastIndex across .test() calls, which
-    // would silently skip alternating tasks.
-    regex.lastIndex = 0;
-    return regex.test(task.text);
-  });
-
-  const { output, view } = buildListing(
-    tasks,
+  const { output, view } = filterIncompleteTasks(
+    state.todos,
+    ({ task }) => {
+      // Sticky/global regexes advance lastIndex across .test() calls, which
+      // would silently skip alternating tasks.
+      regex.lastIndex = 0;
+      return regex.test(task.text);
+    },
     `No incomplete tasks match ${trimmedFilter}.`,
   );
 
@@ -606,12 +553,7 @@ function runList(
 }
 
 function runToday(state: TodoCommandState, today: string): TodoCommandResult {
-  const tasks = incompleteTasks(state.todos).filter(({ task }) => {
-    const due = getMetadataValue(task.metadata, "due");
-    return due !== undefined && due <= today;
-  });
-
-  const { output, view } = buildListing(tasks, "Today is clear.");
+  const { output, view } = listTodayTasks(state.todos, today);
   return { nextTodos: state.todos, output, view };
 }
 
@@ -619,12 +561,7 @@ function runUpcoming(
   state: TodoCommandState,
   today: string,
 ): TodoCommandResult {
-  const tasks = incompleteTasks(state.todos).filter(({ task }) => {
-    const due = getMetadataValue(task.metadata, "due");
-    return due !== undefined && due > today;
-  });
-
-  const { output, view } = buildListing(tasks, "Upcoming is empty.");
+  const { output, view } = listUpcomingTasks(state.todos, today);
   return { nextTodos: state.todos, output, view };
 }
 
