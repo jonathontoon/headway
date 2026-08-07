@@ -1,4 +1,4 @@
-import { HELP_TEXT } from "../../constants";
+import { HELP_TEXT } from "../../commands/registry";
 import { formatTaskBody, getMetadataValue, taskLabel } from "./format";
 import { isTodoDate, parseTodoLine, serializeTodo } from "./parser";
 import type {

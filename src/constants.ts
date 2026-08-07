@@ -9,75 +9,9 @@ export const TERMINAL_PROMPT = "~$";
 export const TERMINAL_BLOCK_GAP_MB = "mb-[1rem]";
 export const TERMINAL_BLOCK_GAP_H = "h-[1rem]";
 
-// Command keywords
-export const COMMANDS = {
-  help: "help",
-} as const;
-
-export const HELP_TEXT = [
-  "TASKS",
-  'add "text [+Project] [due:DATE] [@tag]" - add a task',
-  "edit <#> <text> - replace task line directly",
-  "delete <#> [<#>...] - delete permanently",
-  "",
-  "STATUS",
-  "complete <#> [<#>...] - mark done (priority -> pri:A)",
-  "undo <#> [<#>...] - unmark (restores priority)",
-  "",
-  "ATTRIBUTES",
-  "due <#> <YYYY-MM-DD> - set or update due date",
-  "priority <#> <A-Z> - set or update priority",
-  "tag <#> @tag [@tag...] - add context tag(s)",
-  "project <#> +Project - assign task to a project",
-  "clear <#> due|priority|tags|project - clear an attribute",
-  "",
-  "VIEWS",
-  "list                         list incomplete tasks",
-  "list today                   due today and overdue",
-  "list upcoming                future-dated tasks",
-  "list completed               completed tasks",
-  "list /pattern/i              filter incomplete task text",
-  "",
-  "SYNC",
-  "connect <owner>/<repo> [branch] [path] - authorize and choose the repo file",
-  "disconnect - remove your GitHub connection",
-  "sync status - show sync target and state",
-  "sync backup - save local tasks to GitHub",
-  "sync restore - load tasks from GitHub",
-  "",
-  "OTHER",
-  "donate - donation link",
-].join("\n");
-
 // Keyboard navigation
 export const KEYBOARD_KEYS = {
   arrowUp: "ArrowUp",
   arrowDown: "ArrowDown",
   tab: "Tab",
 } as const;
-
-// First-word command verbs, used for Tab completion
-export const COMMAND_VERBS = [
-  "add",
-  "edit",
-  "delete",
-  "complete",
-  "undo",
-  "due",
-  "priority",
-  "tag",
-  "project",
-  "clear",
-  "list",
-  "donate",
-  "sync",
-  "connect",
-  "disconnect",
-  "help",
-] as const;
-
-// Second-word subcommand verbs, keyed by first-word command, used for Tab completion
-export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> = {
-  list: ["today", "upcoming", "completed"],
-  sync: ["status", "backup", "restore"],
-};

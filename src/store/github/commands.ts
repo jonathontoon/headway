@@ -51,12 +51,7 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
-const GITHUB_VERBS = new Set(["connect", "disconnect", "sync"]);
-
-export function isGitHubCommand(command: string): boolean {
-  const [verb] = command.trim().split(/\s+/);
-  return verb !== undefined && GITHUB_VERBS.has(verb);
-}
+export { isGitHubCommand } from "../../commands/registry";
 
 export async function runGitHubCommand(
   command: string,

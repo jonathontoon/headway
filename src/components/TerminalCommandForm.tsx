@@ -6,12 +6,8 @@ import {
 } from "react";
 import { formatPromptSymbol } from "../services/terminalFormat";
 import { useTerminalCursor } from "../hooks/useTerminalCursor";
-import {
-  TERMINAL_PROMPT,
-  KEYBOARD_KEYS,
-  COMMAND_VERBS,
-  SUBCOMMAND_VERBS,
-} from "../constants";
+import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
+import { COMMAND_VERBS, SUBCOMMAND_VERBS } from "../commands/registry";
 import { TerminalCursorOverlay } from "./TerminalCursorOverlay";
 
 type TerminalCommandFormProps = {

@@ -1,6 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { getLocalDate } from "../store/todos/summary";
-import { HELP_TEXT, TERMINAL_BLOCK_GAP_H } from "../constants";
+import { TERMINAL_BLOCK_GAP_H } from "../constants";
+import { HELP_TEXT } from "../commands/registry";
 import type {
   MessageTone,
   TerminalOutput,

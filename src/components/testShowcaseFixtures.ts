@@ -1,4 +1,4 @@
-import { HELP_TEXT } from "../constants";
+import { HELP_TEXT } from "../commands/registry";
 import { runTodoCommand } from "../store/todos/commands";
 import { formatBootMessage } from "../store/todos/summary";
 import type { TodoClock, TodoCommandState } from "../store/todos/types";
