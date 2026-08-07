@@ -1,6 +1,11 @@
 import { HELP_TEXT } from "../../commands/registry";
 import { formatTaskBody, getMetadataValue, taskLabel } from "./format";
-import { isTodoDate, parseTodoLine, serializeTodo } from "./parser";
+import {
+  isTodoDate,
+  parseTodoLine,
+  serializeTodo,
+  withTaskText,
+} from "./parser";
 import type {
   TodoClock,
   TodoCommandResult,
@@ -290,16 +295,10 @@ function runComplete(
         ? task.text
         : addOrReplaceMetadata(task.text, "pri", task.priority);
 
-    const completedLine = `x ${clock.today()} ${task.creationDate ?? ""} ${text}`;
-    const parsed = parseTodoLine(completedLine);
-    const completedTask = {
-      ...task,
-      completed: true,
-      priority: task.priority,
-      completionDate: clock.today(),
+    const completedTask = withTaskText(
+      { ...task, completed: true, completionDate: clock.today() },
       text,
-      metadata: parsed.ok ? parsed.task.metadata : task.metadata,
-    };
+    );
 
     return {
       task: completedTask,
@@ -320,18 +319,15 @@ function runUndo(
     const restoredPriority =
       getMetadataValue(task.metadata, "pri") ?? task.priority;
     const text = removeMetadata(task.text, "pri");
-    const parsed = parseTodoLine(text);
-
-    const reopenedTask = {
-      ...task,
-      completed: false,
-      completionDate: undefined,
-      priority: restoredPriority,
+    const reopenedTask = withTaskText(
+      {
+        ...task,
+        completed: false,
+        completionDate: undefined,
+        priority: restoredPriority,
+      },
       text,
-      projects: parsed.ok ? parsed.task.projects : task.projects,
-      contexts: parsed.ok ? parsed.task.contexts : task.contexts,
-      metadata: parsed.ok ? parsed.task.metadata : task.metadata,
-    };
+    );
 
     return {
       task: reopenedTask,
@@ -356,13 +352,8 @@ function runDue(
 
   return updateMany(state, [idText ?? ""], (task) => {
     const text = addOrReplaceMetadata(task.text, "due", dateText);
-    const parsed = parseTodoLine(text);
     return {
-      task: {
-        ...task,
-        text,
-        metadata: parsed.ok ? parsed.task.metadata : task.metadata,
-      },
+      task: withTaskText(task, text),
       output: `Updated: due:${dateText}`,
     };
   });
@@ -403,13 +394,8 @@ function runTag(
 
   return updateMany(state, [idText ?? ""], (task) => {
     const text = addUniqueTokens(task.text, tags);
-    const parsed = parseTodoLine(text);
     return {
-      task: {
-        ...task,
-        text,
-        contexts: parsed.ok ? parsed.task.contexts : task.contexts,
-      },
+      task: withTaskText(task, text),
       output: `Updated: added ${tags.join(" ")}`,
     };
   });
@@ -428,13 +414,8 @@ function runProject(
 
   return updateMany(state, [idText ?? ""], (task) => {
     const text = addUniqueTokens(task.text, [projectText]);
-    const parsed = parseTodoLine(text);
     return {
-      task: {
-        ...task,
-        text,
-        projects: parsed.ok ? parsed.task.projects : task.projects,
-      },
+      task: withTaskText(task, text),
       output: `Updated: assigned to ${projectText}`,
     };
   });
@@ -449,12 +430,7 @@ function runClear(
   if (target === "due") {
     return updateMany(state, [idText ?? ""], (task) => {
       const text = removeMetadata(task.text, "due");
-      const parsed = parseTodoLine(text);
-      return {
-        ...task,
-        text,
-        metadata: parsed.ok ? parsed.task.metadata : task.metadata,
-      };
+      return withTaskText(task, text);
     });
   }
 
@@ -473,8 +449,7 @@ function runClear(
         (word) =>
           CONTEXT_PATTERN.test(word) && (tagSet.size === 0 || tagSet.has(word)),
       );
-      const parsed = parseTodoLine(text);
-      return { ...task, text, contexts: parsed.ok ? parsed.task.contexts : [] };
+      return withTaskText(task, text);
     });
   }
 
@@ -483,8 +458,7 @@ function runClear(
       const text = removeTokens(task.text, (word) =>
         PROJECT_PATTERN.test(word),
       );
-      const parsed = parseTodoLine(text);
-      return { ...task, text, projects: parsed.ok ? parsed.task.projects : [] };
+      return withTaskText(task, text);
     });
   }
 

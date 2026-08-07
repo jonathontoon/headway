@@ -99,6 +99,20 @@ export function parseTodoLine(line: string): ParseTodoResult {
   };
 }
 
+export function withTaskText(task: TodoTask, text: string): TodoTask {
+  const parsed = parseTodoLine(serializeTodo({ ...task, text }));
+
+  return parsed.ok
+    ? parsed.task
+    : {
+        ...task,
+        text,
+        projects: [],
+        contexts: [],
+        metadata: [],
+      };
+}
+
 export function serializeTodo(task: TodoTask): string {
   const parts: string[] = [];
 
