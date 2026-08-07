@@ -4,11 +4,11 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { formatPromptSymbol } from "../services/terminalFormat";
 import { useTerminalCursor } from "../hooks/useTerminalCursor";
 import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
 import { COMMAND_VERBS, SUBCOMMAND_VERBS } from "../commands/registry";
 import { TerminalCursorOverlay } from "./TerminalCursorOverlay";
+import { TerminalPromptSymbol } from "./TerminalPromptSymbol";
 
 type TerminalCommandFormProps = {
   readonly command: string;
@@ -158,7 +158,7 @@ export function TerminalCommandForm({
         className="text-terminal-foreground"
         htmlFor="terminal-command"
       >
-        {formatPromptSymbol(TERMINAL_PROMPT)}
+        <TerminalPromptSymbol prompt={TERMINAL_PROMPT} />
       </label>
       <div
         data-testid="terminal-command-capture"

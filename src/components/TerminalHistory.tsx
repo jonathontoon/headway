@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { Fragment, memo } from "react";
 import type { TerminalEntry as TerminalEntryModel } from "../store/terminal/types";
 import { TerminalEntry } from "./TerminalEntry";
 
@@ -12,7 +12,7 @@ export const TerminalHistory = memo(function TerminalHistory({
   taskCount,
 }: TerminalHistoryProps) {
   return (
-    <>
+    <Fragment>
       {entries.map((entry) => (
         <TerminalEntry
           key={entry.id}
@@ -21,6 +21,6 @@ export const TerminalHistory = memo(function TerminalHistory({
           taskCount={taskCount}
         />
       ))}
-    </>
+    </Fragment>
   );
 });
