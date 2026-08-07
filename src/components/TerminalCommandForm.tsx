@@ -1,19 +1,18 @@
 import {
   useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
 import { formatPromptSymbol } from "../services/terminalFormat";
+import { useTerminalCursor } from "../hooks/useTerminalCursor";
 import {
   TERMINAL_PROMPT,
   KEYBOARD_KEYS,
   COMMAND_VERBS,
   SUBCOMMAND_VERBS,
 } from "../constants";
+import { TerminalCursorOverlay } from "./TerminalCursorOverlay";
 
 type TerminalCommandFormProps = {
   readonly command: string;
@@ -61,8 +60,6 @@ function completeCommand(command: string): string | null {
   return null;
 }
 
-const CURSOR_BLINK_RESUME_DELAY_MS = 500;
-
 export function TerminalCommandForm({
   command,
   onSubmit,
@@ -71,80 +68,17 @@ export function TerminalCommandForm({
   onCancel,
   onClearScreen,
 }: TerminalCommandFormProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const commandTextRef = useRef<HTMLSpanElement>(null);
-  const commandMeasurementRef = useRef<HTMLSpanElement>(null);
-  const [cursorPosition, setCursorPosition] = useState(command.length);
-  const [isCursorBlinking, setIsCursorBlinking] = useState(true);
-  const resumeBlinkTimeoutRef =
-    useRef<ReturnType<typeof setTimeout>>(undefined);
-  const isInitialRenderRef = useRef(true);
-
-  function pauseCursorBlink() {
-    setIsCursorBlinking(false);
-    clearTimeout(resumeBlinkTimeoutRef.current);
-    resumeBlinkTimeoutRef.current = setTimeout(() => {
-      setIsCursorBlinking(true);
-    }, CURSOR_BLINK_RESUME_DELAY_MS);
-  }
-
-  function resumeCursorBlinkImmediately() {
-    clearTimeout(resumeBlinkTimeoutRef.current);
-    setIsCursorBlinking(true);
-  }
-
-  useEffect(() => {
-    return () => clearTimeout(resumeBlinkTimeoutRef.current);
-  }, []);
-
-  function syncCursorPosition() {
-    setCursorPosition(inputRef.current?.selectionStart ?? 0);
-    pauseCursorBlink();
-  }
-
-  function setCursorPositionFromClientX(clientX: number) {
-    const input = inputRef.current;
-    const commandText = commandTextRef.current;
-    const commandMeasurement = commandMeasurementRef.current;
-    if (!input || !commandText || !commandMeasurement) {
-      return;
-    }
-
-    const textRect = commandText.getBoundingClientRect();
-    const measurementRect = commandMeasurement.getBoundingClientRect();
-    const measuredLength = Math.max(command.length, 1);
-    const charWidth = measurementRect.width / measuredLength;
-    const nextCursorPosition =
-      charWidth > 0
-        ? Math.max(
-            0,
-            Math.min(
-              command.length,
-              Math.round((clientX - textRect.left) / charWidth),
-            ),
-          )
-        : command.length;
-
-    input.focus({ preventScroll: true });
-    input.setSelectionRange(nextCursorPosition, nextCursorPosition);
-    setCursorPosition(nextCursorPosition);
-    pauseCursorBlink();
-  }
-
-  useLayoutEffect(() => {
-    setCursorPosition(inputRef.current?.selectionStart ?? 0);
-
-    if (isInitialRenderRef.current) {
-      isInitialRenderRef.current = false;
-      return;
-    }
-
-    if (command === "") {
-      resumeCursorBlinkImmediately();
-    } else {
-      pauseCursorBlink();
-    }
-  }, [command]);
+  const {
+    inputRef,
+    commandTextRef,
+    commandMeasurementRef,
+    syncCursorPosition,
+    setCursorPositionFromClientX,
+    before,
+    charUnderCursor,
+    after,
+    isCursorBlinking,
+  } = useTerminalCursor(command);
 
   useEffect(() => {
     function focusInputForTyping(event: globalThis.KeyboardEvent) {
@@ -166,7 +100,7 @@ export function TerminalCommandForm({
 
     window.addEventListener("keydown", focusInputForTyping);
     return () => window.removeEventListener("keydown", focusInputForTyping);
-  }, []);
+  }, [inputRef]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     requestAnimationFrame(syncCursorPosition);
@@ -217,10 +151,6 @@ export function TerminalCommandForm({
     setCursorPositionFromClientX(event.clientX);
   }
 
-  const before = command.slice(0, cursorPosition);
-  const charUnderCursor = command[cursorPosition] ?? " ";
-  const after = command.slice(cursorPosition + 1);
-
   return (
     <form
       className="m-0 text-terminal-foreground whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9] flex items-baseline"
@@ -266,20 +196,10 @@ export function TerminalCommandForm({
           aria-hidden="true"
         >
           {before}
-          <span className="relative inline-block">
-            {charUnderCursor}
-            <span
-              className={`absolute left-0 top-0 grid ${isCursorBlinking ? "animate-terminal-cursor-blink" : ""}`}
-              aria-hidden="true"
-            >
-              <span className="col-start-1 row-start-1 text-terminal-foreground">
-                █
-              </span>
-              <span className="col-start-1 row-start-1 text-terminal-background">
-                {charUnderCursor}
-              </span>
-            </span>
-          </span>
+          <TerminalCursorOverlay
+            char={charUnderCursor}
+            isBlinking={isCursorBlinking}
+          />
           {after}
         </span>
         <span
