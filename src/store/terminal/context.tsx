@@ -42,10 +42,7 @@ type TerminalProviderProps = PropsWithChildren<{
   readonly initialTodos: readonly string[];
 }>;
 
-export function TerminalProvider({
-  children,
-  initialTodos,
-}: TerminalProviderProps) {
+function useTerminalController(initialTodos: readonly string[]): TerminalStore {
   const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
     createInitialTerminalState(initialTodos),
   );
@@ -73,6 +70,22 @@ export function TerminalProvider({
   } | null>(null);
   const restoreConfirmationRef = useRef<string | undefined>(undefined);
 
+  function cancelPendingOperation(): boolean {
+    const pending = githubOperationRef.current;
+    if (!pending) {
+      return false;
+    }
+
+    pending.controller.abort();
+    githubOperationRef.current = null;
+    dispatch(
+      terminalActions.cancelPending(
+        terminalOutput.text(describeCancellation(pending.label)),
+      ),
+    );
+    return true;
+  }
+
   const store = useMemo<TerminalStore>(
     () => ({
       state,
@@ -81,17 +94,7 @@ export function TerminalProvider({
       },
       submitCommand() {
         const trimmed = state.command.trim();
-        const pending = githubOperationRef.current;
-
-        if (pending) {
-          pending.controller.abort();
-          githubOperationRef.current = null;
-          dispatch(
-            terminalActions.cancelPending(
-              terminalOutput.text(describeCancellation(pending.label)),
-            ),
-          );
-        }
+        cancelPendingOperation();
 
         if (isGitHubCommand(trimmed)) {
           dispatch(
@@ -159,15 +162,7 @@ export function TerminalProvider({
         dispatch(terminalActions.navigateHistory(direction));
       },
       cancelCommand() {
-        const pending = githubOperationRef.current;
-        if (pending) {
-          pending.controller.abort();
-          githubOperationRef.current = null;
-          dispatch(
-            terminalActions.cancelPending(
-              terminalOutput.text(describeCancellation(pending.label)),
-            ),
-          );
+        if (cancelPendingOperation()) {
           return;
         }
         dispatch(terminalActions.cancel());
@@ -178,6 +173,15 @@ export function TerminalProvider({
     }),
     [state],
   );
+
+  return store;
+}
+
+export function TerminalProvider({
+  children,
+  initialTodos,
+}: TerminalProviderProps) {
+  const store = useTerminalController(initialTodos);
 
   return (
     <TerminalContext.Provider value={store}>
