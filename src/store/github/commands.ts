@@ -32,6 +32,10 @@ export type GitHubCommandDeps = {
   readonly clientId: string | undefined;
   readonly fetchFn?: FetchFn;
   readonly waitFn?: WaitFn;
+  readonly restoreConfirmation: {
+    readonly get: () => string | undefined;
+    readonly set: (key: string | undefined) => void;
+  };
   readonly signal?: AbortSignal;
 };
 
@@ -62,7 +66,7 @@ export async function runGitHubCommand(
   // Any command other than a repeated 'sync restore' withdraws the pending
   // run-again confirmation, so a stale "run again" can't fire much later.
   if (!(verb === "sync" && args[0] === "restore")) {
-    pendingRestoreKey = undefined;
+    deps.restoreConfirmation.set(undefined);
   }
 
   try {
@@ -477,16 +481,6 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
   }
 }
 
-// Restoring replaces local tasks outright, and unlike a backup there is no
-// git history to recover them from - so a dirty restore must be run twice.
-// The pending key pins the exact target and local tasks that were warned
-// about; any change to either (or any other command) withdraws it.
-let pendingRestoreKey: string | undefined;
-
-export function resetRestoreConfirmation(): void {
-  pendingRestoreKey = undefined;
-}
-
 async function runRestore(deps: GitHubCommandDeps): Promise<void> {
   const session = await requireSession(deps);
 
@@ -501,15 +495,15 @@ async function runRestore(deps: GitHubCommandDeps): Promise<void> {
   if (dirty) {
     const key = `${describeTarget(session.target)}|${hashTodos(deps.getTodos())}`;
 
-    if (pendingRestoreKey !== key) {
-      pendingRestoreKey = key;
+    if (deps.restoreConfirmation.get() !== key) {
+      deps.restoreConfirmation.set(key);
       deps.emit(
         "Warning: you have local tasks that aren't backed up. Run 'sync restore' again to replace them.",
       );
       return;
     }
 
-    pendingRestoreKey = undefined;
+    deps.restoreConfirmation.set(undefined);
   }
 
   const spinnerId = startSpinner(deps, "Loading from GitHub...");

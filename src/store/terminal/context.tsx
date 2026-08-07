@@ -68,6 +68,7 @@ export function TerminalProvider({
     readonly controller: AbortController;
     readonly label: string;
   } | null>(null);
+  const restoreConfirmationRef = useRef<string | undefined>(undefined);
 
   const store = useMemo<TerminalStore>(
     () => ({
@@ -114,6 +115,12 @@ export function TerminalProvider({
               dispatch(terminalActions.applyTodos(todos));
             },
             clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
+            restoreConfirmation: {
+              get: () => restoreConfirmationRef.current,
+              set: (key) => {
+                restoreConfirmationRef.current = key;
+              },
+            },
             signal: controller.signal,
           }).finally(() => {
             if (githubOperationRef.current?.controller === controller) {

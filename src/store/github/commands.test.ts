@@ -1,7 +1,6 @@
 import { encodeLines, type FetchFn, type WaitFn } from "./api";
 import {
   isGitHubCommand,
-  resetRestoreConfirmation,
   runGitHubCommand,
   type GitHubCommandDeps,
 } from "./commands";
@@ -13,6 +12,16 @@ type Route = (init?: RequestInit) => Response;
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
+}
+
+function createRestoreConfirmationStore() {
+  let restoreConfirmation: string | undefined;
+  return {
+    get: () => restoreConfirmation,
+    set: (key: string | undefined) => {
+      restoreConfirmation = key;
+    },
+  };
 }
 
 function fakeFetch(routes: Record<string, Route>): FetchFn {
@@ -62,6 +71,7 @@ function makeDeps(overrides: Partial<GitHubCommandDeps> = {}) {
     applyTodos: (next) => applied.push(next),
     clientId: "client123",
     waitFn: () => Promise.resolve(),
+    restoreConfirmation: createRestoreConfirmationStore(),
     ...overrides,
   };
   return { deps, output, applied };
@@ -94,10 +104,6 @@ const DEVICE_FLOW_ROUTES: Record<string, Route> = {
 };
 
 describe("github commands", () => {
-  beforeEach(() => {
-    resetRestoreConfirmation();
-  });
-
   it("recognizes only github command verbs", () => {
     expect(isGitHubCommand("sync backup")).toBe(true);
     expect(isGitHubCommand("  connect  ")).toBe(true);
@@ -409,6 +415,7 @@ describe("github commands", () => {
 
   it("warns once, then replaces local tasks when sync restore is run again", async () => {
     await configureTarget();
+    const restoreConfirmation = createRestoreConfirmationStore();
     const fetchFn = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({
@@ -417,7 +424,7 @@ describe("github commands", () => {
         }),
     });
 
-    const first = makeDeps({ fetchFn: fakeFetch({}) });
+    const first = makeDeps({ fetchFn: fakeFetch({}), restoreConfirmation });
     await runGitHubCommand("sync restore", first.deps);
     expect(first.applied).toEqual([]);
     expect(first.output[0]).toBe(
@@ -425,7 +432,7 @@ describe("github commands", () => {
     );
     expect((await loadGitHubSettings()).lastSyncedSha).toBeUndefined();
 
-    const second = makeDeps({ fetchFn });
+    const second = makeDeps({ fetchFn, restoreConfirmation });
     await runGitHubCommand("sync restore", second.deps);
     expect(second.applied).toEqual([["remote task"]]);
     expect(second.output[second.output.length - 1]).toBe(
@@ -439,8 +446,9 @@ describe("github commands", () => {
 
   it("withdraws the restore confirmation when the local tasks change", async () => {
     await configureTarget();
+    const restoreConfirmation = createRestoreConfirmationStore();
 
-    const first = makeDeps({ fetchFn: fakeFetch({}) });
+    const first = makeDeps({ fetchFn: fakeFetch({}), restoreConfirmation });
     await runGitHubCommand("sync restore", first.deps);
     expect(first.output[0]).toContain("Run 'sync restore' again");
 
@@ -449,6 +457,7 @@ describe("github commands", () => {
     const second = makeDeps({
       fetchFn: fakeFetch({}),
       getTodos: () => ["edited task"],
+      restoreConfirmation,
     });
     await runGitHubCommand("sync restore", second.deps);
     expect(second.applied).toEqual([]);
@@ -457,15 +466,16 @@ describe("github commands", () => {
 
   it("withdraws the restore confirmation when another command runs in between", async () => {
     await configureTarget();
+    const restoreConfirmation = createRestoreConfirmationStore();
 
-    const first = makeDeps({ fetchFn: fakeFetch({}) });
+    const first = makeDeps({ fetchFn: fakeFetch({}), restoreConfirmation });
     await runGitHubCommand("sync restore", first.deps);
     expect(first.output[0]).toContain("Run 'sync restore' again");
 
-    const status = makeDeps();
+    const status = makeDeps({ restoreConfirmation });
     await runGitHubCommand("sync status", status.deps);
 
-    const second = makeDeps({ fetchFn: fakeFetch({}) });
+    const second = makeDeps({ fetchFn: fakeFetch({}), restoreConfirmation });
     await runGitHubCommand("sync restore", second.deps);
     expect(second.applied).toEqual([]);
     expect(second.output[0]).toContain("Run 'sync restore' again");
