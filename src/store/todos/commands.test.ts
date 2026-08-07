@@ -1,5 +1,6 @@
 import { runTodoCommand } from "./commands";
 import type { TodoClock } from "./types";
+import { outputText } from "../terminal/output";
 
 const clock: TodoClock = {
   today: () => "2026-07-05",
@@ -141,7 +142,9 @@ describe("todo commands", () => {
 
   it("renders the completed view with a fixed date", () => {
     expect(
-      runTodoCommand("list completed", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list completed", { todos, view: [] }, clock).output,
+      ),
     ).toContain("1. Send invoices +work @computer");
   });
 
@@ -152,47 +155,67 @@ describe("todo commands", () => {
     ];
 
     expect(
-      runTodoCommand("list today", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list today", { todos, view: [] }, clock).output,
+      ),
     ).toContain("1. (A) Pay electric bill +bills due:2026-07-04");
     expect(
-      runTodoCommand(
-        "list upcoming",
-        { todos: todosWithUpcoming, view: [] },
-        clock,
-      ).output,
+      outputText(
+        runTodoCommand(
+          "list upcoming",
+          { todos: todosWithUpcoming, view: [] },
+          clock,
+        ).output,
+      ),
     ).toBe("1. Book flights +travel due:2026-07-09");
     expect(
-      runTodoCommand("list completed", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list completed", { todos, view: [] }, clock).output,
+      ),
     ).toContain("1. Send invoices +work @computer");
   });
 
   it("filters incomplete task text with regex literals", () => {
     expect(
-      runTodoCommand("list /\\+work/", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list /\\+work/", { todos, view: [] }, clock).output,
+      ),
     ).toContain("1. Submit quarterly report +work @computer");
     expect(
-      runTodoCommand("list /@home/", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list /@home/", { todos, view: [] }, clock).output,
+      ),
     ).toBe("1. Fix leaky faucet @home");
     expect(
-      runTodoCommand("list /QUARTERLY/i", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list /QUARTERLY/i", { todos, view: [] }, clock).output,
+      ),
     ).toBe("1. Submit quarterly report +work @computer");
     expect(
-      runTodoCommand("list /due:2026-07-04/", { todos, view: [] }, clock)
-        .output,
+      outputText(
+        runTodoCommand("list /due:2026-07-04/", { todos, view: [] }, clock)
+          .output,
+      ),
     ).toContain("1. (A) Pay electric bill +bills due:2026-07-04");
     expect(
-      runTodoCommand("list /nomatch/i", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list /nomatch/i", { todos, view: [] }, clock).output,
+      ),
     ).toBe("No incomplete tasks match /nomatch/i.");
   });
 
   it("accepts any valid regex flags", () => {
     expect(
-      runTodoCommand("list /QUARTERLY/iu", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list /QUARTERLY/iu", { todos, view: [] }, clock).output,
+      ),
     ).toBe("1. Submit quarterly report +work @computer");
     // A global regex keeps lastIndex between .test() calls; both matching
     // tasks must still be listed rather than every other one.
     expect(
-      runTodoCommand("list /due:/g", { todos, view: [] }, clock).output,
+      outputText(
+        runTodoCommand("list /due:/g", { todos, view: [] }, clock).output,
+      ),
     ).toContain("2.");
   });
 
@@ -239,7 +262,9 @@ describe("todo commands", () => {
     // Only "Submit quarterly report" matches the regex, so it prints as
     // position 1 even though it's stable line 4 - proving ids track the
     // rendered list, not raw todo.txt position.
-    expect(listed.output).toBe("1. Submit quarterly report +work @computer");
+    expect(outputText(listed.output)).toBe(
+      "1. Submit quarterly report +work @computer",
+    );
 
     const edited = runTodoCommand(
       "edit 1 Submit the quarterly report +work @computer",

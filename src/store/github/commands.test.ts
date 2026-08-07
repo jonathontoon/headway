@@ -5,6 +5,7 @@ import {
   type GitHubCommandDeps,
 } from "./commands";
 import { hashTodos, loadGitHubSettings, storeGitHubSettings } from "./settings";
+import { outputText } from "../terminal/output";
 
 const todos = ["(A) Pay electric bill +bills", "Call plumber @phone"];
 
@@ -58,10 +59,11 @@ function makeDeps(overrides: Partial<GitHubCommandDeps> = {}) {
   const deps: GitHubCommandDeps = {
     getTodos: () => todos,
     emit: (line, options) => {
+      const text = typeof line === "string" ? line : outputText(line)!;
       if (options?.replace && output.length > 0) {
-        output[output.length - 1] = line;
+        output[output.length - 1] = text;
       } else {
-        output.push(line);
+        output.push(text);
       }
     },
     applyTodos: (next) => applied.push(next),

@@ -1,9 +1,11 @@
 import { formatOutput, formatPromptSymbol } from "../services/terminalFormat";
 import { TERMINAL_BLOCK_GAP_MB, TERMINAL_PROMPT } from "../constants";
+import type { TerminalOutput } from "../store/terminal/output";
+import { toTerminalOutput } from "../store/terminal/output";
 
 type TerminalEntryProps = {
   readonly command?: string | undefined;
-  readonly output?: string | undefined;
+  readonly output?: TerminalOutput | string | undefined;
   readonly taskCount: number;
 };
 
@@ -32,7 +34,7 @@ export function TerminalEntry({
           data-testid="terminal-output"
           className="m-0 whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9] text-terminal-foreground"
         >
-          {formatOutput(output, taskCount)}
+          {formatOutput(toTerminalOutput(output), taskCount)}
         </div>
       )}
     </div>

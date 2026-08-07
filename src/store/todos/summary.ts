@@ -1,10 +1,10 @@
 import {
-  formatSection,
   getMetadataValue,
   parseTasks,
   pluralize,
   type IndexedTask,
 } from "./format";
+import { terminalOutput, type TerminalOutput } from "../terminal/output";
 
 function openTasksInFileOrder(
   todos: readonly string[],
@@ -30,7 +30,7 @@ export function formatBootMessage(
   todos: readonly string[],
   today: string,
   greeting: string,
-): { readonly message: string; readonly view: readonly number[] } {
+): { readonly message: TerminalOutput; readonly view: readonly number[] } {
   const open = openTasksInFileOrder(todos);
   const overdue = open.filter(({ task }) => {
     const due = getMetadataValue(task.metadata, "due");
@@ -39,13 +39,15 @@ export function formatBootMessage(
   const dueToday = open.filter(
     ({ task }) => getMetadataValue(task.metadata, "due") === today,
   );
-  const lines = [
-    `↗ headway v${__APP_VERSION__}`,
-    `${greeting}. You have ${overdue.length} ${pluralize(
-      overdue.length,
-      "overdue task",
-      "overdue tasks",
-    )}, and ${dueToday.length} due today.`,
+  const output: TerminalOutput[] = [
+    terminalOutput.boot(`↗ headway v${__APP_VERSION__}`),
+    terminalOutput.greeting(
+      `${greeting}. You have ${overdue.length} ${pluralize(
+        overdue.length,
+        "overdue task",
+        "overdue tasks",
+      )}, and ${dueToday.length} due today.`,
+    ),
   ];
 
   let position = 1;
@@ -56,13 +58,24 @@ export function formatBootMessage(
     ["TODAY", dueToday],
   ] as const) {
     if (tasks.length === 0) continue;
-    const section = formatSection(tasks, position);
-    lines.push("", heading, ...section.lines);
-    view = [...view, ...section.ids];
+    output.push(
+      terminalOutput.blank(),
+      terminalOutput.muted(heading),
+      terminalOutput.tasks(
+        tasks.map((item, index) => ({
+          position: position + index,
+          task: item.task,
+        })),
+      ),
+    );
+    view = [...view, ...tasks.map((item) => item.id)];
     position += tasks.length;
   }
 
-  lines.push("", "Type 'help' for all available commands.");
+  output.push(
+    terminalOutput.blank(),
+    terminalOutput.muted("Type 'help' for all available commands."),
+  );
 
-  return { message: lines.join("\n"), view };
+  return { message: terminalOutput.group(...output), view };
 }

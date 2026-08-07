@@ -1,6 +1,11 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { getLocalDate } from "../store/todos/summary";
 import { HELP_TEXT, TERMINAL_BLOCK_GAP_H } from "../constants";
+import type {
+  MessageTone,
+  TerminalOutput,
+  TerminalTask,
+} from "../store/terminal/output";
 
 const SECTION_HEADERS = new Set([
   "TASKS",
@@ -13,51 +18,14 @@ const SECTION_HEADERS = new Set([
   "TODAY",
 ]);
 
-const TASK_LINE_PATTERN = /^(\d+)\.\s+(?:\((\w)\)\s+)?(.*)$/;
 const HELP_ROW_PATTERN = /^(.+?)(?: - |\s{2,})(.+)$/;
 const URL_PATTERN = /^https?:\/\//;
-const BOOT_BANNER_PATTERN = /^↗ /;
-const GREETING_PATTERN = /^(Good morning|Good afternoon|Good evening)\./;
 const TASK_FRAGMENT_PATTERN = /(\+[\w-]+|@[\w-]+|due:\d{4}-\d{2}-\d{2})/g;
 const HELP_ARG_PATTERN = /(<[^>]+>|"[^"]*")/g;
 const HEART_PATTERN = /(♥)/;
-const SPINNER_LINE_PATTERN = /^[⠀-⣿] /;
-const SYNC_STATUS_MESSAGE_PATTERN = /^(?:Syncing|Not syncing)/;
 const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
 const DEVICE_CODE_PATTERN = /\b([A-Z0-9]{4}-[A-Z0-9]{4})\b/g;
 const DEVICE_CODE_TEST_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-export const SUCCESS_PREFIXES = [
-  "Added:",
-  "Updated:",
-  "Deleted:",
-  "Completed:",
-  "Reopened:",
-  "Saved:",
-  "Loaded:",
-  "Connected",
-  "Disconnected",
-] as const;
-const MUTED_PATTERN =
-  /\b(empty|is clear|No |not a recognized command|not found)\b/i;
-const SECONDARY_LINE_PREFIXES = ["If it's saved you time"] as const;
-
-type MessageTone = "error" | "warning" | "success" | "muted" | "normal";
-
-type OutputLine =
-  | { readonly kind: "blank" }
-  | { readonly kind: "section"; readonly text: string }
-  | { readonly kind: "task"; readonly match: RegExpMatchArray }
-  | { readonly kind: "secondary"; readonly text: string }
-  | { readonly kind: "boot"; readonly text: string }
-  | { readonly kind: "greeting"; readonly text: string }
-  | { readonly kind: "helpHint"; readonly text: string }
-  | { readonly kind: "url"; readonly text: string }
-  | { readonly kind: "spinner"; readonly text: string }
-  | {
-      readonly kind: "message";
-      readonly text: string;
-      readonly tone: MessageTone;
-    };
 
 export function formatPromptSymbol(prompt: string): ReactNode {
   const [head, ...rest] = prompt;
@@ -120,14 +88,14 @@ function renderTaskFragments(text: string, today: string): ReactNode {
 }
 
 function renderTaskLine(
-  match: RegExpMatchArray,
+  item: TerminalTask,
   today: string,
   key: number,
   idColumnWidth: number,
 ): ReactNode {
-  const id = match[1]!;
-  const priority = match[2];
-  const rest = match[3]!;
+  const { position: id, task } = item;
+  const priority = task.completed ? undefined : task.priority;
+  const rest = task.text.replace(/\s+pri:[^:\s]+/g, "").trim();
 
   return (
     <div key={key} className="block whitespace-pre-wrap">
@@ -382,60 +350,6 @@ function stripRedundantLabel(line: string, tone: MessageTone): string {
   return line;
 }
 
-function messageTone(line: string): MessageTone {
-  if (line.startsWith("Error:")) {
-    return "error";
-  }
-  if (line.startsWith("Warning:")) {
-    return "warning";
-  }
-  if (SUCCESS_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-    return "success";
-  }
-  if (SYNC_STATUS_MESSAGE_PATTERN.test(line)) {
-    if (line.includes("everything's saved")) {
-      return "success";
-    }
-    if (
-      line.includes("unsaved changes") ||
-      line.includes("nothing's been saved yet")
-    ) {
-      return "warning";
-    }
-    if (MUTED_PATTERN.test(line)) {
-      return "muted";
-    }
-  }
-  if (MUTED_PATTERN.test(line)) {
-    return "muted";
-  }
-  return "normal";
-}
-
-function classifyOutputLine(line: string): OutputLine {
-  if (line === "") return { kind: "blank" };
-  if (SECTION_HEADERS.has(line)) return { kind: "section", text: line };
-
-  const taskMatch = line.match(TASK_LINE_PATTERN);
-  if (taskMatch) return { kind: "task", match: taskMatch };
-
-  if (SECONDARY_LINE_PREFIXES.some((prefix) => line.startsWith(prefix))) {
-    return { kind: "secondary", text: line };
-  }
-
-  if (BOOT_BANNER_PATTERN.test(line)) return { kind: "boot", text: line };
-  if (GREETING_PATTERN.test(line)) return { kind: "greeting", text: line };
-
-  if (line === "Type 'help' for all available commands.") {
-    return { kind: "helpHint", text: line };
-  }
-
-  if (URL_PATTERN.test(line)) return { kind: "url", text: line };
-  if (SPINNER_LINE_PATTERN.test(line)) return { kind: "spinner", text: line };
-
-  return { kind: "message", text: line, tone: messageTone(line) };
-}
-
 function renderMessageLine(
   line: string,
   tone: MessageTone,
@@ -464,48 +378,47 @@ function renderSpinnerLine(line: string, key: number): ReactNode {
   );
 }
 
-export function formatOutput(output: string, taskCount: number): ReactNode {
-  if (output === HELP_TEXT) return renderHelpOutput();
-
+function renderOutputLine(
+  output: TerminalOutput,
+  taskCount: number,
+  key: number,
+): ReactNode {
   const today = getLocalDate();
-  const lines = output.split("\n").map(classifyOutputLine);
-  // Sized to the total task count (not just what's in this block) so the id
-  // column lines up the same way across every rendered list, not just within
-  // one of them.
   const idColumnWidth = String(taskCount).length + 1;
 
-  return lines.map((line, i) => {
-    switch (line.kind) {
-      case "blank":
-        return (
-          <div key={i} className={TERMINAL_BLOCK_GAP_H} aria-hidden="true" />
-        );
-      case "section":
-        return (
-          <div key={i} className="block whitespace-pre-wrap text-role-muted">
-            {line.text}
-          </div>
-        );
-      case "task":
-        return renderTaskLine(line.match, today, i, idColumnWidth);
-      case "secondary":
-        return renderSecondaryLine(line.text, i);
-      case "boot":
-        return renderBootBanner(line.text, i);
-      case "greeting":
-        return renderGreeting(line.text, i);
-      case "helpHint":
-        return (
-          <div key={i} className="block whitespace-pre-wrap text-role-muted">
-            {line.text}
-          </div>
-        );
-      case "url":
-        return renderUrlLine(line.text, i);
-      case "spinner":
-        return renderSpinnerLine(line.text, i);
-      case "message":
-        return renderMessageLine(line.text, line.tone, i);
-    }
-  });
+  switch (output.kind) {
+    case "blank":
+      return (
+        <div key={key} className={TERMINAL_BLOCK_GAP_H} aria-hidden="true" />
+      );
+    case "text":
+      return renderMessageLine(output.text, output.tone, key);
+    case "tasks":
+      return output.tasks.map((task, index) =>
+        renderTaskLine(task, today, index, idColumnWidth),
+      );
+    case "help":
+      return renderHelpOutput();
+    case "progress":
+      return renderSpinnerLine(output.text, key);
+    case "boot":
+      return renderBootBanner(output.text, key);
+    case "greeting":
+      return renderGreeting(output.text, key);
+    case "secondary":
+      return renderSecondaryLine(output.text, key);
+    case "link":
+      return renderUrlLine(output.href, key);
+    case "group":
+      return output.items.map((item, index) =>
+        renderOutputLine(item, taskCount, index),
+      );
+  }
+}
+
+export function formatOutput(
+  output: TerminalOutput,
+  taskCount: number,
+): ReactNode {
+  return renderOutputLine(output, taskCount, 0);
 }

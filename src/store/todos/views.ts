@@ -1,8 +1,9 @@
-import { formatSection, getMetadataValue, parseTasks } from "./format";
+import { getMetadataValue, parseTasks } from "./format";
 import type { IndexedTask } from "./format";
+import { terminalOutput, type TerminalOutput } from "../terminal/output";
 
 type TodoListing = {
-  readonly output: string;
+  readonly output: TerminalOutput;
   readonly view: readonly number[];
 };
 
@@ -45,11 +46,15 @@ function buildListing(
   emptyMessage: string,
 ): TodoListing {
   if (tasks.length === 0) {
-    return { output: emptyMessage, view: [] };
+    return { output: terminalOutput.muted(emptyMessage), view: [] };
   }
 
-  const { lines, ids } = formatSection(tasks, 1);
-  return { output: lines.join("\n"), view: ids };
+  return {
+    output: terminalOutput.tasks(
+      tasks.map((item, index) => ({ position: index + 1, task: item.task })),
+    ),
+    view: tasks.map((item) => item.id),
+  };
 }
 
 export function listIncompleteTasks(todos: readonly string[]): TodoListing {

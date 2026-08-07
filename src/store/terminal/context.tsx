@@ -11,6 +11,7 @@ import { storeTodos, subscribeTodos } from "../todos/storage";
 import { terminalActions } from "./actions";
 import { createInitialTerminalState, terminalReducer } from "./reducer";
 import { TerminalContext, type TerminalStore } from "./terminalContext";
+import { terminalOutput, toTerminalOutput } from "./output";
 
 // Persistence is fire-and-forget so command handling stays synchronous; a
 // failed IndexedDB write only costs durability, not the in-memory state,
@@ -22,7 +23,9 @@ function persistTodos(
   storeTodos(todos).catch(() => {
     dispatch(
       terminalActions.appendOutput(
-        "Warning: could not save tasks to local storage.",
+        terminalOutput.warning(
+          "Warning: could not save tasks to local storage.",
+        ),
       ),
     );
   });
@@ -84,7 +87,9 @@ export function TerminalProvider({
           pending.controller.abort();
           githubOperationRef.current = null;
           dispatch(
-            terminalActions.cancelPending(describeCancellation(pending.label)),
+            terminalActions.cancelPending(
+              terminalOutput.text(describeCancellation(pending.label)),
+            ),
           );
         }
 
@@ -107,8 +112,8 @@ export function TerminalProvider({
             emit: (output, options) =>
               dispatch(
                 options?.replace
-                  ? terminalActions.replaceLastOutput(output)
-                  : terminalActions.appendOutput(output),
+                  ? terminalActions.replaceLastOutput(toTerminalOutput(output))
+                  : terminalActions.appendOutput(toTerminalOutput(output)),
               ),
             applyTodos: (todos) => {
               persistTodos(dispatch, todos);
@@ -141,7 +146,9 @@ export function TerminalProvider({
         dispatch(
           terminalActions.submit(
             state.command,
-            result.output,
+            result.output === undefined
+              ? undefined
+              : toTerminalOutput(result.output),
             result.nextTodos,
             result.view ?? state.view,
             false,
@@ -157,7 +164,9 @@ export function TerminalProvider({
           pending.controller.abort();
           githubOperationRef.current = null;
           dispatch(
-            terminalActions.cancelPending(describeCancellation(pending.label)),
+            terminalActions.cancelPending(
+              terminalOutput.text(describeCancellation(pending.label)),
+            ),
           );
           return;
         }

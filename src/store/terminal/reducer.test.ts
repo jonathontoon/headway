@@ -1,5 +1,6 @@
 import { terminalActions } from "./actions";
 import { createInitialTerminalState, terminalReducer } from "./reducer";
+import { terminalOutput } from "./output";
 
 describe("terminal reducer pending state", () => {
   const initial = createInitialTerminalState([]);
@@ -17,7 +18,13 @@ describe("terminal reducer pending state", () => {
 
     const idle = terminalReducer(
       pending,
-      terminalActions.submit("list", "output", [], [], false),
+      terminalActions.submit(
+        "list",
+        terminalOutput.text("output"),
+        [],
+        [],
+        false,
+      ),
     );
     expect(idle.pending).toBe(false);
   });
@@ -40,13 +47,15 @@ describe("terminal reducer pending state", () => {
     );
     const cancelled = terminalReducer(
       pending,
-      terminalActions.cancelPending("Connection cancelled."),
+      terminalActions.cancelPending(
+        terminalOutput.text("Connection cancelled."),
+      ),
     );
 
     expect(cancelled.pending).toBe(false);
     expect(cancelled.entries.at(-1)).toEqual({
       id: pending.entries.length,
-      output: "Connection cancelled.",
+      output: terminalOutput.text("Connection cancelled."),
     });
   });
 });

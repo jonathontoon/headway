@@ -2,10 +2,11 @@ import { HELP_TEXT } from "../constants";
 import { runTodoCommand } from "../store/todos/commands";
 import { formatBootMessage } from "../store/todos/summary";
 import type { TodoClock, TodoCommandState } from "../store/todos/types";
+import type { TerminalOutput } from "../store/terminal/output";
 
 export type ShowcaseEntry = {
   readonly command?: string | undefined;
-  readonly output?: string | undefined;
+  readonly output?: TerminalOutput | string | undefined;
 };
 
 export type ShowcaseSection = {

@@ -21,11 +21,12 @@ import {
   storeGitHubSettings,
   type GitHubSettings,
 } from "./settings";
+import type { TerminalOutput } from "../terminal/output";
 
 export type GitHubCommandDeps = {
   readonly getTodos: () => readonly string[];
   readonly emit: (
-    output: string,
+    output: TerminalOutput | string,
     options?: { readonly replace?: boolean },
   ) => void;
   readonly applyTodos: (todos: readonly string[]) => void;

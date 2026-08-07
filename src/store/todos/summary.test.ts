@@ -1,4 +1,5 @@
 import { formatBootMessage } from "./summary";
+import { outputText } from "../terminal/output";
 
 describe("todo boot summary", () => {
   it("formats the welcome message from overdue and today tasks", () => {
@@ -13,7 +14,7 @@ describe("todo boot summary", () => {
       "Good evening",
     );
 
-    expect(message).toBe(
+    expect(outputText(message)).toBe(
       [
         "↗ headway v3.0.0",
         "Good evening. You have 1 overdue task, and 1 due today.",

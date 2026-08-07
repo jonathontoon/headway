@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { HELP_TEXT } from "../constants";
-import { formatOutput, SUCCESS_PREFIXES } from "./terminalFormat";
+import { parseTodoLine } from "../store/todos/parser";
+import { terminalOutput } from "../store/terminal/output";
+import { formatOutput } from "./terminalFormat";
 
 describe("terminal output formatting", () => {
   it("colors aligned help rows as command and description columns", () => {
-    render(<>{formatOutput(HELP_TEXT, 5)}</>);
+    render(<>{formatOutput(terminalOutput.help(), 5)}</>);
 
     expect(screen.getByText("list today")).toHaveClass("text-role-command");
     expect(screen.getByText("due today and overdue")).toHaveClass(
@@ -15,7 +16,16 @@ describe("terminal output formatting", () => {
   });
 
   it("colors projects and contexts distinctly in task lines", () => {
-    render(<>{formatOutput("1. (A) Ship release +work @laptop", 5)}</>);
+    const parsed = parseTodoLine("(A) Ship release +work @laptop");
+    if (!parsed.ok) throw new Error("expected valid task");
+    render(
+      <>
+        {formatOutput(
+          terminalOutput.tasks([{ position: 1, task: parsed.task }]),
+          5,
+        )}
+      </>,
+    );
 
     expect(screen.getByText("+work")).toHaveClass("text-role-accent");
     expect(screen.getByText("@laptop")).toHaveClass("text-role-context");
@@ -24,20 +34,26 @@ describe("terminal output formatting", () => {
   });
 
   it("colors priorities beyond C with the warm-to-cool spectrum", () => {
-    render(<>{formatOutput("2. (D) Water plants", 5)}</>);
+    const parsed = parseTodoLine("(D) Water plants");
+    if (!parsed.ok) throw new Error("expected valid task");
+    render(
+      <>
+        {formatOutput(
+          terminalOutput.tasks([{ position: 2, task: parsed.task }]),
+          5,
+        )}
+      </>,
+    );
 
     expect(screen.getByText("(D)")).toHaveClass("text-terminal-6");
   });
 
-  it("classifies each success message template as success output", () => {
-    for (const prefix of SUCCESS_PREFIXES) {
-      const { container, unmount } = render(
-        <>{formatOutput(`${prefix} something`, 5)}</>,
-      );
-      const line = container.querySelector("div");
-      expect(line?.textContent).toBe(` → ${prefix} something`);
-      expect(line).toHaveClass("text-role-success");
-      unmount();
-    }
+  it("renders an explicitly successful message", () => {
+    const { container } = render(
+      <>{formatOutput(terminalOutput.success("Saved: something"), 5)}</>,
+    );
+    const line = container.querySelector("div");
+    expect(line?.textContent).toBe(" → Saved: something");
+    expect(line).toHaveClass("text-role-success");
   });
 });

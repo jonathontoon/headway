@@ -25,10 +25,11 @@ export type TodoCommandState = {
 
 export type TodoCommandResult = {
   readonly nextTodos: readonly string[];
-  readonly output?: string | undefined;
+  readonly output?: TerminalOutput | string | undefined;
   readonly view?: readonly number[] | undefined;
 };
 
 export type TodoClock = {
   readonly today: () => string;
 };
+import type { TerminalOutput } from "../terminal/output";
