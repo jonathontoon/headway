@@ -122,10 +122,22 @@ export default {
       return new Response("Forbidden", { status: 403 });
     }
 
-    const upstream = DEVICE_FLOW_ROUTES[url.pathname];
-    const isRevoke = url.pathname === REVOKE_ROUTE;
+    if (request.method !== "POST") {
+      return new Response("Not found", { status: 404 });
+    }
 
-    if ((!upstream && !isRevoke) || request.method !== "POST") {
+    if (url.pathname === REVOKE_ROUTE) {
+      const body = await readLimitedBody(request, MAX_BODY_BYTES);
+
+      if (body === undefined) {
+        return new Response("Payload too large", { status: 413 });
+      }
+
+      return revokeGrant(body, env);
+    }
+
+    const upstream = DEVICE_FLOW_ROUTES[url.pathname];
+    if (upstream === undefined) {
       return new Response("Not found", { status: 404 });
     }
 
@@ -133,14 +145,6 @@ export default {
 
     if (body === undefined) {
       return new Response("Payload too large", { status: 413 });
-    }
-
-    if (isRevoke) {
-      return revokeGrant(body, env);
-    }
-
-    if (upstream === undefined) {
-      return new Response("Not found", { status: 404 });
     }
 
     // When the deployment pins its client id, refuse to proxy for any
