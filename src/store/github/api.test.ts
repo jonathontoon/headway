@@ -8,9 +8,9 @@ import {
   requestDeviceCode,
   revokeToken,
   type DeviceCode,
-  type FetchFunc,
+  type FetchFn,
   type SyncTarget,
-  type WaitFunc,
+  type WaitFn,
 } from "./api";
 
 const target: SyncTarget = {
@@ -24,7 +24,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
 }
 
-function fetchOnce(response: Response, calls: RequestInit[] = []): FetchFunc {
+function fetchOnce(response: Response, calls: RequestInit[] = []): FetchFn {
   return (_input, init) => {
     calls.push(init ?? {});
     return Promise.resolve(response);
@@ -78,9 +78,9 @@ describe("github api", () => {
       jsonResponse({ access_token: "gho_token" }),
     ];
     const waits: number[] = [];
-    const FetchFunc: FetchFunc = () => Promise.resolve(responses.shift()!);
+    const fetchFn: FetchFn = () => Promise.resolve(responses.shift()!);
 
-    const token = await pollForToken("client123", device, FetchFunc, (ms) => {
+    const token = await pollForToken("client123", device, fetchFn, (ms) => {
       waits.push(ms);
       return Promise.resolve();
     });
@@ -127,16 +127,16 @@ describe("github api", () => {
     };
     const controller = new AbortController();
     controller.abort();
-    const WaitFunc: WaitFunc = (_ms, signal) =>
+    const waitFn: WaitFn = (_ms, signal) =>
       signal?.aborted
         ? Promise.reject(new DOMException("Aborted", "AbortError"))
         : Promise.resolve();
-    const FetchFunc: FetchFunc = () => {
+    const fetchFn: FetchFn = () => {
       throw new Error("fetch should not run once aborted");
     };
 
     await expect(
-      pollForToken("client123", device, FetchFunc, WaitFunc, controller.signal),
+      pollForToken("client123", device, fetchFn, waitFn, controller.signal),
     ).rejects.toMatchObject({ name: "AbortError" });
   });
 
@@ -163,14 +163,14 @@ describe("github api", () => {
   });
 
   it("reads a remote file with its blob sha", async () => {
-    const FetchFunc = fetchOnce(
+    const fetchFn = fetchOnce(
       jsonResponse({
         sha: "abc123",
         content: encodeLines(["(A) Pay bill", "Call plumber"]),
       }),
     );
 
-    expect(await getFile(target, "gho_token", FetchFunc)).toEqual({
+    expect(await getFile(target, "gho_token", fetchFn)).toEqual({
       sha: "abc123",
       lines: ["(A) Pay bill", "Call plumber"],
     });
@@ -205,7 +205,7 @@ describe("github api", () => {
 
   it("encodes owner, repo, and path segments into the contents URL", async () => {
     const urls: string[] = [];
-    const FetchFunc: FetchFunc = (input) => {
+    const fetchFn: FetchFn = (input) => {
       urls.push(typeof input === "string" ? input : input.toString());
       return Promise.resolve(jsonResponse({ sha: "abc", content: "" }));
     };
@@ -218,7 +218,7 @@ describe("github api", () => {
         path: "lists/todo list.txt",
       },
       "gho_token",
-      FetchFunc,
+      fetchFn,
     );
 
     expect(urls[0]).toBe(
@@ -232,7 +232,7 @@ describe("github api", () => {
       getFile(
         { ...target, path: "../../user" },
         "gho_token",
-        upstream as unknown as FetchFunc,
+        upstream as unknown as FetchFn,
       ),
     ).rejects.toThrow(/relative file path/);
     expect(upstream).not.toHaveBeenCalled();
@@ -244,7 +244,7 @@ describe("github api", () => {
       getFile(
         { ...target, owner: ".." },
         "gho_token",
-        upstream as unknown as FetchFunc,
+        upstream as unknown as FetchFn,
       ),
     ).rejects.toThrow(/relative file path/);
 
@@ -254,7 +254,7 @@ describe("github api", () => {
         "gho_token",
         ["task"],
         undefined,
-        upstream as unknown as FetchFunc,
+        upstream as unknown as FetchFn,
       ),
     ).rejects.toThrow(/relative file path/);
     expect(upstream).not.toHaveBeenCalled();

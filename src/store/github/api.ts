@@ -1,5 +1,5 @@
-export type FetchFunc = typeof fetch;
-export type WaitFunc = (
+export type FetchFn = typeof fetch;
+export type WaitFn = (
   milliseconds: number,
   signal?: AbortSignal,
 ) => Promise<void>;
@@ -39,7 +39,7 @@ function abortError(): DOMException {
   return new DOMException("The operation was aborted.", "AbortError");
 }
 
-const defaultWait: WaitFunc = (milliseconds, signal) =>
+const defaultWait: WaitFn = (milliseconds, signal) =>
   new Promise((resolve, reject) => {
     if (signal?.aborted) {
       reject(abortError());
@@ -102,10 +102,10 @@ function contentsUrl(target: SyncTarget): string {
 
 export async function requestDeviceCode(
   clientId: string,
-  FetchFunc: FetchFunc = fetch,
+  fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<DeviceCode> {
-  const response = await FetchFunc("/api/github/device/code", {
+  const response = await fetchFn("/api/github/device/code", {
     method: "POST",
     headers: jsonHeaders(),
     body: JSON.stringify({ client_id: clientId, scope: "repo" }),
@@ -132,8 +132,8 @@ export async function requestDeviceCode(
 export async function pollForToken(
   clientId: string,
   device: DeviceCode,
-  FetchFunc: FetchFunc = fetch,
-  wait: WaitFunc = defaultWait,
+  fetchFn: FetchFn = fetch,
+  wait: WaitFn = defaultWait,
   signal?: AbortSignal,
 ): Promise<string> {
   let interval = device.interval;
@@ -146,7 +146,7 @@ export async function pollForToken(
       throw new Error("the device code expired - run 'connect' again");
     }
 
-    const response = await FetchFunc("/api/github/device/token", {
+    const response = await fetchFn("/api/github/device/token", {
       method: "POST",
       headers: jsonHeaders(),
       body: JSON.stringify({
@@ -186,10 +186,10 @@ export async function pollForToken(
 // caller reports rather than treating as failure.
 export async function revokeToken(
   token: string,
-  FetchFunc: FetchFunc = fetch,
+  fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<"revoked" | "unsupported"> {
-  const response = await FetchFunc("/api/github/token/revoke", {
+  const response = await fetchFn("/api/github/token/revoke", {
     method: "POST",
     headers: jsonHeaders(),
     body: JSON.stringify({ access_token: token }),
@@ -209,10 +209,10 @@ export async function revokeToken(
 
 export async function getAuthenticatedLogin(
   token: string,
-  FetchFunc: FetchFunc = fetch,
+  fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<string> {
-  const response = await FetchFunc("https://api.github.com/user", {
+  const response = await fetchFn("https://api.github.com/user", {
     headers: apiHeaders(token),
     signal,
   });
@@ -228,10 +228,10 @@ export async function getAuthenticatedLogin(
 export async function getFile(
   target: SyncTarget,
   token: string,
-  FetchFunc: FetchFunc = fetch,
+  fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<RemoteFile | "not_found"> {
-  const response = await FetchFunc(
+  const response = await fetchFn(
     `${contentsUrl(target)}?ref=${encodeURIComponent(target.branch)}`,
     { headers: apiHeaders(token), signal },
   );
@@ -256,10 +256,10 @@ export async function putFile(
   token: string,
   lines: readonly string[],
   sha: string | undefined,
-  FetchFunc: FetchFunc = fetch,
+  fetchFn: FetchFn = fetch,
   signal?: AbortSignal,
 ): Promise<string> {
-  const response = await FetchFunc(contentsUrl(target), {
+  const response = await fetchFn(contentsUrl(target), {
     method: "PUT",
     headers: apiHeaders(token),
     body: JSON.stringify({
