@@ -1,18 +1,13 @@
-import { kvGet, kvSet } from "../db";
+import { kvSet } from "../db";
 import {
   loadStoredTodos,
   SAMPLE_TODOS,
   sanitizeTodos,
   storeTodos,
   subscribeTodos,
-  TODOS_STORAGE_KEY,
 } from "./storage";
 
 describe("todos storage", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
   it("falls back to the sample todos when nothing is stored", async () => {
     await expect(loadStoredTodos()).resolves.toEqual(SAMPLE_TODOS);
   });
@@ -38,22 +33,6 @@ describe("todos storage", () => {
   it("falls back to samples when the stored value is not an array", async () => {
     await kvSet("todos", "not an array");
     await expect(loadStoredTodos()).resolves.toEqual(SAMPLE_TODOS);
-  });
-
-  it("migrates legacy localStorage todos into IndexedDB once", async () => {
-    localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(["legacy task"]));
-
-    await expect(loadStoredTodos()).resolves.toEqual(["legacy task"]);
-    expect(localStorage.getItem(TODOS_STORAGE_KEY)).toBeNull();
-    await expect(kvGet("todos")).resolves.toEqual(["legacy task"]);
-  });
-
-  it("discards corrupt legacy data and falls back to samples", async () => {
-    localStorage.setItem(TODOS_STORAGE_KEY, "not json");
-
-    await expect(loadStoredTodos()).resolves.toEqual(SAMPLE_TODOS);
-    expect(localStorage.getItem(TODOS_STORAGE_KEY)).toBeNull();
-    await expect(kvGet("todos")).resolves.toBeUndefined();
   });
 
   it("sanitizes arbitrary values", () => {

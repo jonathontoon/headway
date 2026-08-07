@@ -1,4 +1,4 @@
-import { encodeLines, type FetchFn, type WaitFn } from "./api";
+import { encodeLines, type FetchFunc, type WaitFunc } from "./api";
 import {
   isGitHubCommand,
   resetRestoreConfirmation,
@@ -15,7 +15,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
 }
 
-function fakeFetch(routes: Record<string, Route>): FetchFn {
+function fakeFetch(routes: Record<string, Route>): FetchFunc {
   return (input, init) => {
     const url =
       typeof input === "string"
@@ -51,7 +51,7 @@ function makeDeps(overrides: Partial<GitHubCommandDeps> = {}) {
     },
     applyTodos: (next) => applied.push(next),
     clientId: "client123",
-    waitFn: () => Promise.resolve(),
+    WaitFunc: () => Promise.resolve(),
     ...overrides,
   };
   return { deps, output, applied };
@@ -85,7 +85,6 @@ const DEVICE_FLOW_ROUTES: Record<string, Route> = {
 
 describe("github commands", () => {
   beforeEach(() => {
-    localStorage.clear();
     resetRestoreConfirmation();
   });
 
@@ -109,13 +108,13 @@ describe("github commands", () => {
   });
 
   it("requires an owner/repo argument for connect without making requests", async () => {
-    const bare = makeDeps({ fetchFn: fakeFetch({}) });
+    const bare = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("connect", bare.deps);
     expect(bare.output[0]).toBe(
       "Error: usage: connect <owner>/<repo> [branch] [path].",
     );
 
-    const malformed = makeDeps({ fetchFn: fakeFetch({}) });
+    const malformed = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("connect nonsense", malformed.deps);
     expect(malformed.output[0]).toBe(
       "Error: usage: connect <owner>/<repo> [branch] [path].",
@@ -128,7 +127,7 @@ describe("github commands", () => {
       login: "toon",
       lastSyncedSha: "stale",
     });
-    const { deps, output } = makeDeps({ fetchFn: fakeFetch({}) });
+    const { deps, output } = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("connect toon/todos", deps);
 
     expect(await loadGitHubSettings()).toEqual({
@@ -146,7 +145,7 @@ describe("github commands", () => {
 
   it("keeps sync bookkeeping when reconnecting to the same target", async () => {
     await configureTarget({ lastSyncedSha: "keep-sha" });
-    const { deps, output } = makeDeps({ fetchFn: fakeFetch({}) });
+    const { deps, output } = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("connect toon/todos", deps);
 
     expect((await loadGitHubSettings()).lastSyncedSha).toBe("keep-sha");
@@ -157,7 +156,7 @@ describe("github commands", () => {
 
   it("accepts custom branch and path in connect when already connected", async () => {
     await storeGitHubSettings({ token: "gho_token", login: "toon" });
-    const { deps, output } = makeDeps({ fetchFn: fakeFetch({}) });
+    const { deps, output } = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("connect toon/todos develop lists/todo.txt", deps);
 
     expect(output[0]).toBe(
@@ -167,7 +166,7 @@ describe("github commands", () => {
 
   it("rejects traversal and empty segments in the connect path", async () => {
     for (const path of ["../secrets.txt", "a//b.txt", "./todo.txt", "a/.."]) {
-      const { deps, output } = makeDeps({ fetchFn: fakeFetch({}) });
+      const { deps, output } = makeDeps({ FetchFunc: fakeFetch({}) });
       await runGitHubCommand(`connect toon/todos main ${path}`, deps);
 
       expect(output[0]).toBe(
@@ -213,8 +212,8 @@ describe("github commands", () => {
   });
 
   it("connects via the device flow, stores the token, and sets the target", async () => {
-    const fetchFn = fakeFetch(DEVICE_FLOW_ROUTES);
-    const { deps, output } = makeDeps({ fetchFn });
+    const FetchFunc = fakeFetch(DEVICE_FLOW_ROUTES);
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("connect toon/todos", deps);
 
     expect(output[0]).toBe(
@@ -239,8 +238,8 @@ describe("github commands", () => {
       path: "todo.txt",
       lastSyncedSha: "keep-sha",
     });
-    const fetchFn = fakeFetch(DEVICE_FLOW_ROUTES);
-    const { deps, output } = makeDeps({ fetchFn });
+    const FetchFunc = fakeFetch(DEVICE_FLOW_ROUTES);
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("connect", deps);
 
     expect(output[output.length - 1]).toContain("Connected as toon.");
@@ -252,7 +251,7 @@ describe("github commands", () => {
 
   it("stops silently without emitting output when connect is aborted mid-flight", async () => {
     const controller = new AbortController();
-    const fetchFn: FetchFn = (input) => {
+    const FetchFunc: FetchFunc = (input) => {
       const url = typeof input === "string" ? input : input.toString();
       if (url.includes("device/code")) {
         // Simulate the user submitting a new command right after the
@@ -270,14 +269,14 @@ describe("github commands", () => {
       }
       throw new Error(`unexpected fetch after abort: ${url}`);
     };
-    const waitFn: WaitFn = (_ms, signal) =>
+    const WaitFunc: WaitFunc = (_ms, signal) =>
       signal?.aborted
         ? Promise.reject(new DOMException("Aborted", "AbortError"))
         : Promise.resolve();
 
     const { deps, output } = makeDeps({
-      fetchFn,
-      waitFn,
+      FetchFunc,
+      WaitFunc,
       signal: controller.signal,
     });
     await runGitHubCommand("connect toon/todos", deps);
@@ -295,11 +294,11 @@ describe("github commands", () => {
     expect(anonymous.output[0]).toBe("No GitHub connection to disconnect.");
 
     await configureTarget();
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "POST /api/github/token/revoke": () =>
         new Response(null, { status: 204 }),
     });
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("disconnect", deps);
     expect(output[0]).toBe("Disconnected from GitHub and revoked the token.");
     expect((await loadGitHubSettings()).token).toBeUndefined();
@@ -308,11 +307,11 @@ describe("github commands", () => {
 
   it("still disconnects locally when the worker cannot revoke the token", async () => {
     await configureTarget();
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "POST /api/github/token/revoke": () =>
         new Response("Token revocation is not configured", { status: 501 }),
     });
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("disconnect", deps);
 
     expect(output[0]).toBe(
@@ -338,7 +337,7 @@ describe("github commands", () => {
 
   it("saves a new file when none exists remotely", async () => {
     await configureTarget();
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 404),
       "PUT https://api.github.com/repos/toon/todos/contents/todo.txt": (
@@ -349,7 +348,7 @@ describe("github commands", () => {
         return jsonResponse({ content: { sha: "new-sha-1234" } }, 201);
       },
     });
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe("Saved: 2 tasks to toon/todos:todo.txt");
@@ -361,7 +360,7 @@ describe("github commands", () => {
 
   it("updates an existing file when the remote sha matches the last sync", async () => {
     await configureTarget({ lastSyncedSha: "remote-sha" });
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({ sha: "remote-sha", content: encodeLines(["old"]) }),
       "PUT https://api.github.com/repos/toon/todos/contents/todo.txt": (
@@ -372,7 +371,7 @@ describe("github commands", () => {
         return jsonResponse({ content: { sha: "next-sha" } });
       },
     });
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toContain("Saved: 2 tasks");
@@ -380,14 +379,14 @@ describe("github commands", () => {
 
   it("warns but still overwrites when backing up over unseen remote changes", async () => {
     await configureTarget({ lastSyncedSha: "old-sha" });
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({ sha: "changed-sha", content: encodeLines(["other"]) }),
       "PUT https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({ content: { sha: "new-sha" } }),
     });
 
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe(
@@ -400,7 +399,7 @@ describe("github commands", () => {
 
   it("warns once, then replaces local tasks when sync restore is run again", async () => {
     await configureTarget();
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({
           sha: "remote-sha",
@@ -408,7 +407,7 @@ describe("github commands", () => {
         }),
     });
 
-    const first = makeDeps({ fetchFn: fakeFetch({}) });
+    const first = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("sync restore", first.deps);
     expect(first.applied).toEqual([]);
     expect(first.output[0]).toBe(
@@ -416,7 +415,7 @@ describe("github commands", () => {
     );
     expect((await loadGitHubSettings()).lastSyncedSha).toBeUndefined();
 
-    const second = makeDeps({ fetchFn });
+    const second = makeDeps({ FetchFunc });
     await runGitHubCommand("sync restore", second.deps);
     expect(second.applied).toEqual([["remote task"]]);
     expect(second.output[second.output.length - 1]).toBe(
@@ -431,14 +430,14 @@ describe("github commands", () => {
   it("withdraws the restore confirmation when the local tasks change", async () => {
     await configureTarget();
 
-    const first = makeDeps({ fetchFn: fakeFetch({}) });
+    const first = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("sync restore", first.deps);
     expect(first.output[0]).toContain("Run 'sync restore' again");
 
     // The tasks changed between the warning and the second run, so it
     // warns again instead of replacing them.
     const second = makeDeps({
-      fetchFn: fakeFetch({}),
+      FetchFunc: fakeFetch({}),
       getTodos: () => ["edited task"],
     });
     await runGitHubCommand("sync restore", second.deps);
@@ -449,14 +448,14 @@ describe("github commands", () => {
   it("withdraws the restore confirmation when another command runs in between", async () => {
     await configureTarget();
 
-    const first = makeDeps({ fetchFn: fakeFetch({}) });
+    const first = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("sync restore", first.deps);
     expect(first.output[0]).toContain("Run 'sync restore' again");
 
     const status = makeDeps();
     await runGitHubCommand("sync status", status.deps);
 
-    const second = makeDeps({ fetchFn: fakeFetch({}) });
+    const second = makeDeps({ FetchFunc: fakeFetch({}) });
     await runGitHubCommand("sync restore", second.deps);
     expect(second.applied).toEqual([]);
     expect(second.output[0]).toContain("Run 'sync restore' again");
@@ -464,14 +463,14 @@ describe("github commands", () => {
 
   it("restores cleanly when local state matches the last sync", async () => {
     await configureTarget({ lastSyncedHash: hashTodos(todos) });
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({
           sha: "remote-sha",
           content: encodeLines(["remote task"]),
         }),
     });
-    const { deps, applied } = makeDeps({ fetchFn });
+    const { deps, applied } = makeDeps({ FetchFunc });
     await runGitHubCommand("sync restore", deps);
 
     expect(applied).toEqual([["remote task"]]);
@@ -479,11 +478,11 @@ describe("github commands", () => {
 
   it("reports a missing remote file on restore", async () => {
     await configureTarget({ lastSyncedHash: hashTodos(todos) });
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 404),
     });
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("sync restore", deps);
 
     expect(output[0]).toBe(
@@ -493,11 +492,11 @@ describe("github commands", () => {
 
   it("maps 401 responses to a reconnect hint", async () => {
     await configureTarget();
-    const fetchFn = fakeFetch({
+    const FetchFunc = fakeFetch({
       "GET https://api.github.com/repos/toon/todos/contents/todo.txt": () =>
         jsonResponse({}, 401),
     });
-    const { deps, output } = makeDeps({ fetchFn });
+    const { deps, output } = makeDeps({ FetchFunc });
     await runGitHubCommand("sync backup", deps);
 
     expect(output[0]).toBe(

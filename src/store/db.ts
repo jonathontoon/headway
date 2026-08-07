@@ -1,8 +1,8 @@
 // Minimal promise wrapper around IndexedDB, holding a single "kv" object
-// store. IndexedDB is no more XSS-resistant than localStorage (any
-// same-origin script can read both - the CSP and validate-on-read are the
-// real defenses); it's used for async I/O, larger quota, structured clone
-// and navigator.storage.persist() eviction protection.
+// store. Same-origin scripts can read IndexedDB, so the CSP and
+// validate-on-read are the real defenses; IndexedDB is used for async I/O,
+// larger quota, structured clone, and navigator.storage.persist() eviction
+// protection.
 
 const DB_NAME = "headway";
 const DB_VERSION = 1;

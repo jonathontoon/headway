@@ -9,9 +9,9 @@ import {
   requestDeviceCode,
   revokeToken,
   type DeviceCode,
-  type FetchFn,
+  type FetchFunc,
   type SyncTarget,
-  type WaitFn,
+  type WaitFunc,
 } from "./api";
 import {
   DEFAULT_BRANCH,
@@ -30,8 +30,8 @@ export type GitHubCommandDeps = {
   ) => void;
   readonly applyTodos: (todos: readonly string[]) => void;
   readonly clientId: string | undefined;
-  readonly fetchFn?: FetchFn;
-  readonly waitFn?: WaitFn;
+  readonly FetchFunc?: FetchFunc;
+  readonly WaitFunc?: WaitFunc;
   readonly signal?: AbortSignal;
 };
 
@@ -236,7 +236,11 @@ async function runConnect(
   const connectingSpinnerId = startSpinner(deps, "Connecting to GitHub...");
   let device: DeviceCode;
   try {
-    device = await requestDeviceCode(deps.clientId, deps.fetchFn, deps.signal);
+    device = await requestDeviceCode(
+      deps.clientId,
+      deps.FetchFunc,
+      deps.signal,
+    );
   } catch (error) {
     if (!isAbortError(error)) {
       deps.emit(formatError(error), { replace: true });
@@ -270,11 +274,15 @@ async function runConnect(
     const token = await pollForToken(
       deps.clientId,
       device,
-      deps.fetchFn,
-      deps.waitFn,
+      deps.FetchFunc,
+      deps.WaitFunc,
       deps.signal,
     );
-    const login = await getAuthenticatedLogin(token, deps.fetchFn, deps.signal);
+    const login = await getAuthenticatedLogin(
+      token,
+      deps.FetchFunc,
+      deps.signal,
+    );
 
     await storeGitHubSettings({
       ...(await loadGitHubSettings()),
@@ -315,7 +323,7 @@ async function runDisconnect(deps: GitHubCommandDeps): Promise<void> {
   let revoked = false;
   try {
     revoked =
-      (await revokeToken(settings.token, deps.fetchFn, deps.signal)) ===
+      (await revokeToken(settings.token, deps.FetchFunc, deps.signal)) ===
       "revoked";
   } catch (error) {
     if (isAbortError(error)) throw error;
@@ -433,7 +441,7 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
     const remote = await getFile(
       session.target,
       session.token,
-      deps.fetchFn,
+      deps.FetchFunc,
       deps.signal,
     );
     let sha: string | undefined;
@@ -453,7 +461,7 @@ async function runBackup(deps: GitHubCommandDeps): Promise<void> {
       session.token,
       todos,
       sha,
-      deps.fetchFn,
+      deps.FetchFunc,
       deps.signal,
     );
     await storeGitHubSettings({
@@ -515,7 +523,7 @@ async function runRestore(deps: GitHubCommandDeps): Promise<void> {
     const remote = await getFile(
       session.target,
       session.token,
-      deps.fetchFn,
+      deps.FetchFunc,
       deps.signal,
     );
 

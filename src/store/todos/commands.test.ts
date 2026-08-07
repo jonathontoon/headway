@@ -126,7 +126,7 @@ describe("todo commands", () => {
     ).toBe("2026-07-02 Schedule Goodwill pickup @phone due:2026-07-05");
   });
 
-  it("rejects the old target-first clear syntax and missing targets", () => {
+  it("rejects invalid clear syntax and missing targets", () => {
     for (const command of [
       "clear due 1",
       "clear 1",

@@ -9,7 +9,7 @@ A terminal-style todo.txt app in your browser. No databases, no signup, no distr
 - **Priority-aware sorting**: A-E get warm-to-cool colors; your most important tasks stand out
 - **GitHub sync** (optional): back up your todo.txt to a repo you control, and load changes from there
 
-Everything runs client-side. Your tasks live in your browser's localStorage until you sync them to GitHub.
+Everything runs client-side. Your tasks live in your browser's IndexedDB storage until you sync them to GitHub.
 
 ### Filtering tasks
 
@@ -75,7 +75,7 @@ You can back up your tasks to a GitHub repo. Syncing is always manual — nothin
 
 - The device-flow connect endpoints don't allow browser CORS, so the Cloudflare Worker proxies exactly two routes: `/api/github/device/code` and `/api/github/device/token`. Your actual file reads and writes go directly from the browser to `api.github.com`.
 - The app tracks the last-synced file SHA and a content hash of your tasks, so it can warn you about conflicts (remote changed, or unsaved local changes) without blocking you.
-- Your GitHub token lives in `localStorage`. That's fine for a personal deployment, but remember it's readable by any script running on the page — don't reuse a token you use for other things.
+- Your GitHub token lives in IndexedDB. That's fine for a personal deployment, but remember it's readable by any script running on the page — don't reuse a token you use for other things.
 - Device flow uses the classic `repo` scope (fine-grained tokens aren't available via device flow yet).
 
 ## Development
@@ -94,5 +94,5 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/). Ver
 - Vite (dev server and build)
 - Tailwind CSS (styling)
 - Cloudflare Workers (deployment)
-- localStorage (persistence)
+- IndexedDB (persistence)
 - GitHub Contents API (sync)

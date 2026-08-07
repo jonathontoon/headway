@@ -1,6 +1,5 @@
 import { kvGet, kvSet } from "../db";
 
-export const TODOS_STORAGE_KEY = "headway-todos";
 const TODOS_DB_KEY = "todos";
 const TODOS_CHANNEL_NAME = "headway-todos";
 
@@ -72,33 +71,9 @@ export function sanitizeTodos(value: unknown): readonly string[] | undefined {
     : undefined;
 }
 
-export function parseStoredTodos(raw: string): readonly string[] | undefined {
-  try {
-    return sanitizeTodos(JSON.parse(raw));
-  } catch {
-    return undefined;
-  }
-}
-
-// One-time migration from the pre-1.6 localStorage key. The key is removed
-// after a successful IndexedDB write so there is a single source of truth.
-async function migrateLegacyTodos(): Promise<readonly string[] | undefined> {
-  const stored = localStorage.getItem(TODOS_STORAGE_KEY);
-  const todos = stored ? parseStoredTodos(stored) : undefined;
-
-  if (todos) {
-    await kvSet(TODOS_DB_KEY, todos);
-  }
-  if (stored !== null) {
-    localStorage.removeItem(TODOS_STORAGE_KEY);
-  }
-
-  return todos;
-}
-
 export async function loadStoredTodos(): Promise<readonly string[]> {
   const stored = sanitizeTodos(await kvGet(TODOS_DB_KEY));
-  return stored ?? (await migrateLegacyTodos()) ?? SAMPLE_TODOS;
+  return stored ?? SAMPLE_TODOS;
 }
 
 function openTodosChannel(): BroadcastChannel | undefined {
@@ -110,8 +85,7 @@ function openTodosChannel(): BroadcastChannel | undefined {
 export async function storeTodos(todos: readonly string[]): Promise<void> {
   await kvSet(TODOS_DB_KEY, [...todos]);
 
-  // IndexedDB writes don't fire `storage` events the way localStorage did,
-  // so other open tabs are told explicitly.
+  // Other open tabs are told explicitly so their in-memory state stays fresh.
   const channel = openTodosChannel();
   if (channel) {
     channel.postMessage([...todos]);

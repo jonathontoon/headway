@@ -1,6 +1,5 @@
 import { kvGet, kvSet } from "../db";
 
-export const GITHUB_STORAGE_KEY = "headway-github";
 const GITHUB_DB_KEY = "github-settings";
 
 export const DEFAULT_BRANCH = "main";
@@ -30,9 +29,8 @@ const SETTINGS_KEYS = [
   "lastSyncedAt",
 ] as const;
 
-// IndexedDB is writable by anything running in the origin (no safer than
-// localStorage on that front), so only the known keys survive, and only
-// when they hold strings.
+// IndexedDB is writable by anything running in the origin, so only the
+// known keys survive, and only when they hold strings.
 function sanitizeSettings(value: unknown): GitHubSettings {
   if (typeof value !== "object" || value === null) {
     return {};
@@ -51,27 +49,6 @@ function sanitizeSettings(value: unknown): GitHubSettings {
   return settings;
 }
 
-// One-time migration from the pre-1.6 localStorage key. The key is removed
-// after a successful IndexedDB write so there is a single source of truth.
-async function migrateLegacySettings(): Promise<GitHubSettings | undefined> {
-  const stored = localStorage.getItem(GITHUB_STORAGE_KEY);
-
-  if (stored === null) {
-    return undefined;
-  }
-
-  let settings: GitHubSettings;
-  try {
-    settings = sanitizeSettings(JSON.parse(stored));
-  } catch {
-    settings = {};
-  }
-
-  await kvSet(GITHUB_DB_KEY, settings);
-  localStorage.removeItem(GITHUB_STORAGE_KEY);
-  return settings;
-}
-
 export async function loadGitHubSettings(): Promise<GitHubSettings> {
   const stored = await kvGet(GITHUB_DB_KEY);
 
@@ -79,14 +56,14 @@ export async function loadGitHubSettings(): Promise<GitHubSettings> {
     return sanitizeSettings(stored);
   }
 
-  return (await migrateLegacySettings()) ?? {};
+  return {};
 }
 
 export async function storeGitHubSettings(
   settings: GitHubSettings,
 ): Promise<void> {
   // Structured clone rejects nothing here, but dropping undefined fields
-  // keeps the stored record identical to the old JSON form.
+  // keeps the stored record compact.
   await kvSet(GITHUB_DB_KEY, JSON.parse(JSON.stringify(settings)));
 }
 
