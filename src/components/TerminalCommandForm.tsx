@@ -29,10 +29,7 @@ function completeCommand(command: string): string | null {
   }
 
   const words = command.split(" ");
-  const firstWord = words[0];
-  if (firstWord === undefined) {
-    return null;
-  }
+  const firstWord = words[0]!;
 
   if (words.length === 1) {
     const matches = COMMAND_VERBS.filter((verb) => verb.startsWith(firstWord));
@@ -42,8 +39,12 @@ function completeCommand(command: string): string | null {
     return `${matches[0]} `;
   }
 
-  const secondWord = words[1];
-  if (words.length === 2 && secondWord !== undefined && secondWord.length > 0) {
+  if (words.length === 2) {
+    const secondWord = words[1]!;
+    if (secondWord.length === 0) {
+      return null;
+    }
+
     const candidates = SUBCOMMAND_VERBS[firstWord];
     if (!candidates) {
       return null;
