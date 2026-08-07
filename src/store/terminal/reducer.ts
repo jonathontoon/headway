@@ -6,25 +6,56 @@ import {
   getTimeGreeting,
 } from "../todos/summary";
 
+export const TERMINAL_ACTION_TYPE = {
+  CLEAR_SCREEN: "CLEAR_SCREEN",
+  CANCEL: "CANCEL",
+  END_PENDING: "END_PENDING",
+  CANCEL_PENDING: "CANCEL_PENDING",
+  SUBMIT: "SUBMIT",
+  APPEND_OUTPUT: "APPEND_OUTPUT",
+  REPLACE_LAST_OUTPUT: "REPLACE_LAST_OUTPUT",
+  APPLY_TODOS: "APPLY_TODOS",
+  SET_COMMAND: "SET_COMMAND",
+  NAVIGATE_HISTORY: "NAVIGATE_HISTORY",
+} as const;
+
+export type TerminalActionType =
+  (typeof TERMINAL_ACTION_TYPE)[keyof typeof TERMINAL_ACTION_TYPE];
+
 export type TerminalAction =
-  | { readonly type: "clearScreen" }
-  | { readonly type: "cancel" }
-  | { readonly type: "endPending" }
-  | { readonly type: "cancelPending"; readonly output: TerminalOutput }
+  | { readonly type: typeof TERMINAL_ACTION_TYPE.CLEAR_SCREEN }
+  | { readonly type: typeof TERMINAL_ACTION_TYPE.CANCEL }
+  | { readonly type: typeof TERMINAL_ACTION_TYPE.END_PENDING }
   | {
-      readonly type: "submit";
+      readonly type: typeof TERMINAL_ACTION_TYPE.CANCEL_PENDING;
+      readonly output: TerminalOutput;
+    }
+  | {
+      readonly type: typeof TERMINAL_ACTION_TYPE.SUBMIT;
       readonly command: string;
       readonly output?: TerminalOutput | undefined;
       readonly todos: readonly string[];
       readonly view: readonly number[];
       readonly pending: boolean;
     }
-  | { readonly type: "appendOutput"; readonly output: TerminalOutput }
-  | { readonly type: "replaceLastOutput"; readonly output: TerminalOutput }
-  | { readonly type: "applyTodos"; readonly todos: readonly string[] }
-  | { readonly type: "setCommand"; readonly command: string }
   | {
-      readonly type: "navigateHistory";
+      readonly type: typeof TERMINAL_ACTION_TYPE.APPEND_OUTPUT;
+      readonly output: TerminalOutput;
+    }
+  | {
+      readonly type: typeof TERMINAL_ACTION_TYPE.REPLACE_LAST_OUTPUT;
+      readonly output: TerminalOutput;
+    }
+  | {
+      readonly type: typeof TERMINAL_ACTION_TYPE.APPLY_TODOS;
+      readonly todos: readonly string[];
+    }
+  | {
+      readonly type: typeof TERMINAL_ACTION_TYPE.SET_COMMAND;
+      readonly command: string;
+    }
+  | {
+      readonly type: typeof TERMINAL_ACTION_TYPE.NAVIGATE_HISTORY;
       readonly direction: "previous" | "next";
     };
 
@@ -101,12 +132,12 @@ export function terminalReducer(
   action: TerminalAction,
 ): TerminalState {
   switch (action.type) {
-    case "clearScreen":
+    case TERMINAL_ACTION_TYPE.CLEAR_SCREEN:
       return {
         ...state,
         entries: [],
       };
-    case "cancel":
+    case TERMINAL_ACTION_TYPE.CANCEL:
       return {
         ...state,
         entries: [
@@ -119,9 +150,9 @@ export function terminalReducer(
         command: "",
         historyIndex: null,
       };
-    case "endPending":
+    case TERMINAL_ACTION_TYPE.END_PENDING:
       return { ...state, pending: false };
-    case "cancelPending":
+    case TERMINAL_ACTION_TYPE.CANCEL_PENDING:
       return {
         ...state,
         pending: false,
@@ -130,7 +161,7 @@ export function terminalReducer(
           { id: state.entries.length, output: action.output },
         ],
       };
-    case "submit":
+    case TERMINAL_ACTION_TYPE.SUBMIT:
       return {
         ...state,
         entries: [
@@ -147,7 +178,7 @@ export function terminalReducer(
         view: action.view,
         pending: action.pending,
       };
-    case "appendOutput":
+    case TERMINAL_ACTION_TYPE.APPEND_OUTPUT:
       return {
         ...state,
         entries: [
@@ -158,7 +189,7 @@ export function terminalReducer(
           },
         ],
       };
-    case "replaceLastOutput": {
+    case TERMINAL_ACTION_TYPE.REPLACE_LAST_OUTPUT: {
       const lastIndex = state.entries.length - 1;
       if (lastIndex < 0) {
         return state;
@@ -170,18 +201,18 @@ export function terminalReducer(
         ),
       };
     }
-    case "applyTodos":
+    case TERMINAL_ACTION_TYPE.APPLY_TODOS:
       return {
         ...state,
         todos: action.todos,
         view: [],
       };
-    case "setCommand":
+    case TERMINAL_ACTION_TYPE.SET_COMMAND:
       return {
         ...state,
         command: action.command,
       };
-    case "navigateHistory":
+    case TERMINAL_ACTION_TYPE.NAVIGATE_HISTORY:
       return navigateHistory(state, action.direction);
   }
 

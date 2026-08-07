@@ -10,6 +10,7 @@ import { runTodoCommand } from "../todos/commands";
 import { storeTodos, subscribeTodos } from "../todos/storage";
 import {
   createInitialTerminalState,
+  TERMINAL_ACTION_TYPE,
   terminalReducer,
   type TerminalAction,
 } from "./reducer";
@@ -25,7 +26,7 @@ function persistTodos(
 ): void {
   storeTodos(todos).catch(() => {
     dispatch({
-      type: "appendOutput",
+      type: TERMINAL_ACTION_TYPE.APPEND_OUTPUT,
       output: terminalOutput.warning(
         "Warning: could not save tasks to local storage.",
       ),
@@ -59,7 +60,10 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
   // wrote); adopting its version keeps two open tabs from silently
   // clobbering each other's tasks on the next command.
   useEffect(
-    () => subscribeTodos((todos) => dispatch({ type: "applyTodos", todos })),
+    () =>
+      subscribeTodos((todos) =>
+        dispatch({ type: TERMINAL_ACTION_TYPE.APPLY_TODOS, todos }),
+      ),
     [],
   );
 
@@ -80,7 +84,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
     pending.controller.abort();
     githubOperationRef.current = null;
     dispatch({
-      type: "cancelPending",
+      type: TERMINAL_ACTION_TYPE.CANCEL_PENDING,
       output: terminalOutput.text(describeCancellation(pending.label)),
     });
     return true;
@@ -90,7 +94,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
     () => ({
       state,
       setCommand(command) {
-        dispatch({ type: "setCommand", command });
+        dispatch({ type: TERMINAL_ACTION_TYPE.SET_COMMAND, command });
       },
       submitCommand() {
         const trimmed = state.command.trim();
@@ -98,7 +102,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
 
         if (isGitHubCommand(trimmed)) {
           dispatch({
-            type: "submit",
+            type: TERMINAL_ACTION_TYPE.SUBMIT,
             command: state.command,
             output: undefined,
             todos: state.todos,
@@ -115,14 +119,17 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
               dispatch(
                 options?.replace
                   ? {
-                      type: "replaceLastOutput",
+                      type: TERMINAL_ACTION_TYPE.REPLACE_LAST_OUTPUT,
                       output: toTerminalOutput(output),
                     }
-                  : { type: "appendOutput", output: toTerminalOutput(output) },
+                  : {
+                      type: TERMINAL_ACTION_TYPE.APPEND_OUTPUT,
+                      output: toTerminalOutput(output),
+                    },
               ),
             applyTodos: (todos) => {
               persistTodos(dispatch, todos);
-              dispatch({ type: "applyTodos", todos });
+              dispatch({ type: TERMINAL_ACTION_TYPE.APPLY_TODOS, todos });
             },
             clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
             restoreConfirmation: {
@@ -135,7 +142,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
           }).finally(() => {
             if (githubOperationRef.current?.controller === controller) {
               githubOperationRef.current = null;
-              dispatch({ type: "endPending" });
+              dispatch({ type: TERMINAL_ACTION_TYPE.END_PENDING });
             }
           });
           return;
@@ -149,7 +156,7 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
           persistTodos(dispatch, result.nextTodos);
         }
         dispatch({
-          type: "submit",
+          type: TERMINAL_ACTION_TYPE.SUBMIT,
           command: state.command,
           output:
             result.output === undefined
@@ -161,16 +168,19 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
         });
       },
       navigateHistory(direction) {
-        dispatch({ type: "navigateHistory", direction });
+        dispatch({
+          type: TERMINAL_ACTION_TYPE.NAVIGATE_HISTORY,
+          direction,
+        });
       },
       cancelCommand() {
         if (cancelPendingOperation()) {
           return;
         }
-        dispatch({ type: "cancel" });
+        dispatch({ type: TERMINAL_ACTION_TYPE.CANCEL });
       },
       clearScreen() {
-        dispatch({ type: "clearScreen" });
+        dispatch({ type: TERMINAL_ACTION_TYPE.CLEAR_SCREEN });
       },
     }),
     [state],

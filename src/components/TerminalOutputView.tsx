@@ -1,4 +1,5 @@
 import type { TerminalOutput } from "../store/terminal/output";
+import { TERMINAL_OUTPUT_KIND } from "../store/terminal/output";
 import { getLocalDate } from "../store/todos/summary";
 import { TerminalBlank } from "./TerminalBlank";
 import { TerminalBootBanner } from "./TerminalBootBanner";
@@ -23,11 +24,11 @@ export const TerminalOutputView = ({
   const idColumnWidth = String(taskCount).length + 1;
 
   switch (output.kind) {
-    case "blank":
+    case TERMINAL_OUTPUT_KIND.BLANK:
       return <TerminalBlank />;
-    case "text":
+    case TERMINAL_OUTPUT_KIND.TEXT:
       return <TerminalMessage line={output.text} tone={output.tone} />;
-    case "tasks":
+    case TERMINAL_OUTPUT_KIND.TASKS:
       return output.tasks.map((task) => (
         <TerminalTask
           key={task.position}
@@ -36,19 +37,19 @@ export const TerminalOutputView = ({
           idColumnWidth={idColumnWidth}
         />
       ));
-    case "help":
+    case TERMINAL_OUTPUT_KIND.HELP:
       return <TerminalHelpOutput />;
-    case "progress":
+    case TERMINAL_OUTPUT_KIND.PROGRESS:
       return <TerminalSpinner line={output.text} />;
-    case "boot":
+    case TERMINAL_OUTPUT_KIND.BOOT:
       return <TerminalBootBanner line={output.text} />;
-    case "greeting":
+    case TERMINAL_OUTPUT_KIND.GREETING:
       return <TerminalGreeting line={output.text} />;
-    case "secondary":
+    case TERMINAL_OUTPUT_KIND.SECONDARY:
       return <TerminalSecondary line={output.text} />;
-    case "link":
+    case TERMINAL_OUTPUT_KIND.LINK:
       return <TerminalURL line={output.href} />;
-    case "group":
+    case TERMINAL_OUTPUT_KIND.GROUP:
       return output.items.map((item, index) => (
         <TerminalOutputView
           key={`${item.kind}-${index}`}
