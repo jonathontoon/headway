@@ -10,7 +10,7 @@ const INLINE_URL_PATTERN = /(https?:\/\/\S+)/g;
 const DEVICE_CODE_PATTERN = /\b([A-Z0-9]{4}-[A-Z0-9]{4})\b/g;
 const DEVICE_CODE_TEST_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
-function TerminalHeartText({ line }: TerminalInlineTextProps) {
+const TerminalHeartText = ({ line }: TerminalInlineTextProps) => {
   if (!HEART_PATTERN.test(line)) return line;
 
   return line.split(HEART_PATTERN).map((part, i) =>
@@ -22,9 +22,9 @@ function TerminalHeartText({ line }: TerminalInlineTextProps) {
       part
     ),
   );
-}
+};
 
-function TerminalDeviceCodeText({ line }: TerminalInlineTextProps) {
+const TerminalDeviceCodeText = ({ line }: TerminalInlineTextProps) => {
   const parts = line.split(DEVICE_CODE_PATTERN);
 
   if (parts.length === 1) {
@@ -46,9 +46,9 @@ function TerminalDeviceCodeText({ line }: TerminalInlineTextProps) {
       )}
     </Fragment>
   );
-}
+};
 
-export function TerminalInlineText({ line }: TerminalInlineTextProps) {
+export const TerminalInlineText = ({ line }: TerminalInlineTextProps) => {
   const segments = line.split(INLINE_URL_PATTERN);
 
   if (segments.length === 1) {
@@ -72,4 +72,4 @@ export function TerminalInlineText({ line }: TerminalInlineTextProps) {
       </Fragment>
     ),
   );
-}
+};

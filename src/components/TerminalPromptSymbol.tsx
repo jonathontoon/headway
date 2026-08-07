@@ -4,7 +4,7 @@ type TerminalPromptSymbolProps = {
   readonly prompt: string;
 };
 
-export function TerminalPromptSymbol({ prompt }: TerminalPromptSymbolProps) {
+export const TerminalPromptSymbol = ({ prompt }: TerminalPromptSymbolProps) => {
   const [head, ...rest] = prompt;
 
   return (
@@ -13,4 +13,4 @@ export function TerminalPromptSymbol({ prompt }: TerminalPromptSymbolProps) {
       <span className="text-role-command">{rest.join("")}</span>
     </Fragment>
   );
-}
+};

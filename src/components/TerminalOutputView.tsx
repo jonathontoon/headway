@@ -15,10 +15,10 @@ type TerminalOutputViewProps = {
   readonly taskCount: number;
 };
 
-export function TerminalOutputView({
+export const TerminalOutputView = ({
   output,
   taskCount,
-}: TerminalOutputViewProps) {
+}: TerminalOutputViewProps) => {
   const today = getLocalDate();
   const idColumnWidth = String(taskCount).length + 1;
 
@@ -57,4 +57,4 @@ export function TerminalOutputView({
         />
       ));
   }
-}
+};

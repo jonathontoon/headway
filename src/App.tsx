@@ -11,7 +11,7 @@ type AppProps = {
   readonly initialTodos: readonly string[];
 };
 
-function App({ initialTodos }: AppProps) {
+const App = ({ initialTodos }: AppProps) => {
   if (import.meta.env.DEV && window.location.pathname === "/test") {
     return (
       <Suspense fallback={null}>
@@ -25,6 +25,6 @@ function App({ initialTodos }: AppProps) {
       <Terminal />
     </TerminalProvider>
   );
-}
+};
 
 export default App;

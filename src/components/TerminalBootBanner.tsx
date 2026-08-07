@@ -2,7 +2,7 @@ type TerminalBootBannerProps = {
   readonly line: string;
 };
 
-export function TerminalBootBanner({ line }: TerminalBootBannerProps) {
+export const TerminalBootBanner = ({ line }: TerminalBootBannerProps) => {
   const words = line.split(" ");
   const [arrow, ...rest] = words;
   const version = rest.pop();
@@ -13,4 +13,4 @@ export function TerminalBootBanner({ line }: TerminalBootBannerProps) {
       <span className="text-role-accent">{version}</span>
     </div>
   );
-}
+};

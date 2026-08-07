@@ -7,7 +7,7 @@ type TerminalMessageProps = {
   readonly tone: MessageTone;
 };
 
-function toneClassName(tone: MessageTone): string {
+const toneClassName = (tone: MessageTone): string => {
   switch (tone) {
     case "error":
       return "text-role-error";
@@ -20,24 +20,24 @@ function toneClassName(tone: MessageTone): string {
     case "normal":
       return "";
   }
-}
+};
 
-function messageGlyph(tone: MessageTone): string {
+const messageGlyph = (tone: MessageTone): string => {
   if (tone === "error") return "×";
   if (tone === "warning") return "▫";
   return "→";
-}
+};
 
-function hangingIndentStyle(prefix: string): CSSProperties {
+const hangingIndentStyle = (prefix: string): CSSProperties => {
   const width = `${prefix.length}ch`;
   return { paddingLeft: width, textIndent: `-${width}` };
-}
+};
 
-function capitalize(text: string): string {
+const capitalize = (text: string): string => {
   return text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1);
-}
+};
 
-function stripRedundantLabel(line: string, tone: MessageTone): string {
+const stripRedundantLabel = (line: string, tone: MessageTone): string => {
   if (tone === "error" && line.startsWith("Error:")) {
     return capitalize(line.slice("Error:".length).trim());
   }
@@ -47,9 +47,9 @@ function stripRedundantLabel(line: string, tone: MessageTone): string {
   }
 
   return line;
-}
+};
 
-export function TerminalMessage({ line, tone }: TerminalMessageProps) {
+export const TerminalMessage = ({ line, tone }: TerminalMessageProps) => {
   const colorClass = toneClassName(tone);
   const prefix = ` ${messageGlyph(tone)} `;
 
@@ -62,4 +62,4 @@ export function TerminalMessage({ line, tone }: TerminalMessageProps) {
       <TerminalInlineText line={stripRedundantLabel(line, tone)} />
     </div>
   );
-}
+};

@@ -9,7 +9,7 @@ import { TerminalHistory } from "./TerminalHistory";
 import { TerminalCommandForm } from "./TerminalCommandForm";
 import { TerminalPendingHint } from "./TerminalPendingHint";
 
-export function Terminal() {
+export const Terminal = () => {
   const {
     state,
     setCommand,
@@ -24,17 +24,17 @@ export function Terminal() {
     bottomRef.current?.scrollIntoView?.({ block: "end" });
   }, [state.entries.length]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     submitCommand();
-  }
+  };
 
-  function handleContextMenu(event: MouseEvent<HTMLElement>) {
+  const handleContextMenu = (event: MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     if (target.tagName !== "INPUT") {
       event.preventDefault();
     }
-  }
+  };
 
   return (
     <main
@@ -62,4 +62,4 @@ export function Terminal() {
       />
     </main>
   );
-}
+};

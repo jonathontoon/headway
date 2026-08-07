@@ -8,7 +8,7 @@ type TerminalTaskProps = {
 
 const TASK_FRAGMENT_PATTERN = /(\+[\w-]+|@[\w-]+|due:\d{4}-\d{2}-\d{2})/g;
 
-function priorityClassName(letter: string): string {
+const priorityClassName = (letter: string): string => {
   const priorityColors = [
     "text-terminal-1",
     "text-terminal-3",
@@ -23,9 +23,9 @@ function priorityClassName(letter: string): string {
   }
 
   return priorityColors[charCode] ?? "text-role-muted";
-}
+};
 
-function renderTaskFragments(text: string, today: string) {
+const renderTaskFragments = (text: string, today: string) => {
   return text.split(TASK_FRAGMENT_PATTERN).map((part, i) => {
     if (part.startsWith("+")) {
       return (
@@ -62,13 +62,13 @@ function renderTaskFragments(text: string, today: string) {
 
     return part;
   });
-}
+};
 
-export function TerminalTask({
+export const TerminalTask = ({
   item,
   today,
   idColumnWidth,
-}: TerminalTaskProps) {
+}: TerminalTaskProps) => {
   const { position: id, task } = item;
   const priority = task.completed ? undefined : task.priority;
   const rest = task.text.replace(/\s+pri:[^:\s]+/g, "").trim();
@@ -87,4 +87,4 @@ export function TerminalTask({
       {renderTaskFragments(rest, today)}
     </div>
   );
-}
+};

@@ -15,7 +15,7 @@ const SECTION_HEADERS = new Set([
 const HELP_ROW_PATTERN = /^(.+?)(?: - |\s{2,})(.+)$/;
 const HELP_ARG_PATTERN = /(<[^>]+>|"[^"]*")/g;
 
-function renderHelpCommandSegment(segment: string) {
+const renderHelpCommandSegment = (segment: string) => {
   return segment.split(HELP_ARG_PATTERN).map((part, i) =>
     part.startsWith("<") || part.startsWith('"') ? (
       <span key={i} className="text-role-accent">
@@ -25,9 +25,9 @@ function renderHelpCommandSegment(segment: string) {
       part
     ),
   );
-}
+};
 
-export function TerminalHelpOutput() {
+export const TerminalHelpOutput = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-0 sm:gap-y-[0.5em]">
       {HELP_TEXT.split("\n").map((line, i) => {
@@ -80,4 +80,4 @@ export function TerminalHelpOutput() {
       })}
     </div>
   );
-}
+};

@@ -14,7 +14,7 @@ export type ShowcaseSection = {
   readonly entries: readonly ShowcaseEntry[];
 };
 
-function addDays(date: string, days: number): string {
+const addDays = (date: string, days: number): string => {
   const [year, month, day] = date.split("-").map(Number);
   if (year === undefined || month === undefined || day === undefined) {
     throw new Error(`Invalid showcase date: ${date}`);
@@ -22,7 +22,7 @@ function addDays(date: string, days: number): string {
   const result = new Date(Date.UTC(year, month - 1, day));
   result.setUTCDate(result.getUTCDate() + days);
   return result.toISOString().slice(0, 10);
-}
+};
 
 // Fixed anchor date (not tied to the real clock) so the overdue/today/upcoming
 // split in the showcase is stable no matter when this page is loaded.
@@ -120,7 +120,7 @@ const COMMAND_SECTIONS: readonly {
   },
 ];
 
-function buildTodoSections(): readonly ShowcaseSection[] {
+const buildTodoSections = (): readonly ShowcaseSection[] => {
   let state: TodoCommandState = { todos: SEED_TODOS, view: [] };
 
   return COMMAND_SECTIONS.map(({ title, commands }) => {
@@ -131,12 +131,12 @@ function buildTodoSections(): readonly ShowcaseSection[] {
     });
     return { title, entries };
   });
-}
+};
 
-function buildBootSection(): ShowcaseSection {
+const buildBootSection = (): ShowcaseSection => {
   const { message } = formatBootMessage(SEED_TODOS, ANCHOR, "Good morning");
   return { title: "BOOT & GREETING", entries: [{ output: message }] };
-}
+};
 
 // GitHub/sync output requires network and async spinners, so it can't be
 // driven through the real dispatcher here. These are literal copies of the
@@ -252,11 +252,11 @@ const HELP_SECTION: ShowcaseSection = {
   entries: [{ command: "help", output: HELP_TEXT }],
 };
 
-export function buildShowcaseSections(): readonly ShowcaseSection[] {
+export const buildShowcaseSections = (): readonly ShowcaseSection[] => {
   return [
     buildBootSection(),
     ...buildTodoSections(),
     GITHUB_SECTION,
     HELP_SECTION,
   ];
-}
+};

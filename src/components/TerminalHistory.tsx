@@ -7,20 +7,19 @@ type TerminalHistoryProps = {
   readonly taskCount: number;
 };
 
-export const TerminalHistory = memo(function TerminalHistory({
-  entries,
-  taskCount,
-}: TerminalHistoryProps) {
-  return (
-    <Fragment>
-      {entries.map((entry) => (
-        <TerminalEntry
-          key={entry.id}
-          command={entry.command}
-          output={entry.output}
-          taskCount={taskCount}
-        />
-      ))}
-    </Fragment>
-  );
-});
+export const TerminalHistory = memo(
+  ({ entries, taskCount }: TerminalHistoryProps) => {
+    return (
+      <Fragment>
+        {entries.map((entry) => (
+          <TerminalEntry
+            key={entry.id}
+            command={entry.command}
+            output={entry.output}
+            taskCount={taskCount}
+          />
+        ))}
+      </Fragment>
+    );
+  },
+);

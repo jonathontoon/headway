@@ -2,7 +2,7 @@ type TerminalGreetingProps = {
   readonly line: string;
 };
 
-export function TerminalGreeting({ line }: TerminalGreetingProps) {
+export const TerminalGreeting = ({ line }: TerminalGreetingProps) => {
   const parts = line.split(/(\d+ overdue tasks?|\d+ due today)/);
 
   return (
@@ -28,4 +28,4 @@ export function TerminalGreeting({ line }: TerminalGreetingProps) {
       })}
     </div>
   );
-}
+};

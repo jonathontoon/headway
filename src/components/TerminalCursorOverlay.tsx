@@ -3,10 +3,10 @@ type TerminalCursorOverlayProps = {
   readonly isBlinking: boolean;
 };
 
-export function TerminalCursorOverlay({
+export const TerminalCursorOverlay = ({
   char,
   isBlinking,
-}: TerminalCursorOverlayProps) {
+}: TerminalCursorOverlayProps) => {
   return (
     <span className="relative inline-block">
       {char}
@@ -23,4 +23,4 @@ export function TerminalCursorOverlay({
       </span>
     </span>
   );
-}
+};

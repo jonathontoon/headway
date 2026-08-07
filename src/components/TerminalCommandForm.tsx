@@ -19,7 +19,7 @@ type TerminalCommandFormProps = {
   readonly onClearScreen: () => void;
 };
 
-function completeCommand(command: string): string | null {
+const completeCommand = (command: string): string | null => {
   if (command.length === 0) {
     return null;
   }
@@ -55,16 +55,16 @@ function completeCommand(command: string): string | null {
   }
 
   return null;
-}
+};
 
-export function TerminalCommandForm({
+export const TerminalCommandForm = ({
   command,
   onSubmit,
   onChange,
   onNavigateHistory,
   onCancel,
   onClearScreen,
-}: TerminalCommandFormProps) {
+}: TerminalCommandFormProps) => {
   const {
     inputRef,
     commandTextRef,
@@ -78,7 +78,7 @@ export function TerminalCommandForm({
   } = useTerminalCursor(command);
 
   useEffect(() => {
-    function focusInputForTyping(event: globalThis.KeyboardEvent) {
+    const focusInputForTyping = (event: globalThis.KeyboardEvent) => {
       const input = inputRef.current;
       if (!input || document.activeElement === input) {
         return;
@@ -93,13 +93,13 @@ export function TerminalCommandForm({
       }
 
       input.focus();
-    }
+    };
 
     window.addEventListener("keydown", focusInputForTyping);
     return () => window.removeEventListener("keydown", focusInputForTyping);
   }, [inputRef]);
 
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     requestAnimationFrame(syncCursorPosition);
 
     if (event.key === KEYBOARD_KEYS.arrowUp) {
@@ -137,16 +137,16 @@ export function TerminalCommandForm({
       event.preventDefault();
       onClearScreen();
     }
-  }
+  };
 
-  function handleCommandPointerDown(event: PointerEvent<HTMLDivElement>) {
+  const handleCommandPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) {
       return;
     }
 
     event.preventDefault();
     setCursorPositionFromClientX(event.clientX);
-  }
+  };
 
   return (
     <form
@@ -209,4 +209,4 @@ export function TerminalCommandForm({
       </div>
     </form>
   );
-}
+};

@@ -19,6 +19,18 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      "prefer-arrow-callback": [
+        "error",
+        { allowNamedFunctions: false, allowUnboundThis: true },
+      ],
+    },
+  },
+  {
+    files: ["src/components/**/*.{ts,tsx}", "src/*.tsx"],
+    rules: {
+      "func-style": ["error", "expression", { allowArrowFunctions: true }],
+    },
   },
   eslintConfigPrettier,
 ]);

@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import App from "./App";
 import { SAMPLE_TODOS } from "./store/todos/sampleTodos";
 
-function renderApp() {
+const renderApp = () => {
   return render(<App initialTodos={SAMPLE_TODOS} />);
-}
+};
 
 describe("App Component", () => {
   it("renders an editable terminal prompt", () => {

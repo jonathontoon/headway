@@ -2,7 +2,7 @@ type TerminalURLProps = {
   readonly line: string;
 };
 
-export function TerminalURL({ line }: TerminalURLProps) {
+export const TerminalURL = ({ line }: TerminalURLProps) => {
   return (
     <div className="block whitespace-pre-wrap pl-[3ch]">
       <a
@@ -15,4 +15,4 @@ export function TerminalURL({ line }: TerminalURLProps) {
       </a>
     </div>
   );
-}
+};

@@ -4,14 +4,14 @@ type TerminalPendingHintProps = {
   readonly onCancel: () => void;
 };
 
-export function TerminalPendingHint({ onCancel }: TerminalPendingHintProps) {
+export const TerminalPendingHint = ({ onCancel }: TerminalPendingHintProps) => {
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
+    const handleKeyDown = (event: KeyboardEvent) => {
       // Preserve OS/browser shortcuts (copy, refresh, ...) instead of
       // treating every modifier combo as a cancel request.
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       onCancel();
-    }
+    };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -22,4 +22,4 @@ export function TerminalPendingHint({ onCancel }: TerminalPendingHintProps) {
       Press any key to cancel
     </p>
   );
-}
+};

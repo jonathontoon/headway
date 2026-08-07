@@ -10,11 +10,11 @@ type TerminalEntryProps = {
   readonly taskCount: number;
 };
 
-export function TerminalEntry({
+export const TerminalEntry = ({
   command,
   output,
   taskCount,
-}: TerminalEntryProps) {
+}: TerminalEntryProps) => {
   return (
     <div className={TERMINAL_BLOCK_GAP_MB}>
       {command !== undefined && (
@@ -43,4 +43,4 @@ export function TerminalEntry({
       )}
     </div>
   );
-}
+};
