@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The browser GitHub client ID now uses `GITHUB_CLIENT_ID`, matching the worker configuration. The Vite build exposes only this public client ID and does not expose GitHub secrets.
+
 <!--
 ### Added
 ### Changed
@@ -50,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Tasks and GitHub settings moved from localStorage to IndexedDB; existing data is migrated automatically on first load and the old localStorage keys are removed (rolling back to an older deployment after that will not see changes made since the migration). Note: IndexedDB is not more resistant to same-origin scripts than localStorage - the CSP and validate-on-read checks remain the tamper defenses - but it brings non-blocking I/O, a larger quota, and eviction protection.
+- Tasks and GitHub settings moved from localStorage to indexedDB; existing data is migrated automatically on first load and the old localStorage keys are removed (rolling back to an older deployment after that will not see changes made since the migration). Note: indexedDB is not more resistant to same-origin scripts than localStorage - the CSP and validate-on-read checks remain the tamper defenses - but it brings non-blocking I/O, a larger quota, and eviction protection.
 
 - `sync restore` now refuses to replace unsaved local tasks; pass `sync restore --force` to overwrite them.
 - `connect` now explains that the stored token can read and write every repo on the account.
@@ -108,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Manual GitHub sync for the todo list: `sync setup <owner>/<repo> [branch] [path]` picks a repo file (defaults `main`/`todo.txt`), `sync push` commits local tasks via the GitHub Contents API, `sync pull` replaces local tasks from the repo, and `sync`/`sync status` reports the target, account, and dirty/clean state. Push and pull detect conflicts (remote changed since last sync, or unpushed local changes) and require `--force` to override.
-- `login`/`logout` commands authenticate with GitHub via the OAuth device flow (set `VITE_GITHUB_CLIENT_ID` to an OAuth App with device flow enabled). A new Cloudflare Worker route proxies the two device-flow endpoints that don't allow browser CORS.
+- `login`/`logout` commands authenticate with GitHub via the OAuth device flow (set `GITHUB_CLIENT_ID` to an OAuth App with device flow enabled). A new Cloudflare Worker route proxies the two device-flow endpoints that don't allow browser CORS.
 
 ## [1.1.0] - 2026-07-11
 

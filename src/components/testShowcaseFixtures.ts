@@ -148,7 +148,7 @@ const GITHUB_SECTION: ShowcaseSection = {
     {
       command: "connect octocat/todos",
       output:
-        "Error: no GitHub client id is configured - set VITE_GITHUB_CLIENT_ID and rebuild.",
+        "Error: no GitHub client id is configured - set GITHUB_CLIENT_ID and rebuild.",
     },
     {
       command: "connect",

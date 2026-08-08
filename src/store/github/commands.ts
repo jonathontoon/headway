@@ -251,7 +251,7 @@ async function runConnect(
 
   if (!deps.clientId) {
     deps.emit(
-      "Error: no GitHub client id is configured - set VITE_GITHUB_CLIENT_ID and rebuild.",
+      "Error: no GitHub client id is configured - set GITHUB_CLIENT_ID and rebuild.",
     );
     return;
   }

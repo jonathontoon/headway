@@ -121,7 +121,9 @@ function useTerminalController(): TerminalStore {
             applyTodos: (todos) => {
               persistTodos(dispatch, todos);
             },
-            clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
+            clientId:
+              import.meta.env.GITHUB_CLIENT_ID ??
+              import.meta.env.VITE_GITHUB_CLIENT_ID,
             restoreConfirmation: {
               get: () => restoreConfirmationRef.current,
               set: (key) => {

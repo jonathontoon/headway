@@ -15,6 +15,7 @@ const packageJson = JSON.parse(
 
 // https://vite.dev/config/
 export default defineConfig({
+  envPrefix: ["VITE_", "GITHUB_CLIENT_ID"],
   plugins: [
     react(),
     VitePWA({
