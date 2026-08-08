@@ -1,4 +1,3 @@
-import { HELP_TEXT } from "../../commands/registry";
 import { formatTaskBody, getMetadataValue, taskLabel } from "./format";
 import {
   isTodoDate,
@@ -19,6 +18,7 @@ import {
   listTodayTasks,
   listUpcomingTasks,
 } from "./views";
+import { terminalOutput } from "../terminal/output";
 
 const PRIORITY_PATTERN = /^[A-Z]$/;
 const CONTEXT_PATTERN = /^@\S+$/;
@@ -549,7 +549,7 @@ function runCommand(
   }
 
   if (trimmedCommand === "help") {
-    return { nextTodos: state.todos, output: HELP_TEXT };
+    return { nextTodos: state.todos, output: terminalOutput.help() };
   }
 
   const [commandName, ...args] = trimmedCommand.split(/\s+/);

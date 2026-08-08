@@ -1,8 +1,7 @@
-import { HELP_TEXT } from "../commands/registry";
 import { runTodoCommand } from "../store/todos/commands";
 import { formatBootMessage } from "../store/todos/summary";
 import type { TodoClock, TodoCommandState } from "../store/todos/types";
-import type { TerminalOutput } from "../store/terminal/output";
+import { terminalOutput, type TerminalOutput } from "../store/terminal/output";
 
 /** One command and output pair in the terminal showcase. */
 export type ShowcaseEntry = {
@@ -252,7 +251,7 @@ const GITHUB_SECTION: ShowcaseSection = {
 
 const HELP_SECTION: ShowcaseSection = {
   title: "HELP",
-  entries: [{ command: "help", output: HELP_TEXT }],
+  entries: [{ command: "help", output: terminalOutput.help() }],
 };
 
 /**

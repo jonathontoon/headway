@@ -1,5 +1,6 @@
 import type { TodoTask } from "../todos/types";
 import { formatTask } from "../todos/format";
+import { HELP_TEXT } from "../../commands/registry";
 
 /** Semantic tone used to style a terminal text message. */
 export type MessageTone = "error" | "warning" | "success" | "muted" | "normal";
@@ -126,7 +127,7 @@ export function outputText(
     case OUTPUT_TYPE.LINK:
       return output.href;
     case OUTPUT_TYPE.HELP:
-      return "help";
+      return HELP_TEXT;
     case OUTPUT_TYPE.TASKS:
       return output.tasks
         .map(({ position, task }) => formatTask(position, task))

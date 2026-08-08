@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - Cloudflare deploys now resolve the `fake-indexeddb` package with the correct npm package name and import path.
+- `help` now renders the structured colored command list again instead of plain text.
 
 ### Removed
 

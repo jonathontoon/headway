@@ -1,6 +1,6 @@
 import { runTodoCommand } from "../commands";
 import type { TodoClock } from "../types";
-import { outputText } from "../../terminal/output";
+import { outputText, terminalOutput } from "../../terminal/output";
 
 const clock: TodoClock = {
   today: () => "2026-07-05",
@@ -173,6 +173,12 @@ describe("todo commands", () => {
         runTodoCommand("list completed", { todos, view: [] }, clock).output,
       ),
     ).toContain("1. Send invoices +work @computer");
+  });
+
+  it("renders help as structured terminal output", () => {
+    expect(runTodoCommand("help", { todos, view: [] }, clock).output).toEqual(
+      terminalOutput.help(),
+    );
   });
 
   it("filters incomplete task text with regex literals", () => {
