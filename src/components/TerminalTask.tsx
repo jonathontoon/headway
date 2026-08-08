@@ -80,17 +80,19 @@ export const TerminalTask = ({
   const rest = task.text.replace(/\s+pri:[^:\s]+/g, "").trim();
 
   return (
-    <div className="block whitespace-pre-wrap">
+    <div className="flex whitespace-pre-wrap">
       <span
-        className="inline-block text-right text-role-muted"
+        className="shrink-0 text-right text-role-muted"
         style={{ minWidth: `${idColumnWidth}ch` }}
       >
         {id}.
-      </span>{" "}
-      {priority && (
-        <span className={priorityClassName(priority)}>({priority}) </span>
-      )}
-      {renderTaskFragments(rest, today)}
+      </span>
+      <span className="min-w-0 pl-[1ch]">
+        {priority && (
+          <span className={priorityClassName(priority)}>({priority}) </span>
+        )}
+        {renderTaskFragments(rest, today)}
+      </span>
     </div>
   );
 };

@@ -67,7 +67,7 @@ export const TerminalHelpOutput = () => {
               <span className="whitespace-pre-wrap text-role-command pl-[1ch]">
                 {renderHelpCommandSegment(command)}
               </span>
-              <span className="whitespace-pre-wrap text-role-muted mb-2 sm:mb-0">
+              <span className="whitespace-pre-wrap text-role-muted pl-[1ch] mb-2 sm:mb-0">
                 {description}
               </span>
             </Fragment>
