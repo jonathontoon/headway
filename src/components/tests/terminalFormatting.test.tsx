@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { terminalOutput } from "../../store/terminal/output";
 import { parseTodoLine } from "../../store/todos/parser";
+import { TerminalEntry } from "../TerminalEntry";
 import { TerminalOutputView } from "../TerminalOutputView";
 
 describe("terminal output formatting", () => {
@@ -54,5 +55,25 @@ describe("terminal output formatting", () => {
     const line = container.querySelector("div");
     expect(line?.textContent).toBe(" → Saved: something");
     expect(line).toHaveClass("text-role-success");
+  });
+
+  it("keeps terminal entry response layout classes stable", () => {
+    render(
+      <TerminalEntry
+        output={terminalOutput.text("plain output")}
+        taskCount={5}
+      />,
+    );
+
+    expect(screen.getByTestId("terminal-output")).toHaveClass(
+      "m-0",
+      "whitespace-pre-wrap",
+      "font-mono",
+      "text-xs",
+      "sm:text-sm",
+      "md:text-base",
+      "leading-[1.9]",
+      "text-terminal-foreground",
+    );
   });
 });

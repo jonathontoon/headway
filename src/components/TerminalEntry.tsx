@@ -3,6 +3,7 @@ import type { TerminalOutput } from "../store/terminal/output";
 import { toTerminalOutput } from "../store/terminal/output";
 import { TerminalOutputView } from "./TerminalOutputView";
 import { TerminalPromptSymbol } from "./TerminalPromptSymbol";
+import { TerminalResponseBlock } from "./TerminalResponseBlock";
 
 type TerminalEntryProps = {
   readonly command?: string | undefined;
@@ -10,6 +11,13 @@ type TerminalEntryProps = {
   readonly taskCount: number;
 };
 
+/**
+ * Renders one terminal history entry, including the submitted command and its
+ * response output.
+ *
+ * @param props - The command, output, and task count for the entry.
+ * @returns The rendered terminal history entry.
+ */
 export const TerminalEntry = ({
   command,
   output,
@@ -31,15 +39,12 @@ export const TerminalEntry = ({
         </p>
       )}
       {output !== undefined && (
-        <div
-          data-testid="terminal-output"
-          className="m-0 whitespace-pre-wrap font-mono text-xs sm:text-sm md:text-base leading-[1.9] text-terminal-foreground"
-        >
+        <TerminalResponseBlock>
           <TerminalOutputView
             output={toTerminalOutput(output)}
             taskCount={taskCount}
           />
-        </div>
+        </TerminalResponseBlock>
       )}
     </div>
   );
