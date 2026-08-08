@@ -15,7 +15,6 @@ export const ACTION_TYPE = {
   SUBMIT: "SUBMIT",
   APPEND_OUTPUT: "APPEND_OUTPUT",
   REPLACE_LAST_OUTPUT: "REPLACE_LAST_OUTPUT",
-  APPLY_TODOS: "APPLY_TODOS",
   SET_COMMAND: "SET_COMMAND",
   NAVIGATE_HISTORY: "NAVIGATE_HISTORY",
 } as const;
@@ -34,7 +33,6 @@ export type TerminalAction =
       readonly type: typeof ACTION_TYPE.SUBMIT;
       readonly command: string;
       readonly output?: TerminalOutput | undefined;
-      readonly todos: readonly string[];
       readonly view: readonly number[];
       readonly pending: boolean;
     }
@@ -45,10 +43,6 @@ export type TerminalAction =
   | {
       readonly type: typeof ACTION_TYPE.REPLACE_LAST_OUTPUT;
       readonly output: TerminalOutput;
-    }
-  | {
-      readonly type: typeof ACTION_TYPE.APPLY_TODOS;
-      readonly todos: readonly string[];
     }
   | {
       readonly type: typeof ACTION_TYPE.SET_COMMAND;
@@ -72,7 +66,6 @@ export function createInitialTerminalState(
     entries: [{ id: 0, output: message }],
     command: "",
     historyIndex: null,
-    todos,
     view,
     pending: false,
   };
@@ -174,7 +167,6 @@ export function terminalReducer(
         ],
         command: "",
         historyIndex: null,
-        todos: action.todos,
         view: action.view,
         pending: action.pending,
       };
@@ -201,12 +193,6 @@ export function terminalReducer(
         ),
       };
     }
-    case ACTION_TYPE.APPLY_TODOS:
-      return {
-        ...state,
-        todos: action.todos,
-        view: [],
-      };
     case ACTION_TYPE.SET_COMMAND:
       return {
         ...state,

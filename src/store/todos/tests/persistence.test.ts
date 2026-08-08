@@ -13,6 +13,26 @@ describe("todos persistence store", () => {
     expect(todosStore.getSnapshot()).toEqual(["(A) Pay bill", "Call plumber"]);
   });
 
+  it("updates the snapshot before the indexedDB write completes", async () => {
+    let resolveWrite: (() => void) | undefined;
+    const write = new Promise<void>((resolve) => {
+      resolveWrite = resolve;
+    });
+    const set = vi.spyOn(indexedDB, "set").mockReturnValueOnce(write);
+
+    const save = todosStore.set(["write later"]);
+
+    try {
+      expect(todosStore.getSnapshot()).toEqual(["write later"]);
+      await Promise.resolve();
+      expect(set).toHaveBeenCalledWith("todos", ["write later"]);
+    } finally {
+      resolveWrite?.();
+      await save;
+      set.mockRestore();
+    }
+  });
+
   it("keeps an explicitly empty list instead of restoring samples", async () => {
     await todosStore.set([]);
     expect(todosStore.getSnapshot()).toEqual([]);

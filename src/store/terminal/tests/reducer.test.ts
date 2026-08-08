@@ -17,7 +17,6 @@ describe("terminal reducer pending state", () => {
       type: ACTION_TYPE.SUBMIT,
       command: "connect owner/repo",
       output: undefined,
-      todos: [],
       view: [],
       pending: true,
     });
@@ -27,7 +26,6 @@ describe("terminal reducer pending state", () => {
       type: ACTION_TYPE.SUBMIT,
       command: "list",
       output: terminalOutput.text("output"),
-      todos: [],
       view: [],
       pending: false,
     });
@@ -39,7 +37,6 @@ describe("terminal reducer pending state", () => {
       type: ACTION_TYPE.SUBMIT,
       command: "connect owner/repo",
       output: undefined,
-      todos: [],
       view: [],
       pending: true,
     });
@@ -56,7 +53,6 @@ describe("terminal reducer pending state", () => {
       type: ACTION_TYPE.SUBMIT,
       command: "connect owner/repo",
       output: undefined,
-      todos: [],
       view: [],
       pending: true,
     });

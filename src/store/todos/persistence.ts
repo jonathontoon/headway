@@ -7,8 +7,11 @@ const TODOS_CHANNEL_NAME = "headway-todos";
 type Listener = () => void;
 
 let snapshot: readonly string[] = SAMPLE_TODOS;
+let persistedSnapshot: readonly string[] = SAMPLE_TODOS;
 let initialized = false;
 let initialization: Promise<void> | undefined;
+let writeQueue: Promise<void> = Promise.resolve();
+let writeVersion = 0;
 let todosChannel: BroadcastChannel | undefined;
 
 const listeners = new Set<Listener>();
@@ -31,6 +34,7 @@ function receiveTodos(event: MessageEvent): void {
   const todos = sanitizeTodos(event.data);
   if (todos) {
     snapshot = todos;
+    persistedSnapshot = todos;
     emit();
   }
 }
@@ -54,6 +58,7 @@ async function initialize(): Promise<void> {
     .get<unknown>(TODOS_DB_KEY)
     .then((value) => {
       snapshot = sanitizeTodos(value) ?? SAMPLE_TODOS;
+      persistedSnapshot = snapshot;
       initialized = true;
       emit();
     })
@@ -75,11 +80,25 @@ function getServerSnapshot(): readonly string[] {
 
 async function setTodos(todos: readonly string[]): Promise<void> {
   const nextTodos = [...todos];
-  await indexedDB.set(TODOS_DB_KEY, nextTodos);
-
+  const version = writeVersion + 1;
+  writeVersion = version;
   snapshot = nextTodos;
   emit();
-  openTodosChannel()?.postMessage(nextTodos);
+
+  const write = writeQueue.then(() => indexedDB.set(TODOS_DB_KEY, nextTodos));
+  writeQueue = write.catch(() => undefined);
+
+  try {
+    await write;
+    persistedSnapshot = nextTodos;
+    openTodosChannel()?.postMessage(nextTodos);
+  } catch (error) {
+    if (version === writeVersion) {
+      snapshot = persistedSnapshot;
+      emit();
+    }
+    throw error;
+  }
 }
 
 function subscribe(listener: Listener): () => void {
@@ -105,6 +124,9 @@ export function __resetTodosStoreForTests(): void {
   initialized = false;
   initialization = undefined;
   snapshot = SAMPLE_TODOS;
+  persistedSnapshot = SAMPLE_TODOS;
+  writeQueue = Promise.resolve();
+  writeVersion = 0;
   listeners.clear();
   todosChannel?.close();
   todosChannel = undefined;

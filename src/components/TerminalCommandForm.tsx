@@ -1,10 +1,6 @@
-import {
-  useEffect,
-  type FormEvent,
-  type KeyboardEvent,
-  type PointerEvent,
-} from "react";
+import { type FormEvent, type KeyboardEvent, type PointerEvent } from "react";
 import { useCursor } from "../hooks/useCursor";
+import { useKeyDown } from "../hooks/useKeyDown";
 import { TERMINAL_PROMPT, KEYBOARD_KEYS } from "../constants";
 import { COMMAND_VERBS, SUBCOMMAND_VERBS } from "../commands/registry";
 import { Direction } from "../store/terminal/direction";
@@ -78,27 +74,22 @@ export const TerminalCommandForm = ({
     isCursorBlinking,
   } = useCursor(command);
 
-  useEffect(() => {
-    const focusInputForTyping = (event: globalThis.KeyboardEvent) => {
-      const input = inputRef.current;
-      if (!input || document.activeElement === input) {
-        return;
-      }
+  useKeyDown((event) => {
+    const input = inputRef.current;
+    if (!input || document.activeElement === input) {
+      return;
+    }
 
-      if (event.ctrlKey || event.metaKey || event.altKey) {
-        return;
-      }
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
 
-      if (event.key.length !== 1 && event.key !== "Backspace") {
-        return;
-      }
+    if (event.key.length !== 1 && event.key !== "Backspace") {
+      return;
+    }
 
-      input.focus();
-    };
-
-    window.addEventListener("keydown", focusInputForTyping);
-    return () => window.removeEventListener("keydown", focusInputForTyping);
-  }, [inputRef]);
+    input.focus();
+  });
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     requestAnimationFrame(syncCursorPosition);

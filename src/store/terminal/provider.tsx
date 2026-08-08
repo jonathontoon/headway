@@ -5,6 +5,7 @@ import {
   useRef,
   type PropsWithChildren,
 } from "react";
+import { useTodos } from "../../hooks/useTodos";
 import { isGitHubCommand, runGitHubCommand } from "../github/commands";
 import { runTodoCommand } from "../todos/commands";
 import { todosStore } from "../todos/persistence";
@@ -42,31 +43,20 @@ function describeCancellation(label: string): string {
   return `${label} cancelled.`;
 }
 
-type TerminalProviderProps = PropsWithChildren<{
-  readonly todos: readonly string[];
-}>;
+type TerminalProviderProps = PropsWithChildren;
 
-function useTerminalController(todos: readonly string[]): TerminalStore {
+function useTerminalController(): TerminalStore {
+  const todos = useTodos();
   const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
     createInitialTerminalState(todos),
   );
 
-  useEffect(() => {
-    const hasSameTodos =
-      state.todos.length === todos.length &&
-      state.todos.every((todo, index) => todo === todos[index]);
-
-    if (!hasSameTodos) {
-      dispatch({ type: ACTION_TYPE.APPLY_TODOS, todos });
-    }
-  }, [state.todos, todos]);
-
   // GitHub commands resolve asynchronously; the ref keeps getTodos current
   // instead of reading the todos captured when the command was submitted.
-  const todosRef = useRef(state.todos);
+  const todosRef = useRef(todos);
   useEffect(() => {
-    todosRef.current = state.todos;
-  }, [state.todos]);
+    todosRef.current = todos;
+  }, [todos]);
 
   // Tracks a github command currently in flight (e.g. the login device-flow
   // poll), so submitting another command can cancel it instead of blocking.
@@ -94,6 +84,7 @@ function useTerminalController(todos: readonly string[]): TerminalStore {
   const store = useMemo<TerminalStore>(
     () => ({
       state,
+      todos,
       setCommand(command) {
         dispatch({ type: ACTION_TYPE.SET_COMMAND, command });
       },
@@ -106,7 +97,6 @@ function useTerminalController(todos: readonly string[]): TerminalStore {
             type: ACTION_TYPE.SUBMIT,
             command: state.command,
             output: undefined,
-            todos: state.todos,
             view: state.view,
             pending: true,
           });
@@ -130,7 +120,6 @@ function useTerminalController(todos: readonly string[]): TerminalStore {
               ),
             applyTodos: (todos) => {
               persistTodos(dispatch, todos);
-              dispatch({ type: ACTION_TYPE.APPLY_TODOS, todos });
             },
             clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
             restoreConfirmation: {
@@ -150,10 +139,10 @@ function useTerminalController(todos: readonly string[]): TerminalStore {
         }
 
         const result = runTodoCommand(state.command, {
-          todos: state.todos,
+          todos,
           view: state.view,
         });
-        if (result.nextTodos !== state.todos) {
+        if (result.nextTodos !== todos) {
           persistTodos(dispatch, result.nextTodos);
         }
         dispatch({
@@ -163,7 +152,6 @@ function useTerminalController(todos: readonly string[]): TerminalStore {
             result.output === undefined
               ? undefined
               : toTerminalOutput(result.output),
-          todos: result.nextTodos,
           view: result.view ?? state.view,
           pending: false,
         });
@@ -184,14 +172,14 @@ function useTerminalController(todos: readonly string[]): TerminalStore {
         dispatch({ type: ACTION_TYPE.CLEAR_SCREEN });
       },
     }),
-    [state],
+    [state, todos],
   );
 
   return store;
 }
 
-export function TerminalProvider({ children, todos }: TerminalProviderProps) {
-  const store = useTerminalController(todos);
+export function TerminalProvider({ children }: TerminalProviderProps) {
+  const store = useTerminalController();
 
   return (
     <TerminalContext.Provider value={store}>

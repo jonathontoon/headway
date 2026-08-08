@@ -4,6 +4,7 @@ import type { TerminalState } from "./types";
 
 export type TerminalStore = {
   readonly state: TerminalState;
+  readonly todos: readonly string[];
   readonly setCommand: (command: string) => void;
   readonly submitCommand: () => void;
   readonly navigateHistory: (direction: Direction) => void;

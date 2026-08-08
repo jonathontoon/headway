@@ -12,6 +12,7 @@ import { TerminalPendingHint } from "./TerminalPendingHint";
 export const Terminal = () => {
   const {
     state,
+    todos,
     setCommand,
     submitCommand,
     navigateHistory,
@@ -42,7 +43,7 @@ export const Terminal = () => {
       aria-label="Terminal prompt"
       onContextMenu={handleContextMenu}
     >
-      <TerminalHistory entries={state.entries} taskCount={state.todos.length} />
+      <TerminalHistory entries={state.entries} taskCount={todos.length} />
       {state.pending ? (
         <TerminalPendingHint onCancel={cancelCommand} />
       ) : (
