@@ -1,4 +1,5 @@
 import { runTodoCommand } from "../commands";
+import { APP_DEPLOYED_AT, APP_VERSION } from "../../buildInfo";
 import type { TodoClock } from "../types";
 import { outputText, terminalOutput } from "../../terminal/output";
 
@@ -179,6 +180,12 @@ describe("todo commands", () => {
     expect(runTodoCommand("help", { todos, view: [] }, clock).output).toEqual(
       terminalOutput.help(),
     );
+  });
+
+  it("renders version with deployment metadata", () => {
+    expect(
+      runTodoCommand("version", { todos, view: [] }, clock).output,
+    ).toEqual(terminalOutput.version(APP_VERSION, APP_DEPLOYED_AT));
   });
 
   it("filters incomplete task text with regex literals", () => {

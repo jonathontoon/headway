@@ -59,7 +59,7 @@ export function formatBootMessage(
     ({ task }) => getMetadataValue(task.metadata, "due") === today,
   );
   const output: TerminalOutput[] = [
-    terminalOutput.boot(`↗ headway v${__APP_VERSION__}`),
+    terminalOutput.boot("↗ headway"),
     terminalOutput.greeting(
       `${greeting}. You have ${overdue.length} ${pluralize(
         overdue.length,

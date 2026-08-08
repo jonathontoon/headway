@@ -19,6 +19,7 @@ import {
   listUpcomingTasks,
 } from "./views";
 import { terminalOutput } from "../terminal/output";
+import { APP_DEPLOYED_AT, APP_VERSION } from "../buildInfo";
 
 const PRIORITY_PATTERN = /^[A-Z]$/;
 const CONTEXT_PATTERN = /^@\S+$/;
@@ -550,6 +551,13 @@ function runCommand(
 
   if (trimmedCommand === "help") {
     return { nextTodos: state.todos, output: terminalOutput.help() };
+  }
+
+  if (trimmedCommand === "version") {
+    return {
+      nextTodos: state.todos,
+      output: terminalOutput.version(APP_VERSION, APP_DEPLOYED_AT),
+    };
   }
 
   const [commandName, ...args] = trimmedCommand.split(/\s+/);

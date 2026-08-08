@@ -12,6 +12,7 @@ export const OUTPUT_TYPE = {
   TASKS: "TASKS",
   HELP: "HELP",
   HEADING: "HEADING",
+  VERSION: "VERSION",
   PROGRESS: "PROGRESS",
   BOOT: "BOOT",
   GREETING: "GREETING",
@@ -39,6 +40,11 @@ export type TerminalOutput =
   | {
       readonly type: typeof OUTPUT_TYPE.HEADING;
       readonly text: string;
+    }
+  | {
+      readonly type: typeof OUTPUT_TYPE.VERSION;
+      readonly version: string;
+      readonly deployedAt: string;
     }
   | {
       readonly type: typeof OUTPUT_TYPE.PROGRESS;
@@ -81,6 +87,11 @@ export const terminalOutput = {
   heading: (text: string): TerminalOutput => ({
     type: OUTPUT_TYPE.HEADING,
     text,
+  }),
+  version: (version: string, deployedAt: string): TerminalOutput => ({
+    type: OUTPUT_TYPE.VERSION,
+    version,
+    deployedAt,
   }),
   progress: (text: string): TerminalOutput => ({
     type: OUTPUT_TYPE.PROGRESS,
@@ -138,6 +149,8 @@ export function outputText(
       return output.href;
     case OUTPUT_TYPE.HELP:
       return HELP_TEXT;
+    case OUTPUT_TYPE.VERSION:
+      return `headway v${output.version}\n↳ Last deployed ${output.deployedAt}`;
     case OUTPUT_TYPE.TASKS:
       return output.tasks
         .map(({ position, task }) => formatTask(position, task))

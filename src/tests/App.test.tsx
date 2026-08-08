@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import App from "../App";
+import { APP_DEPLOYED_AT, APP_VERSION } from "../store/buildInfo";
 
 const renderApp = () => {
   return render(<App />);
@@ -13,7 +14,7 @@ describe("App Component", () => {
     const bootOutput = document.querySelector(
       '[data-testid="terminal-output"]',
     );
-    expect(bootOutput?.textContent).toContain("headway v3.0.0");
+    expect(bootOutput?.textContent).toContain("↗ headway");
     expect(bootOutput?.textContent).toContain(
       "Type 'help' for all available commands.",
     );
@@ -81,5 +82,19 @@ describe("App Component", () => {
     expect(outputEl?.textContent).toBe(
       " → 1 is not a recognized command. Type 'help' for all available commands.",
     );
+  });
+
+  it("shows the version and last deployment time", () => {
+    renderApp();
+    const input = screen.getByLabelText("Terminal command");
+
+    fireEvent.change(input, { target: { value: "version" } });
+    fireEvent.submit(input.closest("form")!);
+
+    const versionOutput = document.querySelectorAll(
+      '[data-testid="terminal-output"]',
+    )[1];
+    expect(versionOutput?.textContent).toContain(`headway v${APP_VERSION}`);
+    expect(versionOutput?.textContent).toContain(APP_DEPLOYED_AT);
   });
 });

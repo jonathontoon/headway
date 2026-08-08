@@ -11,12 +11,17 @@ type TerminalBootBannerProps = {
 export const TerminalBootBanner = ({ line }: TerminalBootBannerProps) => {
   const words = line.split(" ");
   const [arrow, ...rest] = words;
-  const version = rest.pop();
+  const maybeVersion = rest.at(-1);
+  const hasVersion = maybeVersion !== undefined && /^v\d/.test(maybeVersion);
+  const titleWords = hasVersion ? rest.slice(0, -1) : rest;
+  const title = titleWords.join(" ");
 
   return (
     <div className="block whitespace-pre-wrap">
-      <span className="text-role-command">{arrow}</span> {rest.join(" ")}{" "}
-      <span className="text-role-accent">{version}</span>
+      <span className="text-role-command">{arrow}</span> {title}
+      {hasVersion ? (
+        <span className="text-role-accent"> {maybeVersion}</span>
+      ) : null}
     </div>
   );
 };

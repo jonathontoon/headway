@@ -13,6 +13,8 @@ const packageJson = JSON.parse(
   ),
 );
 
+const deployedAt = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
+
 // https://vite.dev/config/
 export default defineConfig({
   envPrefix: ["VITE_", "GITHUB_CLIENT_ID"],
@@ -62,5 +64,6 @@ export default defineConfig({
   },
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
+    __APP_DEPLOYED_AT__: JSON.stringify(deployedAt),
   },
 });

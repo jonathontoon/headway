@@ -156,7 +156,14 @@ const COMMANDS: readonly CommandDefinition[] = [
     verb: "donate",
     section: "OTHER",
     usage: "donate",
-    description: "donation link",
+    description: "support ongoing development",
+    domain: "todo",
+  },
+  {
+    verb: "version",
+    section: "OTHER",
+    usage: "version",
+    description: "show version and deploy time",
     domain: "todo",
   },
   {

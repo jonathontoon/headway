@@ -10,6 +10,7 @@ import { TerminalMessage } from "./TerminalMessage";
 import { TerminalSecondary } from "./TerminalSecondary";
 import { TerminalSpinner } from "./TerminalSpinner";
 import { TerminalTask } from "./TerminalTask";
+import { TerminalVersionOutput } from "./TerminalVersionOutput";
 import { TerminalURL } from "./TerminalURL";
 
 type TerminalOutputViewProps = {
@@ -48,6 +49,13 @@ export const TerminalOutputView = ({
       return <TerminalHelpOutput />;
     case OUTPUT_TYPE.HEADING:
       return <TerminalHeading line={output.text} />;
+    case OUTPUT_TYPE.VERSION:
+      return (
+        <TerminalVersionOutput
+          version={output.version}
+          deployedAt={output.deployedAt}
+        />
+      );
     case OUTPUT_TYPE.PROGRESS:
       return <TerminalSpinner line={output.text} />;
     case OUTPUT_TYPE.BOOT:

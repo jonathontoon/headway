@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Cloudflare deploys now resolve the `fake-indexeddb` package with the correct npm package name and import path.
 - `help` now renders the structured colored command list again instead of plain text.
+- Boot section labels such as `OVERDUE` now render without a message arrow.
 
 ### Removed
 
@@ -33,6 +34,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 ### Security
 -->
+
+## [3.1.0] - 2026-08-08
+
+### Added
+
+- The `version` command now shows the app version and the `↳ Last deployed ...` timestamp.
+
+### Changed
+
+- The boot banner now shows `↗ headway`; use `version` to see the app version and last deploy time.
+- The `donate` command now says `support ongoing development`.
+- `help` and `version` now live under `OTHER`.
 
 ## [3.0.0] - 2026-07-16
 
