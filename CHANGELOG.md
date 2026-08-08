@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - The browser GitHub client ID now uses `GITHUB_CLIENT_ID`, matching the worker configuration. The Vite build exposes only this public client ID and does not expose GitHub secrets.
 - Vitest setup now lives under `src/tests` with the rest of the test support files.
+- Todo persistence now uses a generic IndexedDB service and a persistent store as its single source of truth, with database configuration defined centrally.
+- Terminal command handling, output formatting, cursor logic, and todo parsing are organized into focused modules and components.
+- Shared keyboard event handling is provided by reusable hooks, and terminal actions and output use explicit typed models.
+- TypeScript compiler checks are stricter, and test files are organized in `tests` directories beside their source areas.
+
+### Removed
+
+- Unused starter image assets.
 
 <!--
 ### Added
