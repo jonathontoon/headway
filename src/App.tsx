@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Terminal } from "./components/Terminal";
+import { useTodos } from "./hooks/useTodos";
 import { TerminalProvider } from "./store/terminal/provider";
 
 // Dynamically imported so its module (fixture data, sample GitHub output
@@ -7,11 +8,9 @@ import { TerminalProvider } from "./store/terminal/provider";
 // import.meta.env.DEV's build-time `false` is needed to prove that.
 const TestShowcase = lazy(() => import("./components/TestShowcase"));
 
-type AppProps = {
-  readonly initialTodos: readonly string[];
-};
+const App = () => {
+  const todos = useTodos();
 
-const App = ({ initialTodos }: AppProps) => {
   if (import.meta.env.DEV && window.location.pathname === "/test") {
     return (
       <Suspense fallback={null}>
@@ -21,7 +20,7 @@ const App = ({ initialTodos }: AppProps) => {
   }
 
   return (
-    <TerminalProvider initialTodos={initialTodos}>
+    <TerminalProvider todos={todos}>
       <Terminal />
     </TerminalProvider>
   );

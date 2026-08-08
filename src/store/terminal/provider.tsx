@@ -7,7 +7,7 @@ import {
 } from "react";
 import { isGitHubCommand, runGitHubCommand } from "../github/commands";
 import { runTodoCommand } from "../todos/commands";
-import { storeTodos, subscribeTodos } from "../todos/storage";
+import { todosStore } from "../todos/persistence";
 import {
   createInitialTerminalState,
   ACTION_TYPE,
@@ -19,13 +19,13 @@ import { TerminalContext, type TerminalStore } from "./context";
 import { terminalOutput, toTerminalOutput } from "./output";
 
 // Persistence is fire-and-forget so command handling stays synchronous; a
-// failed IndexedDB write only costs durability, not the in-memory state,
+// failed indexedDB write only costs durability, not the in-memory state,
 // so it's surfaced as a terminal line rather than thrown.
 function persistTodos(
   dispatch: (action: TerminalAction) => void,
   todos: readonly string[],
 ): void {
-  storeTodos(todos).catch(() => {
+  todosStore.set(todos).catch(() => {
     dispatch({
       type: ACTION_TYPE.APPEND_OUTPUT,
       output: terminalOutput.warning(
@@ -43,13 +43,23 @@ function describeCancellation(label: string): string {
 }
 
 type TerminalProviderProps = PropsWithChildren<{
-  readonly initialTodos: readonly string[];
+  readonly todos: readonly string[];
 }>;
 
-function useTerminalController(initialTodos: readonly string[]): TerminalStore {
+function useTerminalController(todos: readonly string[]): TerminalStore {
   const [state, dispatch] = useReducer(terminalReducer, undefined, () =>
-    createInitialTerminalState(initialTodos),
+    createInitialTerminalState(todos),
   );
+
+  useEffect(() => {
+    const hasSameTodos =
+      state.todos.length === todos.length &&
+      state.todos.every((todo, index) => todo === todos[index]);
+
+    if (!hasSameTodos) {
+      dispatch({ type: ACTION_TYPE.APPLY_TODOS, todos });
+    }
+  }, [state.todos, todos]);
 
   // GitHub commands resolve asynchronously; the ref keeps getTodos current
   // instead of reading the todos captured when the command was submitted.
@@ -57,16 +67,6 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
   useEffect(() => {
     todosRef.current = state.todos;
   }, [state.todos]);
-  // Another tab writing todos broadcasts them here (never in the tab that
-  // wrote); adopting its version keeps two open tabs from silently
-  // clobbering each other's tasks on the next command.
-  useEffect(
-    () =>
-      subscribeTodos((todos) =>
-        dispatch({ type: ACTION_TYPE.APPLY_TODOS, todos }),
-      ),
-    [],
-  );
 
   // Tracks a github command currently in flight (e.g. the login device-flow
   // poll), so submitting another command can cancel it instead of blocking.
@@ -190,11 +190,8 @@ function useTerminalController(initialTodos: readonly string[]): TerminalStore {
   return store;
 }
 
-export function TerminalProvider({
-  children,
-  initialTodos,
-}: TerminalProviderProps) {
-  const store = useTerminalController(initialTodos);
+export function TerminalProvider({ children, todos }: TerminalProviderProps) {
+  const store = useTerminalController(todos);
 
   return (
     <TerminalContext.Provider value={store}>

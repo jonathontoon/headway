@@ -1,4 +1,4 @@
-import { kvSet } from "../../db";
+import { indexedDB } from "../../../services/indexedDB";
 import {
   hashTodos,
   loadGitHubSettings,
@@ -10,7 +10,7 @@ describe("github settings", () => {
     await expect(loadGitHubSettings()).resolves.toEqual({});
   });
 
-  it("round-trips settings through IndexedDB", async () => {
+  it("round-trips settings through indexedDB", async () => {
     await storeGitHubSettings({
       owner: "toon",
       repo: "todos",
@@ -35,15 +35,15 @@ describe("github settings", () => {
   });
 
   it("falls back to empty settings on corrupt stored values", async () => {
-    await kvSet("github-settings", "a string");
+    await indexedDB.set("github-settings", "a string");
     await expect(loadGitHubSettings()).resolves.toEqual({});
 
-    await kvSet("github-settings", 42);
+    await indexedDB.set("github-settings", 42);
     await expect(loadGitHubSettings()).resolves.toEqual({});
   });
 
   it("drops unknown keys and non-string fields from stored settings", async () => {
-    await kvSet("github-settings", {
+    await indexedDB.set("github-settings", {
       owner: "toon",
       repo: 42,
       token: null,

@@ -1,11 +1,13 @@
 import "@testing-library/jest-dom";
-import "fake-indexeddb/auto";
-import { IDBFactory } from "fake-indexeddb";
-import { __resetDbForTests } from "./store/db";
+import "fake-indexedDB/auto";
+import { IDBFactory } from "fake-indexedDB";
+import { __resetDbForTests } from "./services/indexedDB";
+import { __resetTodosStoreForTests } from "./store/todos/persistence";
 
 beforeEach(() => {
-  // Fresh IndexedDB per test; the cached connection in db.ts would
+  // Fresh indexedDB per test; the cached connection in indexedDB.ts would
   // otherwise keep pointing at the previous factory's database.
   globalThis.indexedDB = new IDBFactory();
   __resetDbForTests();
+  __resetTodosStoreForTests();
 });

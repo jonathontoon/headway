@@ -1,4 +1,4 @@
-import { kvGet, kvSet } from "../db";
+import { indexedDB } from "../../services/indexedDB";
 
 const GITHUB_DB_KEY = "github-settings";
 
@@ -29,7 +29,7 @@ const SETTINGS_KEYS = [
   "lastSyncedAt",
 ] as const;
 
-// IndexedDB is writable by anything running in the origin, so only the
+// indexedDB is writable by anything running in the origin, so only the
 // known keys survive, and only when they hold strings.
 function sanitizeSettings(value: unknown): GitHubSettings {
   if (typeof value !== "object" || value === null) {
@@ -50,7 +50,7 @@ function sanitizeSettings(value: unknown): GitHubSettings {
 }
 
 export async function loadGitHubSettings(): Promise<GitHubSettings> {
-  const stored = await kvGet(GITHUB_DB_KEY);
+  const stored = await indexedDB.get<unknown>(GITHUB_DB_KEY);
 
   if (stored !== undefined) {
     return sanitizeSettings(stored);
@@ -64,7 +64,7 @@ export async function storeGitHubSettings(
 ): Promise<void> {
   // Structured clone rejects nothing here, but dropping undefined fields
   // keeps the stored record compact.
-  await kvSet(GITHUB_DB_KEY, JSON.parse(JSON.stringify(settings)));
+  await indexedDB.set(GITHUB_DB_KEY, JSON.parse(JSON.stringify(settings)));
 }
 
 // FNV-1a over the joined lines; detects local changes since the last sync.

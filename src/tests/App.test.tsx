@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import App from "../App";
-import { SAMPLE_TODOS } from "../store/todos/sampleTodos";
 
 const renderApp = () => {
-  return render(<App initialTodos={SAMPLE_TODOS} />);
+  return render(<App />);
 };
 
 describe("App Component", () => {

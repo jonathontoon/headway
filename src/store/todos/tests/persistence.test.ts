@@ -1,38 +1,33 @@
-import { kvSet } from "../../db";
-import {
-  loadStoredTodos,
-  sanitizeTodos,
-  storeTodos,
-  subscribeTodos,
-} from "../storage";
+import { indexedDB } from "../../../services/indexedDB";
+import { sanitizeTodos, todosStore } from "../persistence";
 import { SAMPLE_TODOS } from "../sampleTodos";
 
-describe("todos storage", () => {
+describe("todos persistence store", () => {
   it("falls back to the sample todos when nothing is stored", async () => {
-    await expect(loadStoredTodos()).resolves.toEqual(SAMPLE_TODOS);
+    await todosStore.initialize();
+    expect(todosStore.getSnapshot()).toEqual(SAMPLE_TODOS);
   });
 
-  it("round-trips todos through IndexedDB", async () => {
-    await storeTodos(["(A) Pay bill", "Call plumber"]);
-    await expect(loadStoredTodos()).resolves.toEqual([
-      "(A) Pay bill",
-      "Call plumber",
-    ]);
+  it("round-trips todos through indexedDB", async () => {
+    await todosStore.set(["(A) Pay bill", "Call plumber"]);
+    expect(todosStore.getSnapshot()).toEqual(["(A) Pay bill", "Call plumber"]);
   });
 
   it("keeps an explicitly empty list instead of restoring samples", async () => {
-    await storeTodos([]);
-    await expect(loadStoredTodos()).resolves.toEqual([]);
+    await todosStore.set([]);
+    expect(todosStore.getSnapshot()).toEqual([]);
   });
 
   it("drops non-string entries from stored values", async () => {
-    await kvSet("todos", ["keep", 42, null, "also keep"]);
-    await expect(loadStoredTodos()).resolves.toEqual(["keep", "also keep"]);
+    await indexedDB.set("todos", ["keep", 42, null, "also keep"]);
+    await todosStore.initialize();
+    expect(todosStore.getSnapshot()).toEqual(["keep", "also keep"]);
   });
 
   it("falls back to samples when the stored value is not an array", async () => {
-    await kvSet("todos", "not an array");
-    await expect(loadStoredTodos()).resolves.toEqual(SAMPLE_TODOS);
+    await indexedDB.set("todos", "not an array");
+    await todosStore.initialize();
+    expect(todosStore.getSnapshot()).toEqual(SAMPLE_TODOS);
   });
 
   it("sanitizes arbitrary values", () => {
@@ -43,10 +38,12 @@ describe("todos storage", () => {
 
   it("broadcasts stored todos to subscribers in other contexts", async () => {
     const received: (readonly string[])[] = [];
-    const unsubscribe = subscribeTodos((todos) => received.push(todos));
+    const unsubscribe = todosStore.subscribe(() =>
+      received.push(todosStore.getSnapshot()),
+    );
 
     try {
-      await storeTodos(["broadcast me"]);
+      await todosStore.set(["broadcast me"]);
       // BroadcastChannel delivery is asynchronous with no completion
       // signal, so poll briefly instead of racing a single timer tick.
       await vi.waitFor(() => expect(received).toEqual([["broadcast me"]]));
