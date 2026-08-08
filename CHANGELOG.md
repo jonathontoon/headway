@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Shared keyboard event handling is provided by reusable hooks, and terminal actions and output use explicit typed models.
 - TypeScript compiler checks are stricter, and test files are organized in `tests` directories beside their source areas.
 
+### Fixed
+
+- Cloudflare deploys now resolve the `fake-indexeddb` package with the correct npm package name and import path.
+
 ### Removed
 
 - Unused starter image assets.

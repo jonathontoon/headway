@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import "fake-indexedDB/auto";
-import { IDBFactory } from "fake-indexedDB";
+import "fake-indexeddb/auto";
+import { IDBFactory } from "fake-indexeddb";
 import { indexedDB } from "../services/indexedDB";
 import { __resetTodosStoreForTests } from "../store/todos/persistence";
 
