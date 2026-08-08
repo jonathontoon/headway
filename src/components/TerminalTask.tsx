@@ -64,6 +64,12 @@ const renderTaskFragments = (text: string, today: string) => {
   });
 };
 
+/**
+ * Renders one formatted todo task row.
+ *
+ * @param props - Task item, current date, and id column width.
+ * @returns The formatted terminal task row.
+ */
 export const TerminalTask = ({
   item,
   today,

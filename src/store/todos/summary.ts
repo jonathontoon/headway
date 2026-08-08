@@ -12,12 +12,23 @@ function openTasksInFileOrder(
   return parseTasks(todos).filter(({ task }) => !task.completed);
 }
 
+/**
+ * Gets the current local date in `YYYY-MM-DD` format.
+ *
+ * @returns The local calendar date.
+ */
 export function getLocalDate(): string {
   const date = new Date();
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
 }
 
+/**
+ * Selects a time-of-day greeting.
+ *
+ * @param date - Date used to choose the greeting.
+ * @returns Morning, afternoon, or evening greeting text.
+ */
 export function getTimeGreeting(date = new Date()): string {
   const hour = date.getHours();
 
@@ -26,6 +37,14 @@ export function getTimeGreeting(date = new Date()): string {
   return "Good evening";
 }
 
+/**
+ * Builds the boot summary shown when the terminal starts.
+ *
+ * @param todos - Raw todo.txt lines.
+ * @param today - Current local date in `YYYY-MM-DD` format.
+ * @param greeting - Greeting text for the current time of day.
+ * @returns Grouped terminal output and the source ids shown in the summary.
+ */
 export function formatBootMessage(
   todos: readonly string[],
   today: string,

@@ -17,6 +17,17 @@ type EventFor<
   ? EventMapFor<Target>[EventName]
   : Event;
 
+/**
+ * Adds a typed DOM event listener that always calls the latest handler.
+ *
+ * @typeParam Target - Event target type.
+ * @typeParam EventName - Event name type.
+ * @param target - Target to attach to, or null to skip.
+ * @param eventName - DOM event name.
+ * @param listener - Handler called when the event fires.
+ * @param options - Optional listener options.
+ * @returns Nothing.
+ */
 export const useEventListener = <
   Target extends EventTarget,
   EventName extends string,

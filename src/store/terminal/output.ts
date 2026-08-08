@@ -1,8 +1,10 @@
 import type { TodoTask } from "../todos/types";
 import { formatTask } from "../todos/format";
 
+/** Semantic tone used to style a terminal text message. */
 export type MessageTone = "error" | "warning" | "success" | "muted" | "normal";
 
+/** Terminal output node type names. */
 export const OUTPUT_TYPE = {
   BLANK: "BLANK",
   TEXT: "TEXT",
@@ -16,8 +18,10 @@ export const OUTPUT_TYPE = {
   GROUP: "GROUP",
 } as const;
 
+/** Supported terminal output node type. */
 export type TerminalOutputType = (typeof OUTPUT_TYPE)[keyof typeof OUTPUT_TYPE];
 
+/** Structured output model rendered by `TerminalOutputView`. */
 export type TerminalOutput =
   | { readonly type: typeof OUTPUT_TYPE.BLANK }
   | {
@@ -49,6 +53,7 @@ export type TerminalOutput =
       readonly items: readonly TerminalOutput[];
     };
 
+/** Todo task row shown in terminal task lists. */
 export type TerminalTask = {
   readonly position: number;
   readonly task: TodoTask;
@@ -58,6 +63,7 @@ function message(text: string, tone: MessageTone = "normal"): TerminalOutput {
   return { type: OUTPUT_TYPE.TEXT, text, tone };
 }
 
+/** Factory helpers for building structured terminal output nodes. */
 export const terminalOutput = {
   blank: (): TerminalOutput => ({ type: OUTPUT_TYPE.BLANK }),
   text: message,
@@ -96,6 +102,12 @@ export const terminalOutput = {
   }),
 };
 
+/**
+ * Converts terminal output to plain text.
+ *
+ * @param output - Structured output, raw text, or undefined.
+ * @returns Plain text for search, tests, or persistence helpers.
+ */
 export function outputText(
   output: TerminalOutput | string | undefined,
 ): string | undefined {
@@ -127,6 +139,12 @@ export function outputText(
   }
 }
 
+/**
+ * Normalizes raw command output text into structured terminal output.
+ *
+ * @param output - Raw command output or an existing structured output node.
+ * @returns Structured terminal output with inferred tone when needed.
+ */
 export function toTerminalOutput(
   output: TerminalOutput | string,
 ): TerminalOutput {

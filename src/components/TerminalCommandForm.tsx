@@ -54,6 +54,12 @@ const completeCommand = (command: string): string | null => {
   return null;
 };
 
+/**
+ * Renders the active terminal command form and custom cursor.
+ *
+ * @param props - Command value and terminal command handlers.
+ * @returns The command input form.
+ */
 export const TerminalCommandForm = ({
   command,
   onSubmit,

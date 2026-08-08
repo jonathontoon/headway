@@ -110,6 +110,7 @@ async function revokeGrant(body: string, env: Env): Promise<Response> {
   return new Response("Could not revoke the token", { status: 502 });
 }
 
+/** Cloudflare Worker entry point for GitHub device-flow proxy routes. */
 export default {
   async fetch(request: Request, env: Env = {}): Promise<Response> {
     const url = new URL(request.url);

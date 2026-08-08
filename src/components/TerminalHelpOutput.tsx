@@ -27,6 +27,11 @@ const renderHelpCommandSegment = (segment: string) => {
   );
 };
 
+/**
+ * Renders terminal help text as command and description columns.
+ *
+ * @returns The formatted help output.
+ */
 export const TerminalHelpOutput = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-0 sm:gap-y-[0.5em]">

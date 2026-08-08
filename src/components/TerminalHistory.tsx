@@ -7,6 +7,12 @@ type TerminalHistoryProps = {
   readonly taskCount: number;
 };
 
+/**
+ * Renders all saved terminal history entries.
+ *
+ * @param props - Terminal entries and task count for output formatting.
+ * @returns The terminal history list.
+ */
 export const TerminalHistory = memo(
   ({ entries, taskCount }: TerminalHistoryProps) => {
     return (

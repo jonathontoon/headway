@@ -57,14 +57,33 @@ function buildListing(
   };
 }
 
+/**
+ * Builds the default list of incomplete tasks.
+ *
+ * @param todos - Raw todo.txt lines.
+ * @returns Terminal output and the source ids in display order.
+ */
 export function listIncompleteTasks(todos: readonly string[]): TodoListing {
   return buildListing(incompleteTasks(todos), "No incomplete tasks.");
 }
 
+/**
+ * Builds the list of completed tasks.
+ *
+ * @param todos - Raw todo.txt lines.
+ * @returns Terminal output and the source ids in display order.
+ */
 export function listCompletedTasks(todos: readonly string[]): TodoListing {
   return buildListing(completedTasks(todos), "Completed is empty.");
 }
 
+/**
+ * Builds the list of tasks due today or overdue.
+ *
+ * @param todos - Raw todo.txt lines.
+ * @param today - Current local date in `YYYY-MM-DD` format.
+ * @returns Terminal output and the source ids in display order.
+ */
 export function listTodayTasks(
   todos: readonly string[],
   today: string,
@@ -77,6 +96,13 @@ export function listTodayTasks(
   return buildListing(tasks, "Today is clear.");
 }
 
+/**
+ * Builds the list of future-dated tasks.
+ *
+ * @param todos - Raw todo.txt lines.
+ * @param today - Current local date in `YYYY-MM-DD` format.
+ * @returns Terminal output and the source ids in display order.
+ */
 export function listUpcomingTasks(
   todos: readonly string[],
   today: string,
@@ -89,6 +115,14 @@ export function listUpcomingTasks(
   return buildListing(tasks, "Upcoming is empty.");
 }
 
+/**
+ * Filters incomplete tasks with a caller-provided predicate.
+ *
+ * @param todos - Raw todo.txt lines.
+ * @param predicate - Function that selects tasks to include.
+ * @param emptyMessage - Message to show when no tasks match.
+ * @returns Terminal output and the source ids in display order.
+ */
 export function filterIncompleteTasks(
   todos: readonly string[],
   predicate: (task: IndexedTask) => boolean,

@@ -590,6 +590,14 @@ function runCommand(
   }
 }
 
+/**
+ * Runs a todo terminal command against the current todo state.
+ *
+ * @param command - Raw terminal command text.
+ * @param state - Current todo lines and visible id mapping.
+ * @param clock - Clock dependency used for date-based commands.
+ * @returns Updated todo state, command output, and visible id mapping.
+ */
 export function runTodoCommand(
   command: string,
   state: TodoCommandState,

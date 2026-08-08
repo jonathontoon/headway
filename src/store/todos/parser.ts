@@ -27,10 +27,22 @@ function extractMetadata(words: readonly string[]): readonly TodoMetadata[] {
   });
 }
 
+/**
+ * Tests whether a value has the todo.txt date format.
+ *
+ * @param value - Value to test.
+ * @returns True when the value is `YYYY-MM-DD`.
+ */
 export function isTodoDate(value: string): boolean {
   return DATE_PATTERN.test(value);
 }
 
+/**
+ * Parses one todo.txt line into structured task data.
+ *
+ * @param line - Raw todo.txt line.
+ * @returns A parsed task or a parse error.
+ */
 export function parseTodoLine(line: string): ParseTodoResult {
   const trimmedLine = line.trim();
 
@@ -99,6 +111,13 @@ export function parseTodoLine(line: string): ParseTodoResult {
   };
 }
 
+/**
+ * Replaces task text and refreshes parsed project, context, and metadata data.
+ *
+ * @param task - Source task.
+ * @param text - Replacement task text.
+ * @returns Task with updated text-derived fields.
+ */
 export function withTaskText(task: TodoTask, text: string): TodoTask {
   const parsed = parseTodoLine(serializeTodo({ ...task, text }));
 
@@ -113,6 +132,12 @@ export function withTaskText(task: TodoTask, text: string): TodoTask {
       };
 }
 
+/**
+ * Serializes parsed task data back to todo.txt text.
+ *
+ * @param task - Task to serialize.
+ * @returns A todo.txt line.
+ */
 export function serializeTodo(task: TodoTask): string {
   const parts: string[] = [];
 

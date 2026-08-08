@@ -168,8 +168,10 @@ const COMMANDS: readonly CommandDefinition[] = [
   },
 ];
 
+/** Unique first words supported by terminal commands. */
 export const COMMAND_VERBS = [...new Set(COMMANDS.map(({ verb }) => verb))];
 
+/** Supported subcommands by first command word. */
 export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> =
   Object.fromEntries(
     COMMANDS.flatMap(({ verb, subcommands }) =>
@@ -177,6 +179,7 @@ export const SUBCOMMAND_VERBS: Readonly<Record<string, readonly string[]>> =
     ),
   );
 
+/** Help text rendered by the terminal `help` command. */
 export const HELP_TEXT = [...new Set(COMMANDS.map(({ section }) => section))]
   .flatMap((section) => [
     section,
@@ -188,6 +191,12 @@ export const HELP_TEXT = [...new Set(COMMANDS.map(({ section }) => section))]
   .slice(0, -1)
   .join("\n");
 
+/**
+ * Checks whether a command is handled by the GitHub command runner.
+ *
+ * @param command - Raw terminal command text.
+ * @returns True when the first word belongs to the GitHub command domain.
+ */
 export function isGitHubCommand(command: string): boolean {
   const [verb] = command.trim().split(/\s+/);
   return COMMANDS.some(

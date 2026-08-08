@@ -49,6 +49,12 @@ const stripRedundantLabel = (line: string, tone: MessageTone): string => {
   return line;
 };
 
+/**
+ * Renders a single terminal message with tone color and glyph.
+ *
+ * @param props - Message line and semantic tone.
+ * @returns The formatted message row.
+ */
 export const TerminalMessage = ({ line, tone }: TerminalMessageProps) => {
   const colorClass = toneClassName(tone);
   const prefix = ` ${messageGlyph(tone)} `;

@@ -2,6 +2,12 @@ type TerminalGreetingProps = {
   readonly line: string;
 };
 
+/**
+ * Renders the boot greeting and highlights due counts.
+ *
+ * @param props - Greeting line to render.
+ * @returns The formatted greeting.
+ */
 export const TerminalGreeting = ({ line }: TerminalGreetingProps) => {
   const parts = line.split(/(\d+ overdue tasks?|\d+ due today)/);
 

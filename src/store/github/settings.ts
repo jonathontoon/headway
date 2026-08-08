@@ -2,9 +2,13 @@ import { indexedDB } from "../../services/indexedDB";
 
 const GITHUB_DB_KEY = "github-settings";
 
+/** Default branch used when a sync target does not specify one. */
 export const DEFAULT_BRANCH = "main";
+
+/** Default repo file path used for todo sync. */
 export const DEFAULT_PATH = "todo.txt";
 
+/** Persisted GitHub sync settings and last-sync bookkeeping. */
 export type GitHubSettings = {
   readonly owner?: string | undefined;
   readonly repo?: string | undefined;
@@ -49,6 +53,11 @@ function sanitizeSettings(value: unknown): GitHubSettings {
   return settings;
 }
 
+/**
+ * Loads sanitized GitHub sync settings from browser storage.
+ *
+ * @returns Stored settings with unknown fields removed.
+ */
 export async function loadGitHubSettings(): Promise<GitHubSettings> {
   const stored = await indexedDB.get<unknown>(GITHUB_DB_KEY);
 
@@ -59,6 +68,12 @@ export async function loadGitHubSettings(): Promise<GitHubSettings> {
   return {};
 }
 
+/**
+ * Stores GitHub sync settings in browser storage.
+ *
+ * @param settings - Settings to persist.
+ * @returns Nothing.
+ */
 export async function storeGitHubSettings(
   settings: GitHubSettings,
 ): Promise<void> {
@@ -67,7 +82,12 @@ export async function storeGitHubSettings(
   await indexedDB.set(GITHUB_DB_KEY, JSON.parse(JSON.stringify(settings)));
 }
 
-// FNV-1a over the joined lines; detects local changes since the last sync.
+/**
+ * Hashes todo lines to detect local changes since the last sync.
+ *
+ * @param todos - Todo lines to hash.
+ * @returns FNV-1a hash as an 8-character hex string.
+ */
 export function hashTodos(todos: readonly string[]): string {
   const text = todos.join("\n");
   let hash = 0x811c9dc5;

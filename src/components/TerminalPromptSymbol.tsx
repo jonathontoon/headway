@@ -4,6 +4,12 @@ type TerminalPromptSymbolProps = {
   readonly prompt: string;
 };
 
+/**
+ * Renders the terminal prompt with split colors.
+ *
+ * @param props - Prompt text to render.
+ * @returns The formatted prompt symbol.
+ */
 export const TerminalPromptSymbol = ({ prompt }: TerminalPromptSymbolProps) => {
   const [head, ...rest] = prompt;
 

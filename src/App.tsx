@@ -7,6 +7,11 @@ import { TerminalProvider } from "./store/terminal/provider";
 // import.meta.env.DEV's build-time `false` is needed to prove that.
 const TestShowcase = lazy(() => import("./components/TestShowcase"));
 
+/**
+ * Selects the normal terminal app or the development showcase route.
+ *
+ * @returns The root React app.
+ */
 const App = () => {
   if (import.meta.env.DEV && window.location.pathname === "/test") {
     return (
@@ -23,4 +28,5 @@ const App = () => {
   );
 };
 
+/** Root React app component. */
 export default App;

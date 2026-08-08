@@ -3,6 +3,12 @@ type TerminalCursorOverlayProps = {
   readonly isBlinking: boolean;
 };
 
+/**
+ * Renders the block cursor over the character at the insertion point.
+ *
+ * @param props - Character under the cursor and blink state.
+ * @returns The cursor overlay.
+ */
 export const TerminalCursorOverlay = ({
   char,
   isBlinking,

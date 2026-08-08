@@ -7,6 +7,7 @@ import {
   getTimeGreeting,
 } from "../todos/summary";
 
+/** Terminal reducer action names. */
 export const ACTION_TYPE = {
   CLEAR_SCREEN: "CLEAR_SCREEN",
   CANCEL: "CANCEL",
@@ -19,8 +20,10 @@ export const ACTION_TYPE = {
   NAVIGATE_HISTORY: "NAVIGATE_HISTORY",
 } as const;
 
+/** Supported terminal reducer action name. */
 export type TerminalActionType = (typeof ACTION_TYPE)[keyof typeof ACTION_TYPE];
 
+/** All actions accepted by the terminal reducer. */
 export type TerminalAction =
   | { readonly type: typeof ACTION_TYPE.CLEAR_SCREEN }
   | { readonly type: typeof ACTION_TYPE.CANCEL }
@@ -53,6 +56,12 @@ export type TerminalAction =
       readonly direction: Direction;
     };
 
+/**
+ * Creates terminal state with the boot summary as the first entry.
+ *
+ * @param todos - Current todo lines used to build the boot summary.
+ * @returns Initial terminal reducer state.
+ */
 export function createInitialTerminalState(
   todos: readonly string[],
 ): TerminalState {
@@ -120,6 +129,13 @@ function navigateHistory(
   };
 }
 
+/**
+ * Applies a terminal action to state.
+ *
+ * @param state - Current terminal state.
+ * @param action - Action to apply.
+ * @returns Updated terminal state.
+ */
 export function terminalReducer(
   state: TerminalState,
   action: TerminalAction,

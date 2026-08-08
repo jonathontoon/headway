@@ -2,6 +2,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const CURSOR_BLINK_RESUME_DELAY_MS = 500;
 
+/**
+ * Manages the custom terminal cursor and its text measurement refs.
+ *
+ * @param command - Current command text.
+ * @returns Refs, cursor text parts, and cursor control handlers.
+ */
 export function useCursor(command: string) {
   const inputRef = useRef<HTMLInputElement>(null);
   const commandTextRef = useRef<HTMLSpanElement>(null);

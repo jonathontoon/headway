@@ -1,3 +1,4 @@
+/** Seed todo.txt lines used for first-run data and tests. */
 export const SAMPLE_TODOS: readonly string[] = [
   // OVERDUE (High priority stress test)
   "(A) 2026-06-15 Emergency: Fix production database bug +work @computer due:2026-07-08",

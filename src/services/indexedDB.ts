@@ -4,12 +4,14 @@ import { INDEXED_DB_OPTIONS } from "../constants";
 // the real defenses. indexedDB provides async I/O, structured clone support,
 // larger quota, and navigator.storage.persist() eviction protection.
 
+/** Options used to create an IndexedDB key-value client. */
 export type IndexedDBOptions = {
   readonly dbName: string;
   readonly storeName: string;
   readonly version?: number;
 };
 
+/** Small async key-value client backed by IndexedDB. */
 export type IndexedDBClient = {
   readonly get: <T>(key: string) => Promise<T | undefined>;
   readonly set: <T>(key: string, value: T) => Promise<void>;
@@ -17,6 +19,12 @@ export type IndexedDBClient = {
   readonly close: () => void;
 };
 
+/**
+ * Creates an IndexedDB-backed key-value client.
+ *
+ * @param options - Database name, object-store name, and schema version.
+ * @returns Client for reading, writing, removing, and closing storage.
+ */
 export const createIndexedDB = ({
   dbName,
   storeName,
@@ -126,4 +134,5 @@ export const createIndexedDB = ({
   return { get, set, remove, close };
 };
 
+/** Default application IndexedDB client. */
 export const indexedDB = createIndexedDB(INDEXED_DB_OPTIONS);

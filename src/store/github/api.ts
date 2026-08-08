@@ -1,9 +1,13 @@
+/** Fetch-compatible function used by GitHub sync code. */
 export type FetchFn = typeof fetch;
+
+/** Delay function used while polling GitHub device authorization. */
 export type WaitFn = (
   milliseconds: number,
   signal?: AbortSignal,
 ) => Promise<void>;
 
+/** GitHub repository file target used for todo sync. */
 export type SyncTarget = {
   readonly owner: string;
   readonly repo: string;
@@ -11,6 +15,7 @@ export type SyncTarget = {
   readonly path: string;
 };
 
+/** Device-flow code response returned by GitHub. */
 export type DeviceCode = {
   readonly deviceCode: string;
   readonly userCode: string;
@@ -19,14 +24,23 @@ export type DeviceCode = {
   readonly expiresIn: number;
 };
 
+/** GitHub file content and SHA needed for conflict-aware updates. */
 export type RemoteFile = {
   readonly sha: string;
   readonly lines: readonly string[];
 };
 
+/** Error thrown when a GitHub or worker request fails with a status code. */
 export class GitHubApiError extends Error {
+  /** HTTP status returned by the failed request. */
   readonly status: number;
 
+  /**
+   * Creates a GitHub API error.
+   *
+   * @param status - HTTP status returned by the failed request.
+   * @param message - Error message for terminal output or tests.
+   */
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -78,10 +92,22 @@ function requestInit(init: RequestInit, signal?: AbortSignal): RequestInit {
 // the URL parser before the request is sent - letting it retarget the
 // request to a different endpoint. Reject those (and empty segments)
 // instead of just encoding.
+/**
+ * Checks that a path segment cannot be normalized by URL parsing.
+ *
+ * @param segment - Owner, repo, branch, or file path segment.
+ * @returns True when the segment is safe to use.
+ */
 export function isValidPathSegment(segment: string): boolean {
   return segment !== "" && segment !== "." && segment !== "..";
 }
 
+/**
+ * Checks that a repository file path is relative and safe.
+ *
+ * @param path - Repository file path.
+ * @returns True when each segment is valid.
+ */
 export function isValidRepoPath(path: string): boolean {
   return path.split("/").every(isValidPathSegment);
 }
@@ -104,6 +130,15 @@ function contentsUrl(target: SyncTarget): string {
   return `https://api.github.com/repos/${encodeURIComponent(target.owner)}/${encodeURIComponent(target.repo)}/contents/${path}`;
 }
 
+/**
+ * Starts GitHub OAuth device authorization through the same-origin worker.
+ *
+ * @param clientId - GitHub OAuth app client id.
+ * @param fetchFn - Fetch function to use.
+ * @param signal - Optional abort signal.
+ * @returns Device-flow data for the user prompt and token poll.
+ * @throws GitHubApiError when GitHub or the worker rejects the request.
+ */
 export async function requestDeviceCode(
   clientId: string,
   fetchFn: FetchFn = fetch,
@@ -138,6 +173,17 @@ export async function requestDeviceCode(
   };
 }
 
+/**
+ * Polls GitHub until the device code is authorized.
+ *
+ * @param clientId - GitHub OAuth app client id.
+ * @param device - Device-flow data returned by `requestDeviceCode`.
+ * @param fetchFn - Fetch function to use.
+ * @param wait - Delay function used between polls.
+ * @param signal - Optional abort signal.
+ * @returns The OAuth access token.
+ * @throws GitHubApiError when authorization fails unexpectedly.
+ */
 export async function pollForToken(
   clientId: string,
   device: DeviceCode,
@@ -198,6 +244,15 @@ export async function pollForToken(
 // Revocation needs the app's client secret, so it goes through the worker.
 // "unsupported" means the worker isn't configured for it (501), which the
 // caller reports rather than treating as failure.
+/**
+ * Revokes a GitHub OAuth grant through the same-origin worker.
+ *
+ * @param token - Token to revoke.
+ * @param fetchFn - Fetch function to use.
+ * @param signal - Optional abort signal.
+ * @returns Whether the token was revoked or the worker lacks configuration.
+ * @throws GitHubApiError when the worker reports a revoke failure.
+ */
 export async function revokeToken(
   token: string,
   fetchFn: FetchFn = fetch,
@@ -226,6 +281,15 @@ export async function revokeToken(
   return "revoked";
 }
 
+/**
+ * Reads the login for an authenticated GitHub token.
+ *
+ * @param token - GitHub access token.
+ * @param fetchFn - Fetch function to use.
+ * @param signal - Optional abort signal.
+ * @returns GitHub login name.
+ * @throws GitHubApiError when GitHub rejects the token or request.
+ */
 export async function getAuthenticatedLogin(
   token: string,
   fetchFn: FetchFn = fetch,
@@ -244,6 +308,16 @@ export async function getAuthenticatedLogin(
   return data.login;
 }
 
+/**
+ * Reads the configured todo file from GitHub.
+ *
+ * @param target - Repository file target.
+ * @param token - GitHub access token.
+ * @param fetchFn - Fetch function to use.
+ * @param signal - Optional abort signal.
+ * @returns Remote file content, or `not_found` when the file does not exist.
+ * @throws GitHubApiError when GitHub rejects the read.
+ */
 export async function getFile(
   target: SyncTarget,
   token: string,
@@ -270,6 +344,18 @@ export async function getFile(
   return { sha: data.sha, lines: decodeContent(data.content) };
 }
 
+/**
+ * Writes todo lines to the configured GitHub file.
+ *
+ * @param target - Repository file target.
+ * @param token - GitHub access token.
+ * @param lines - Todo lines to write.
+ * @param sha - Current remote SHA when replacing an existing file.
+ * @param fetchFn - Fetch function to use.
+ * @param signal - Optional abort signal.
+ * @returns New remote file SHA.
+ * @throws GitHubApiError when GitHub rejects the write.
+ */
 export async function putFile(
   target: SyncTarget,
   token: string,
@@ -306,7 +392,12 @@ export async function putFile(
   return data.content.sha;
 }
 
-// UTF-8-safe base64: btoa/atob only handle byte strings.
+/**
+ * Encodes todo lines as UTF-8-safe base64 for GitHub Contents API writes.
+ *
+ * @param lines - Todo lines to encode.
+ * @returns Base64 content with a trailing newline.
+ */
 export function encodeLines(lines: readonly string[]): string {
   const bytes = new TextEncoder().encode(lines.join("\n") + "\n");
   let binary = "";
@@ -318,6 +409,12 @@ export function encodeLines(lines: readonly string[]): string {
   return btoa(binary);
 }
 
+/**
+ * Decodes GitHub Contents API base64 content to todo lines.
+ *
+ * @param content - Base64 content from GitHub.
+ * @returns Decoded todo lines without trailing blank lines.
+ */
 export function decodeContent(content: string): readonly string[] {
   const binary = atob(content.replace(/\s/g, ""));
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));

@@ -23,6 +23,7 @@ import {
 } from "./settings";
 import type { TerminalOutput } from "../terminal/output";
 
+/** Dependencies used by GitHub command handlers. */
 export type GitHubCommandDeps = {
   readonly getTodos: () => readonly string[];
   readonly emit: (
@@ -51,8 +52,16 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
+/** Re-exported classifier for GitHub command routing. */
 export { isGitHubCommand } from "../../commands/registry";
 
+/**
+ * Runs a GitHub-related terminal command.
+ *
+ * @param command - Raw terminal command text.
+ * @param deps - Storage, network, output, and cancellation dependencies.
+ * @returns Nothing.
+ */
 export async function runGitHubCommand(
   command: string,
   deps: GitHubCommandDeps,

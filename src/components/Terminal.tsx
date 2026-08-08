@@ -9,6 +9,11 @@ import { TerminalHistory } from "./TerminalHistory";
 import { TerminalCommandForm } from "./TerminalCommandForm";
 import { TerminalPendingHint } from "./TerminalPendingHint";
 
+/**
+ * Renders the full terminal screen and command input.
+ *
+ * @returns The terminal application UI.
+ */
 export const Terminal = () => {
   const {
     state,

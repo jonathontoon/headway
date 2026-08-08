@@ -4,11 +4,13 @@ import { formatBootMessage } from "../store/todos/summary";
 import type { TodoClock, TodoCommandState } from "../store/todos/types";
 import type { TerminalOutput } from "../store/terminal/output";
 
+/** One command and output pair in the terminal showcase. */
 export type ShowcaseEntry = {
   readonly command?: string | undefined;
   readonly output?: TerminalOutput | string | undefined;
 };
 
+/** Named group of terminal showcase entries. */
 export type ShowcaseSection = {
   readonly title: string;
   readonly entries: readonly ShowcaseEntry[];
@@ -47,6 +49,7 @@ const SEED_TODOS: readonly string[] = [
   `x ${COMPLETED_ON} ${CREATED} Buy groceries +Personal @home`,
 ];
 
+/** Task count used to align task ids in the terminal showcase. */
 export const SHOWCASE_TASK_COUNT = SEED_TODOS.length + 1;
 
 const clock: TodoClock = { today: () => ANCHOR };
@@ -252,6 +255,11 @@ const HELP_SECTION: ShowcaseSection = {
   entries: [{ command: "help", output: HELP_TEXT }],
 };
 
+/**
+ * Builds all terminal showcase sections.
+ *
+ * @returns Stable showcase sections for the development test route.
+ */
 export const buildShowcaseSections = (): readonly ShowcaseSection[] => {
   return [
     buildBootSection(),

@@ -180,6 +180,12 @@ function useTerminalController(): TerminalStore {
   return store;
 }
 
+/**
+ * Provides terminal state and command actions to the app.
+ *
+ * @param props - React children that need terminal context.
+ * @returns The terminal context provider.
+ */
 export function TerminalProvider({ children }: TerminalProviderProps) {
   const store = useTerminalController();
 

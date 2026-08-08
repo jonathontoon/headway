@@ -16,8 +16,12 @@ let todosChannel: BroadcastChannel | undefined;
 
 const listeners = new Set<Listener>();
 
-// indexedDB and BroadcastChannel are writable by anything running in the
-// origin, so every value read back is validated before use.
+/**
+ * Validates persisted todo data read from browser storage or another tab.
+ *
+ * @param value - Unknown persisted value.
+ * @returns A string array when the value is usable, or undefined.
+ */
 export function sanitizeTodos(value: unknown): readonly string[] | undefined {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
@@ -110,6 +114,7 @@ function subscribe(listener: Listener): () => void {
   };
 }
 
+/** Browser-backed todo store used by React through `useSyncExternalStore`. */
 export const todosStore = {
   getSnapshot,
   getServerSnapshot,
@@ -118,8 +123,11 @@ export const todosStore = {
   subscribe,
 };
 
-// Tests replace indexedDB between cases and must also reset this store's
-// in-memory snapshot and channel.
+/**
+ * Resets the singleton todo store for isolated tests.
+ *
+ * @returns Nothing.
+ */
 export function __resetTodosStoreForTests(): void {
   initialized = false;
   initialization = undefined;

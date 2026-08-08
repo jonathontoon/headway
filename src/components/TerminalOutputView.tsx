@@ -16,6 +16,12 @@ type TerminalOutputViewProps = {
   readonly taskCount: number;
 };
 
+/**
+ * Renders a structured terminal output node.
+ *
+ * @param props - Output node and task count used for task id width.
+ * @returns The matching terminal output component.
+ */
 export const TerminalOutputView = ({
   output,
   taskCount,

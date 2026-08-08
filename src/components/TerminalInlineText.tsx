@@ -48,6 +48,12 @@ const TerminalDeviceCodeText = ({ line }: TerminalInlineTextProps) => {
   );
 };
 
+/**
+ * Renders inline terminal text with links and special tokens highlighted.
+ *
+ * @param props - Text line to render.
+ * @returns The formatted inline text.
+ */
 export const TerminalInlineText = ({ line }: TerminalInlineTextProps) => {
   const segments = line.split(INLINE_URL_PATTERN);
 

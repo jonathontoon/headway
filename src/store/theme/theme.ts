@@ -1,6 +1,6 @@
 import type { Theme } from "./types";
 
-// Base palette: Gogh "earthsong". Tweak freely — this is the only theme.
+/** Built-in Earthsong terminal color theme. */
 export const THEME: Theme = {
   name: "earthsong",
   background: "#292520",

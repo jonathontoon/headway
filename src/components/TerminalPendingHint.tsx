@@ -4,6 +4,12 @@ type TerminalPendingHintProps = {
   readonly onCancel: () => void;
 };
 
+/**
+ * Renders the pending-operation cancel hint.
+ *
+ * @param props - Cancel handler called when the user presses a key.
+ * @returns The pending command hint.
+ */
 export const TerminalPendingHint = ({ onCancel }: TerminalPendingHintProps) => {
   useKeyDown((event) => {
     // Preserve OS/browser shortcuts (copy, refresh, ...) instead of
