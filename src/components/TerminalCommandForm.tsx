@@ -73,7 +73,7 @@ export const TerminalCommandForm = ({
     commandTextRef,
     commandMeasurementRef,
     syncCursorPosition,
-    setCursorPositionFromClientX,
+    setCursorPositionFromPoint,
     before,
     charUnderCursor,
     after,
@@ -143,7 +143,7 @@ export const TerminalCommandForm = ({
     }
 
     event.preventDefault();
-    setCursorPositionFromClientX(event.clientX);
+    setCursorPositionFromPoint(event.clientX, event.clientY);
   };
 
   return (
@@ -187,7 +187,7 @@ export const TerminalCommandForm = ({
         />
         <span
           ref={commandTextRef}
-          className="relative block whitespace-pre pointer-events-none"
+          className="relative block whitespace-pre-wrap pointer-events-none"
           aria-hidden="true"
         >
           {before}
@@ -199,7 +199,7 @@ export const TerminalCommandForm = ({
         </span>
         <span
           ref={commandMeasurementRef}
-          className="absolute left-0 top-0 invisible whitespace-pre pointer-events-none"
+          className="absolute left-0 top-0 whitespace-pre-wrap opacity-0 select-none"
           aria-hidden="true"
         >
           {command || " "}

@@ -44,7 +44,7 @@ export const Terminal = () => {
 
   return (
     <main
-      className="block h-dvh overflow-y-auto overscroll-contain px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-8 md:pt-8 md:pb-[calc(2rem+env(safe-area-inset-bottom))] box-border [-webkit-overflow-scrolling:touch]"
+      className="block h-dvh overflow-x-hidden overflow-y-auto overscroll-contain px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-8 md:pt-8 md:pb-[calc(2rem+env(safe-area-inset-bottom))] box-border [overflow-wrap:anywhere] [-webkit-overflow-scrolling:touch]"
       aria-label="Terminal prompt"
       onContextMenu={handleContextMenu}
     >

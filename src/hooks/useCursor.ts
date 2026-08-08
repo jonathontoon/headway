@@ -40,7 +40,81 @@ export function useCursor(command: string) {
     pauseCursorBlink();
   }
 
-  function setCursorPositionFromClientX(clientX: number) {
+  function approximateCharOffsetFromClientX(
+    clientX: number,
+    commandText: HTMLElement,
+    commandMeasurement: HTMLElement,
+    textLength: number,
+  ): number {
+    const textRect = commandText.getBoundingClientRect();
+    const measurementRect = commandMeasurement.getBoundingClientRect();
+    const measuredLength = Math.max(textLength, 1);
+    const charWidth = measurementRect.width / measuredLength;
+    return charWidth > 0
+      ? Math.max(
+          0,
+          Math.min(
+            textLength,
+            Math.round((clientX - textRect.left) / charWidth),
+          ),
+        )
+      : textLength;
+  }
+
+  /**
+   * Resolves a client-space point to a character offset within `mirror`'s
+   * text content, using the browser's own caret hit-testing so wrapped
+   * lines resolve correctly. Returns null if neither hit-testing API is
+   * available, or the hit doesn't land inside `mirror`.
+   */
+  function resolveCharOffsetFromPoint(
+    clientX: number,
+    clientY: number,
+    mirror: HTMLElement,
+    textLength: number,
+  ): number | null {
+    const rect = mirror.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      return null;
+    }
+
+    const x = Math.min(Math.max(clientX, rect.left), rect.right - 0.5);
+    const y = Math.min(Math.max(clientY, rect.top), rect.bottom - 0.5);
+
+    const hit: { node: Node; offset: number } | null = (() => {
+      if (typeof document.caretRangeFromPoint === "function") {
+        const range = document.caretRangeFromPoint(x, y);
+        return range
+          ? { node: range.startContainer, offset: range.startOffset }
+          : null;
+      }
+
+      if (typeof document.caretPositionFromPoint === "function") {
+        const position = document.caretPositionFromPoint(x, y);
+        return position
+          ? { node: position.offsetNode, offset: position.offset }
+          : null;
+      }
+
+      return null;
+    })();
+
+    if (!hit) {
+      return null;
+    }
+
+    const { node, offset } = hit;
+
+    if (!mirror.contains(node)) {
+      return null;
+    }
+
+    const charOffset = node === mirror ? (offset > 0 ? textLength : 0) : offset;
+
+    return Math.max(0, Math.min(textLength, charOffset));
+  }
+
+  function setCursorPositionFromPoint(clientX: number, clientY: number) {
     const input = inputRef.current;
     const commandText = commandTextRef.current;
     const commandMeasurement = commandMeasurementRef.current;
@@ -48,20 +122,21 @@ export function useCursor(command: string) {
       return;
     }
 
-    const textRect = commandText.getBoundingClientRect();
-    const measurementRect = commandMeasurement.getBoundingClientRect();
-    const measuredLength = Math.max(command.length, 1);
-    const charWidth = measurementRect.width / measuredLength;
+    const hitOffset = resolveCharOffsetFromPoint(
+      clientX,
+      clientY,
+      commandMeasurement,
+      command.length,
+    );
+
     const nextCursorPosition =
-      charWidth > 0
-        ? Math.max(
-            0,
-            Math.min(
-              command.length,
-              Math.round((clientX - textRect.left) / charWidth),
-            ),
-          )
-        : command.length;
+      hitOffset ??
+      approximateCharOffsetFromClientX(
+        clientX,
+        commandText,
+        commandMeasurement,
+        command.length,
+      );
 
     input.focus({ preventScroll: true });
     input.setSelectionRange(nextCursorPosition, nextCursorPosition);
@@ -89,7 +164,7 @@ export function useCursor(command: string) {
     commandTextRef,
     commandMeasurementRef,
     syncCursorPosition,
-    setCursorPositionFromClientX,
+    setCursorPositionFromPoint,
     before: command.slice(0, cursorPosition),
     charUnderCursor: command[cursorPosition] ?? " ",
     after: command.slice(cursorPosition + 1),
