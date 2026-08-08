@@ -25,6 +25,6 @@ export default defineConfig({
         url: "http://localhost/",
       },
     },
-    setupFiles: "./src/setupTests.ts",
+    setupFiles: "./src/tests/setupTests.ts",
   },
 });
