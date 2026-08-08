@@ -1,11 +1,11 @@
-import { kvSet } from "../db";
+import { kvSet } from "../../db";
 import {
   loadStoredTodos,
   sanitizeTodos,
   storeTodos,
   subscribeTodos,
-} from "./storage";
-import { SAMPLE_TODOS } from "./sampleTodos";
+} from "../storage";
+import { SAMPLE_TODOS } from "../sampleTodos";
 
 describe("todos storage", () => {
   it("falls back to the sample todos when nothing is stored", async () => {

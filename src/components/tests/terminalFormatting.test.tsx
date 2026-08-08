@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { terminalOutput } from "../store/terminal/output";
-import { parseTodoLine } from "../store/todos/parser";
-import { TerminalOutputView } from "./TerminalOutputView";
+import { terminalOutput } from "../../store/terminal/output";
+import { parseTodoLine } from "../../store/todos/parser";
+import { TerminalOutputView } from "../TerminalOutputView";
 
 describe("terminal output formatting", () => {
   it("colors aligned help rows as command and description columns", () => {

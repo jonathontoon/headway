@@ -1,4 +1,4 @@
-import { parseTodoLine, serializeTodo } from "./parser";
+import { parseTodoLine, serializeTodo } from "../parser";
 
 describe("todo.txt parser", () => {
   it("parses and serializes an incomplete task with priority and creation date", () => {

@@ -1,5 +1,5 @@
-import { formatBootMessage } from "./summary";
-import { outputText } from "../terminal/output";
+import { formatBootMessage } from "../summary";
+import { outputText } from "../../terminal/output";
 
 describe("todo boot summary", () => {
   it("formats the welcome message from overdue and today tasks", () => {

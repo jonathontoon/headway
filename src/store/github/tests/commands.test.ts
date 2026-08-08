@@ -1,11 +1,15 @@
-import { encodeLines, type FetchFn, type WaitFn } from "./api";
+import { encodeLines, type FetchFn, type WaitFn } from "../api";
 import {
   isGitHubCommand,
   runGitHubCommand,
   type GitHubCommandDeps,
-} from "./commands";
-import { hashTodos, loadGitHubSettings, storeGitHubSettings } from "./settings";
-import { outputText } from "../terminal/output";
+} from "../commands";
+import {
+  hashTodos,
+  loadGitHubSettings,
+  storeGitHubSettings,
+} from "../settings";
+import { outputText } from "../../terminal/output";
 
 const todos = ["(A) Pay electric bill +bills", "Call plumber @phone"];
 

@@ -1,6 +1,6 @@
-import { runTodoCommand } from "./commands";
-import type { TodoClock } from "./types";
-import { outputText } from "../terminal/output";
+import { runTodoCommand } from "../commands";
+import type { TodoClock } from "../types";
+import { outputText } from "../../terminal/output";
 
 const clock: TodoClock = {
   today: () => "2026-07-05",

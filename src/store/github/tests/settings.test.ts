@@ -1,5 +1,9 @@
-import { kvSet } from "../db";
-import { hashTodos, loadGitHubSettings, storeGitHubSettings } from "./settings";
+import { kvSet } from "../../db";
+import {
+  hashTodos,
+  loadGitHubSettings,
+  storeGitHubSettings,
+} from "../settings";
 
 describe("github settings", () => {
   it("returns empty settings when nothing is stored", async () => {

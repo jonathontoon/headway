@@ -11,7 +11,7 @@ import {
   type FetchFn,
   type SyncTarget,
   type WaitFn,
-} from "./api";
+} from "../api";
 
 const target: SyncTarget = {
   owner: "toon",

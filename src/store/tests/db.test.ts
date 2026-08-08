@@ -1,4 +1,4 @@
-import { kvDelete, kvGet, kvSet } from "./db";
+import { kvDelete, kvGet, kvSet } from "../db";
 
 describe("db", () => {
   it("returns undefined for a missing key", async () => {

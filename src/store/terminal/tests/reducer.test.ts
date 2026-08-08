@@ -2,8 +2,8 @@ import {
   ACTION_TYPE,
   createInitialTerminalState,
   terminalReducer,
-} from "./reducer";
-import { terminalOutput } from "./output";
+} from "../reducer";
+import { terminalOutput } from "../output";
 
 describe("terminal reducer pending state", () => {
   const initial = createInitialTerminalState([]);
