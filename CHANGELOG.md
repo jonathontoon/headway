@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+<!--
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+-->
+
+## [3.1.1] - 2026-08-08
+
 ### Changed
 
 - The browser GitHub client ID now uses `GITHUB_CLIENT_ID`, matching the worker configuration. The Vite build exposes only this public client ID and does not expose GitHub secrets.
@@ -21,19 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Cloudflare deploys now resolve the `fake-indexeddb` package with the correct npm package name and import path.
 - `help` now renders the structured colored command list again instead of plain text.
 - Boot section labels such as `OVERDUE` now render without a message arrow.
+- `help` descriptions and wrapped task lines now align under their command/task text on mobile instead of starting at the left edge.
+- The command input no longer runs off-screen on mobile; long commands wrap, and tapping wrapped text still places the cursor correctly. Long unbroken text (like URLs) in terminal output now wraps instead of overflowing the screen.
 
 ### Removed
 
 - Unused starter image assets.
-
-<!--
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
--->
 
 ## [3.1.0] - 2026-08-08
 
