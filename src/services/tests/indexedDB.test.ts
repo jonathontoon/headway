@@ -1,4 +1,9 @@
-import { indexedDB } from "../indexedDB";
+import { createIndexedDB } from "../indexedDB";
+
+const indexedDB = createIndexedDB({
+  dbName: "indexed-db-test",
+  storeName: "records",
+});
 
 describe("indexed db", () => {
   it("returns undefined for a missing key", async () => {
@@ -25,5 +30,21 @@ describe("indexed db", () => {
     await indexedDB.set("todos", ["a"]);
     await indexedDB.remove("todos");
     await expect(indexedDB.get("todos")).resolves.toBeUndefined();
+  });
+
+  it("reports when indexedDB is unavailable without caching the failure", async () => {
+    const originalIndexedDB = globalThis.indexedDB;
+    indexedDB.close();
+    globalThis.indexedDB = undefined as unknown as IDBFactory;
+
+    try {
+      await expect(indexedDB.get("missing")).rejects.toThrow(
+        "indexedDB is not available",
+      );
+    } finally {
+      globalThis.indexedDB = originalIndexedDB;
+    }
+
+    await expect(indexedDB.get("missing")).resolves.toBeUndefined();
   });
 });

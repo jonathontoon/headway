@@ -15,3 +15,9 @@ export const KEYBOARD_KEYS = {
   arrowDown: "ArrowDown",
   tab: "Tab",
 } as const;
+
+// IndexedDB configuration
+export const INDEXED_DB_OPTIONS = {
+  dbName: "headway",
+  storeName: "kv",
+} as const;
