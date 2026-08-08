@@ -166,13 +166,6 @@ const COMMANDS: readonly CommandDefinition[] = [
     description: "show version and deploy time",
     domain: "todo",
   },
-  {
-    verb: "help",
-    section: "OTHER",
-    usage: "help",
-    description: "show all commands",
-    domain: "todo",
-  },
 ];
 
 /** Unique first words supported by terminal commands. */

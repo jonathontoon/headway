@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 -->
 
+### Changed
+
+- The `help` command no longer lists itself in the command registry output.
+
 ## [3.1.1] - 2026-08-08
 
 ### Changed
