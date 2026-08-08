@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - The browser GitHub client ID now uses `GITHUB_CLIENT_ID`, matching the worker configuration. The Vite build exposes only this public client ID and does not expose GitHub secrets.
+- Vitest setup now lives under `src/tests` with the rest of the test support files.
 
 <!--
 ### Added
