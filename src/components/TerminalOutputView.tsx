@@ -5,6 +5,7 @@ import { TerminalBlank } from "./TerminalBlank";
 import { TerminalBootBanner } from "./TerminalBootBanner";
 import { TerminalGreeting } from "./TerminalGreeting";
 import { TerminalHelpOutput } from "./TerminalHelpOutput";
+import { TerminalHeading } from "./TerminalHeading";
 import { TerminalMessage } from "./TerminalMessage";
 import { TerminalSecondary } from "./TerminalSecondary";
 import { TerminalSpinner } from "./TerminalSpinner";
@@ -45,6 +46,8 @@ export const TerminalOutputView = ({
       ));
     case OUTPUT_TYPE.HELP:
       return <TerminalHelpOutput />;
+    case OUTPUT_TYPE.HEADING:
+      return <TerminalHeading line={output.text} />;
     case OUTPUT_TYPE.PROGRESS:
       return <TerminalSpinner line={output.text} />;
     case OUTPUT_TYPE.BOOT:

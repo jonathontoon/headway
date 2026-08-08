@@ -11,6 +11,7 @@ export const OUTPUT_TYPE = {
   TEXT: "TEXT",
   TASKS: "TASKS",
   HELP: "HELP",
+  HEADING: "HEADING",
   PROGRESS: "PROGRESS",
   BOOT: "BOOT",
   GREETING: "GREETING",
@@ -35,6 +36,10 @@ export type TerminalOutput =
       readonly tasks: readonly TerminalTask[];
     }
   | { readonly type: typeof OUTPUT_TYPE.HELP }
+  | {
+      readonly type: typeof OUTPUT_TYPE.HEADING;
+      readonly text: string;
+    }
   | {
       readonly type: typeof OUTPUT_TYPE.PROGRESS;
       readonly text: string;
@@ -73,6 +78,10 @@ export const terminalOutput = {
   success: (text: string): TerminalOutput => message(text, "success"),
   muted: (text: string): TerminalOutput => message(text, "muted"),
   help: (): TerminalOutput => ({ type: OUTPUT_TYPE.HELP }),
+  heading: (text: string): TerminalOutput => ({
+    type: OUTPUT_TYPE.HEADING,
+    text,
+  }),
   progress: (text: string): TerminalOutput => ({
     type: OUTPUT_TYPE.PROGRESS,
     text,
@@ -123,6 +132,7 @@ export function outputText(
     case OUTPUT_TYPE.BOOT:
     case OUTPUT_TYPE.GREETING:
     case OUTPUT_TYPE.SECONDARY:
+    case OUTPUT_TYPE.HEADING:
       return output.text;
     case OUTPUT_TYPE.LINK:
       return output.href;

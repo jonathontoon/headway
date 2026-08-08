@@ -57,6 +57,18 @@ describe("terminal output formatting", () => {
     expect(line).toHaveClass("text-role-success");
   });
 
+  it("renders boot headings without a message glyph", () => {
+    render(
+      <TerminalOutputView
+        output={terminalOutput.heading("OVERDUE")}
+        taskCount={5}
+      />,
+    );
+
+    expect(screen.getByText("OVERDUE").textContent).toBe("OVERDUE");
+    expect(screen.getByText("OVERDUE")).toHaveClass("text-role-muted");
+  });
+
   it("keeps terminal entry response layout classes stable", () => {
     render(
       <TerminalEntry

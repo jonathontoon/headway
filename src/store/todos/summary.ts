@@ -79,7 +79,7 @@ export function formatBootMessage(
     if (tasks.length === 0) continue;
     output.push(
       terminalOutput.blank(),
-      terminalOutput.muted(heading),
+      terminalOutput.heading(heading),
       terminalOutput.tasks(
         tasks.map((item, index) => ({
           position: position + index,
