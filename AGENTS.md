@@ -1,8 +1,17 @@
 # Agent Instructions
 
+## Required skills
+
+Always use these skills for the matching work:
+
+- [Conventional Commit](/Users/toon/.agents/skills/conventional-commit/SKILL.md) for every commit. Review the worktree, inspect the diff, stage only the intended files, and use a valid Conventional Commit message.
+- [JSDoc TypeScript Docs](/Users/toon/.agents/skills/jsdoc-typescript-docs/SKILL.md) when writing or changing TypeScript. Document exported functions, types, interfaces, enums, hooks, and React components. Include parameters, return values, errors, and examples when they help explain the API.
+
+Keep [CHANGELOG.md](./CHANGELOG.md) current. Add user-visible changes to the `[Unreleased]` section under the correct Keep a Changelog heading. When a release is made, move the relevant entries to a versioned section with the release date.
+
 ## Commit messages
 
-Always write commit messages using the [Conventional Commits](https://www.conventionalcommits.org/) format, per the `conventional-commit` skill (https://www.skills.sh/github/awesome-copilot/conventional-commit):
+Always write commit messages using the [Conventional Commits](https://www.conventionalcommits.org/) format, per the [Conventional Commit skill](https://www.skills.sh/github/awesome-copilot/conventional-commit):
 
 ```
 type(scope): description
